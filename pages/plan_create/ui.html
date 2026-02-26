@@ -169,12 +169,12 @@
                             <div className="animate-fade-up">
                                 <div className="flex flex-col items-center pt-2 px-8 text-center">
                                     <div className="mb-6"><SunnyLogo /></div>
-                                    <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2 mb-2" data-i18n="plan_create_title_focus">What is your core focus?</h3>
-                                    <p className="text-[14px] text-text-secondary" data-i18n="plan_create_subtitle_focus">I will tailor your journey based on this goal.</p>
+                                    <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2 mb-2" data-i18n-key="plan_create_title_focus">What is your core focus?</h3>
+                                    <p className="text-[14px] text-text-secondary" data-i18n-key="plan_create_subtitle_focus">I will tailor your journey based on this goal.</p>
                                 </div>
                                 <div className="mt-8 px-6 space-y-3">
                                     {GOALS.map(g => (
-                                        <div key={g.id} onClick={() => setSelections({...selections, goal: g.id})} data-prd-zone={`plan_create_goal_${g.id}`} className={`p-5 rounded-[24px] border-2 transition-all flex items-center gap-4 cursor-pointer ${selections.goal === g.id ? 'border-brand-red bg-brand-red/5' : 'border-transparent bg-white shadow-sm'}`}>
+                                        <div key={g.id} onClick={() => setSelections({...selections, goal: g.id})} data-zone-id={`plan_create_goal_${g.id}`} data-track-id="click_goal_card" data-track-params={JSON.stringify({ goal: g.id })} className={`p-5 rounded-[24px] border-2 transition-all flex items-center gap-4 cursor-pointer ${selections.goal === g.id ? 'border-brand-red bg-brand-red/5' : 'border-transparent bg-white shadow-sm'}`}>
                                             <span className="text-2xl">{g.icon}</span>
                                             <div className="text-left"><h4 className={`font-bold text-[15px] ${selections.goal === g.id ? 'text-brand-red' : 'text-text-primary'}`}>{g.label}</h4><p className="text-[11px] text-text-secondary">{g.sub}</p></div>
                                         </div>
@@ -188,12 +188,12 @@
                             <div className="animate-fade-up">
                                 <div className="flex flex-col items-center pt-2 px-8 text-center">
                                     <div className="mb-6"><SunnyLogo /></div>
-                                    <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2 mb-2" data-i18n="plan_create_title_equipment">Your training space?</h3>
-                                    <p className="text-[14px] text-text-secondary" data-i18n="plan_create_subtitle_equipment">Select what you have available.</p>
+                                    <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2 mb-2" data-i18n-key="plan_create_title_equipment">Your training space?</h3>
+                                    <p className="text-[14px] text-text-secondary" data-i18n-key="plan_create_subtitle_equipment">Select what you have available.</p>
                                 </div>
                                 
                                 <div className="mt-8 px-6 pb-20">
-                                    <h4 className="text-[12px] font-bold text-text-secondary uppercase tracking-widest mb-3 ml-1" data-i18n="plan_create_label_cardio">Cardio Machines</h4>
+                                    <h4 className="text-[12px] font-bold text-text-secondary uppercase tracking-widest mb-3 ml-1" data-i18n-key="plan_create_label_cardio">Cardio Machines</h4>
                                     <div className="grid grid-cols-2 gap-3 mb-6">
                                         {MAJOR_EQUIPMENT.map(e => (
                                             <div key={e} onClick={() => toggleEquipment(e)} data-prd-zone={`plan_create_equip_${e.toLowerCase().replace(/\s+/g, '_')}`} className={`p-4 rounded-[16px] border-2 transition-all cursor-pointer flex flex-col justify-between h-20 ${selections.equip.includes(e) ? 'border-brand-red bg-brand-red/5' : 'border-transparent bg-white shadow-sm'}`}>
