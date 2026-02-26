@@ -1,68 +1,188 @@
 {
-  "page_id": "Plan_Create",
-  "page_name": "AI 计划生成向导 (Onboarding)",
+  "page_id": "plan_create",
+  "page_name": "AI 计划生成向导 (Plan Create)",
   "zones": [
     {
-      "zone_id": "step-1-goal",
+      "zone_id": "plan_create_goal_fat_loss",
       "module_level": "L1",
-      "module_name": "Step 1: 核心目标设定",
-      "trigger_event": "Click Option Card",
+      "module_name": "Step1 目标选择 - 减脂",
+      "trigger_event": "Click Goal Card",
       "logic_steps": [
-        "渲染 4 个核心目标：Weight Loss (减脂), Build Muscle (增肌), Health & Vitality (健康), Rehab & Stretch (康复)。",
-        "用户点击单选，记录至状态机 `selections.goal`。",
-        "被选中卡片触发红色高亮与背景微亮反馈。",
-        "若未选择任何目标，底部 'Continue' 按钮保持 disabled 状态。"
+        "与 plan_create_goal_muscle / plan_create_goal_vitality / plan_create_goal_rehab 四选一",
+        "用户点击后记录至状态机 selections.goal = 'fat_loss'",
+        "被选中卡片呈现 border-brand-red、bg-brand-red/5 高亮",
+        "未选目标时底部 plan_create_cta_continue 保持 disabled"
       ],
       "exit_states": []
     },
     {
-      "zone_id": "step-2-equip",
+      "zone_id": "plan_create_goal_muscle",
       "module_level": "L1",
-      "module_name": "Step 2: 可用器材勾选",
-      "trigger_event": "Click Multiple Options",
+      "module_name": "Step1 目标选择 - 增肌",
+      "trigger_event": "Click Goal Card",
+      "logic_steps": ["同上，selections.goal = 'muscle'"],
+      "exit_states": []
+    },
+    {
+      "zone_id": "plan_create_goal_vitality",
+      "module_level": "L1",
+      "module_name": "Step1 目标选择 - 健康活力",
+      "trigger_event": "Click Goal Card",
+      "logic_steps": ["同上，selections.goal = 'vitality'"],
+      "exit_states": []
+    },
+    {
+      "zone_id": "plan_create_goal_rehab",
+      "module_level": "L1",
+      "module_name": "Step1 目标选择 - 康复拉伸",
+      "trigger_event": "Click Goal Card",
+      "logic_steps": ["同上，selections.goal = 'rehab'"],
+      "exit_states": []
+    },
+    {
+      "zone_id": "plan_create_equip_none",
+      "module_level": "L1",
+      "module_name": "Step2 器材 - 无器材",
+      "trigger_event": "Click I have no equipment yet",
       "logic_steps": [
-        "支持多选逻辑。选中项右上角出现 Check 标记，记录至 `selections.equip`。",
-        "排他逻辑：若用户点击底部的 'I have no equipment yet' (None)，则自动清空其他已选器材记录。"
+        "点击后 selections.equip 强制设为 ['None']，清空其他已选器材",
+        "与所有 plan_create_equip_* 卡片互斥：选 None 后其他勾选清除"
       ],
       "exit_states": []
     },
     {
-      "zone_id": "step-3-freq",
+      "zone_id": "plan_create_equip_cardio_accessories",
+      "module_level": "L1",
+      "module_name": "Step2 器材 - 有氧/配件多选",
+      "trigger_event": "Click Equipment Card",
+      "logic_steps": [
+        "Cardio: Bike, Treadmill, Rower, Elliptical, Stepper, Row-N-Ride, Stair Climber；Accessories: Dumbbells, Bands, Yoga Ball",
+        "多选，选中项记录至 selections.equip，并显示 Check 图标",
+        "若当前 equip 包含 'None'，选择任意具体器材时先移除 'None' 再追加该项"
+      ],
+      "exit_states": []
+    },
+    {
+      "zone_id": "plan_create_freq_3",
       "module_level": "L2",
-      "module_name": "Step 3: 频次与健康约束",
-      "trigger_event": "Click Options",
-      "logic_steps": [
-        "训练频次 (Days per week) 为单选逻辑，默认值为 3 Days。",
-        "排除项 (Exclude Exercises) 为多选逻辑，包含 Knee Pain, Back Pain 等。"
-      ],
+      "module_name": "Step3 频次 - 3 天/周",
+      "trigger_event": "Click Frequency Option",
+      "logic_steps": ["单选，selections.freq = '3'，标签 Newbie"],
       "exit_states": []
     },
     {
-      "zone_id": "step-5-coach",
+      "zone_id": "plan_create_freq_4",
       "module_level": "L2",
-      "module_name": "Step 5: 教练角色绑定",
-      "trigger_event": "Select Coach Avatar",
+      "module_name": "Step3 频次 - 4 天/周",
+      "trigger_event": "Click Frequency Option",
+      "logic_steps": ["单选，selections.freq = '4'，标签 Pro"],
+      "exit_states": []
+    },
+    {
+      "zone_id": "plan_create_freq_5",
+      "module_level": "L2",
+      "module_name": "Step3 频次 - 5 天/周",
+      "trigger_event": "Click Frequency Option",
+      "logic_steps": ["单选，selections.freq = '5'，标签 Elite"],
+      "exit_states": []
+    },
+    {
+      "zone_id": "plan_create_exclude_health",
+      "module_level": "L2",
+      "module_name": "Step3 排除项多选",
+      "trigger_event": "Click Exclude Exercise",
       "logic_steps": [
-        "展示 3 位具备不同性格的教练卡片 (Alex, Sarah, Max)。",
-        "点击后记录至 `selectedCoach`，并触发卡片的放大悬浮动效 (scale[1.02])。",
-        "选中教练后，底部 'Confirm Coach' 按钮解锁可用。"
+        "Knee Pain, Back Pain, No Jumping, Heart/BP 多选，记录至 selections.health",
+        "用于生成计划时排除对应动作"
       ],
       "exit_states": []
     },
     {
-      "zone_id": "bottom-cta",
+      "zone_id": "plan_create_thinking",
+      "module_level": "L2",
+      "module_name": "AI 分析中遮罩",
+      "trigger_event": "After Step3 CTA Click",
+      "logic_steps": [
+        "Step3 点击「Generate My AI Plan」后不直接进入 Step4，先展示 2.5s 全屏 thinking 动效",
+        "展示 selections.goal / equip 相关文案与三点跳动加载动画，再 setStep(4)"
+      ],
+      "exit_states": []
+    },
+    {
+      "zone_id": "plan_create_coach_alex",
+      "module_level": "L2",
+      "module_name": "Step5 教练 - Alex",
+      "trigger_event": "Select Coach Card",
+      "logic_steps": ["三选一，选中后 selectedCoach = { id: 'alex', ... }，卡片 scale-[1.02] 与 border-brand-red"],
+      "exit_states": []
+    },
+    {
+      "zone_id": "plan_create_coach_sarah",
+      "module_level": "L2",
+      "module_name": "Step5 教练 - Sarah",
+      "trigger_event": "Select Coach Card",
+      "logic_steps": ["同上，selectedCoach = { id: 'sarah', ... }"],
+      "exit_states": []
+    },
+    {
+      "zone_id": "plan_create_coach_max",
+      "module_level": "L2",
+      "module_name": "Step5 教练 - Max",
+      "trigger_event": "Select Coach Card",
+      "logic_steps": ["同上，selectedCoach = { id: 'max', ... }"],
+      "exit_states": []
+    },
+    {
+      "zone_id": "plan_create_cta_continue",
       "module_level": "Global",
-      "module_name": "全局底部控制器 (CTA)",
-      "trigger_event": "Click Action Button",
+      "module_name": "底部 CTA - Continue",
+      "trigger_event": "Click Continue",
       "logic_steps": [
-        "随 step 自动切换文案：Continue -> Generate My AI Plan -> YES, LET'S DO THIS -> Confirm Coach -> START NOW。",
-        "动效干预：Step 3 点击后，拦截跳转，强制展示 2.5s 的 'AI Analyzing' 全屏遮罩动效，再进入 Step 4。"
+        "仅 Step1/Step2 显示；Step1 时需 selections.goal 已选才可点击",
+        "点击后 setStep(step + 1)"
       ],
+      "exit_states": []
+    },
+    {
+      "zone_id": "plan_create_cta_generate",
+      "module_level": "Global",
+      "module_name": "底部 CTA - Generate My AI Plan",
+      "trigger_event": "Click Generate",
+      "logic_steps": [
+        "仅 Step3 且 !thinking 时显示；点击后 setThinking(true)，2.5s 后 setThinking(false); setStep(4)"
+      ],
+      "exit_states": []
+    },
+    {
+      "zone_id": "plan_create_cta_yes",
+      "module_level": "Global",
+      "module_name": "底部 CTA - YES, LET'S DO THIS",
+      "trigger_event": "Click Yes",
+      "logic_steps": ["仅 Step4 显示；点击后 setStep(5)"],
+      "exit_states": []
+    },
+    {
+      "zone_id": "plan_create_cta_confirm_coach",
+      "module_level": "Global",
+      "module_name": "底部 CTA - Confirm Coach",
+      "trigger_event": "Click Confirm Coach",
+      "logic_steps": [
+        "仅 Step5 显示；需 selectedCoach 已选才可点击，否则 disabled",
+        "点击后 setStep(6)"
+      ],
+      "exit_states": []
+    },
+    {
+      "zone_id": "plan_create_cta_start_now",
+      "module_level": "Global",
+      "module_name": "底部 CTA - START NOW",
+      "trigger_event": "Click START NOW",
+      "logic_steps": ["仅 Step6 显示；点击后执行跨页路由，不刷新整页"],
       "exit_states": [
         {
-          "condition": "流程结束，点击 START NOW",
-          "action": "进入首次破冰骑行体验",
-          "next_page_id": "First_Ride"
+          "condition": "用户点击 START NOW",
+          "action": "调用 window.navigateTo('first_ride')，进入首次骑行体验页",
+          "next_page_id": "first_ride"
         }
       ]
     }

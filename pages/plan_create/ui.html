@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SunnyFit: Personalized Journey Final</title>
+    <title>SunnyFit: Plan Create (SOP 2.0)</title>
     
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -11,6 +11,21 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        // SOP 2.0 MapsTo 跨级路由：供本页及子组件调用，统一通过父级 Viewer 切换 page 参数
+        function navigateTo(targetPageId) {
+            try {
+                const parentParams = new URLSearchParams(window.parent.location.search);
+                parentParams.set('page', targetPageId);
+                window.parent.location.search = parentParams.toString();
+            } catch (e) {
+                console.warn("未检测到 Viewer 外壳，执行降级跳转");
+                alert("SOP 路由触发：即将前往 -> " + targetPageId);
+            }
+        }
+        if (typeof window !== 'undefined') window.navigateTo = navigateTo;
+    </script>
 
     <script>
         tailwind.config = {
@@ -154,12 +169,12 @@
                             <div className="animate-fade-up">
                                 <div className="flex flex-col items-center pt-2 px-8 text-center">
                                     <div className="mb-6"><SunnyLogo /></div>
-                                    <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2 mb-2">What is your core focus?</h3>
-                                    <p className="text-[14px] text-text-secondary">I will tailor your journey based on this goal.</p>
+                                    <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2 mb-2" data-i18n="plan_create_title_focus">What is your core focus?</h3>
+                                    <p className="text-[14px] text-text-secondary" data-i18n="plan_create_subtitle_focus">I will tailor your journey based on this goal.</p>
                                 </div>
                                 <div className="mt-8 px-6 space-y-3">
                                     {GOALS.map(g => (
-                                        <div key={g.id} onClick={() => setSelections({...selections, goal: g.id})} className={`p-5 rounded-[24px] border-2 transition-all flex items-center gap-4 cursor-pointer ${selections.goal === g.id ? 'border-brand-red bg-brand-red/5' : 'border-transparent bg-white shadow-sm'}`}>
+                                        <div key={g.id} onClick={() => setSelections({...selections, goal: g.id})} data-prd-zone={`plan_create_goal_${g.id}`} className={`p-5 rounded-[24px] border-2 transition-all flex items-center gap-4 cursor-pointer ${selections.goal === g.id ? 'border-brand-red bg-brand-red/5' : 'border-transparent bg-white shadow-sm'}`}>
                                             <span className="text-2xl">{g.icon}</span>
                                             <div className="text-left"><h4 className={`font-bold text-[15px] ${selections.goal === g.id ? 'text-brand-red' : 'text-text-primary'}`}>{g.label}</h4><p className="text-[11px] text-text-secondary">{g.sub}</p></div>
                                         </div>
@@ -173,32 +188,32 @@
                             <div className="animate-fade-up">
                                 <div className="flex flex-col items-center pt-2 px-8 text-center">
                                     <div className="mb-6"><SunnyLogo /></div>
-                                    <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2 mb-2">Your training space?</h3>
-                                    <p className="text-[14px] text-text-secondary">Select what you have available.</p>
+                                    <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2 mb-2" data-i18n="plan_create_title_equipment">Your training space?</h3>
+                                    <p className="text-[14px] text-text-secondary" data-i18n="plan_create_subtitle_equipment">Select what you have available.</p>
                                 </div>
                                 
                                 <div className="mt-8 px-6 pb-20">
-                                    <h4 className="text-[12px] font-bold text-text-secondary uppercase tracking-widest mb-3 ml-1">Cardio Machines</h4>
+                                    <h4 className="text-[12px] font-bold text-text-secondary uppercase tracking-widest mb-3 ml-1" data-i18n="plan_create_label_cardio">Cardio Machines</h4>
                                     <div className="grid grid-cols-2 gap-3 mb-6">
                                         {MAJOR_EQUIPMENT.map(e => (
-                                            <div key={e} onClick={() => toggleEquipment(e)} className={`p-4 rounded-[16px] border-2 transition-all cursor-pointer flex flex-col justify-between h-20 ${selections.equip.includes(e) ? 'border-brand-red bg-brand-red/5' : 'border-transparent bg-white shadow-sm'}`}>
+                                            <div key={e} onClick={() => toggleEquipment(e)} data-prd-zone={`plan_create_equip_${e.toLowerCase().replace(/\s+/g, '_')}`} className={`p-4 rounded-[16px] border-2 transition-all cursor-pointer flex flex-col justify-between h-20 ${selections.equip.includes(e) ? 'border-brand-red bg-brand-red/5' : 'border-transparent bg-white shadow-sm'}`}>
                                                 <div className={`text-[13px] font-bold leading-tight ${selections.equip.includes(e) ? 'text-brand-red' : 'text-text-primary'}`}>{e}</div>
                                                 {selections.equip.includes(e) && <div className="self-end text-brand-red"><Icons.Check /></div>}
                                             </div>
                                         ))}
                                     </div>
 
-                                    <h4 className="text-[12px] font-bold text-text-secondary uppercase tracking-widest mb-3 ml-1">Accessories</h4>
+                                    <h4 className="text-[12px] font-bold text-text-secondary uppercase tracking-widest mb-3 ml-1" data-i18n="plan_create_label_accessories">Accessories</h4>
                                     <div className="flex flex-wrap gap-3 mb-6">
                                         {SMALL_EQUIPMENT.map(e => (
-                                            <div key={e} onClick={() => toggleEquipment(e)} className={`px-4 py-3 rounded-[16px] border-2 transition-all cursor-pointer font-bold text-[12px] ${selections.equip.includes(e) ? 'border-brand-red bg-brand-red/5 text-brand-red' : 'border-transparent bg-white shadow-sm text-text-primary'}`}>
+                                            <div key={e} onClick={() => toggleEquipment(e)} data-prd-zone={`plan_create_equip_${e.toLowerCase().replace(/\s+/g, '_')}`} className={`px-4 py-3 rounded-[16px] border-2 transition-all cursor-pointer font-bold text-[12px] ${selections.equip.includes(e) ? 'border-brand-red bg-brand-red/5 text-brand-red' : 'border-transparent bg-white shadow-sm text-text-primary'}`}>
                                                 {e}
                                             </div>
                                         ))}
                                     </div>
 
-                                    <div onClick={() => toggleEquipment('None')} className={`w-full p-4 rounded-[16px] border-2 transition-all cursor-pointer flex items-center justify-center font-bold text-[14px] ${selections.equip.includes('None') ? 'border-brand-red bg-brand-red text-white' : 'border-dashed border-gray-300 text-text-secondary'}`}>
-                                        I have no equipment yet
+                                    <div onClick={() => toggleEquipment('None')} data-prd-zone="plan_create_equip_none" className={`w-full p-4 rounded-[16px] border-2 transition-all cursor-pointer flex items-center justify-center font-bold text-[14px] ${selections.equip.includes('None') ? 'border-brand-red bg-brand-red text-white' : 'border-dashed border-gray-300 text-text-secondary'}`}>
+                                        <span data-i18n="plan_create_equip_none_label">I have no equipment yet</span>
                                     </div>
                                 </div>
                             </div>
@@ -209,24 +224,24 @@
                             <div className="animate-fade-up px-6">
                                 <div className="flex flex-col items-center pt-2 text-center px-2">
                                     <div className="mb-6"><SunnyLogo /></div>
-                                    <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2 mb-6">Frequency & Condition</h3>
+                                    <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2 mb-6" data-i18n="plan_create_title_frequency">Frequency & Condition</h3>
                                 </div>
                                 <div className="space-y-8">
                                     <div>
-                                        <label className="text-[12px] font-bold text-text-secondary uppercase tracking-widest mb-4 block">Days per week</label>
+                                        <label className="text-[12px] font-bold text-text-secondary uppercase tracking-widest mb-4 block" data-i18n="plan_create_label_days">Days per week</label>
                                         <div className="flex gap-3">
                                             {['3', '4', '5'].map(d => (
-                                                <div key={d} onClick={() => setSelections({...selections, freq: d})} className={`flex-1 py-4 rounded-xl text-center font-bold border-2 transition-all cursor-pointer ${selections.freq === d ? 'border-brand-red bg-brand-red/5 text-brand-red' : 'border-transparent bg-white text-text-primary shadow-sm'}`}>
+                                                <div key={d} onClick={() => setSelections({...selections, freq: d})} data-prd-zone={`plan_create_freq_${d}`} className={`flex-1 py-4 rounded-xl text-center font-bold border-2 transition-all cursor-pointer ${selections.freq === d ? 'border-brand-red bg-brand-red/5 text-brand-red' : 'border-transparent bg-white text-text-primary shadow-sm'}`}>
                                                     {d} Days <div className="text-[10px] opacity-60 font-medium">{d==='3'?'Newbie':d==='4'?'Pro':'Elite'}</div>
                                                 </div>
                                             ))}
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="text-[12px] font-bold text-text-secondary uppercase tracking-widest mb-4 block">Exclude Exercises</label>
+                                        <label className="text-[12px] font-bold text-text-secondary uppercase tracking-widest mb-4 block" data-i18n="plan_create_label_exclude">Exclude Exercises</label>
                                         <div className="grid grid-cols-2 gap-3">
                                             {['Knee Pain', 'Back Pain', 'No Jumping', 'Heart/BP'].map(h => (
-                                                <div key={h} onClick={() => toggleHealth(h)} className={`p-3 rounded-xl border-2 text-[13px] font-semibold transition-all cursor-pointer text-center ${selections.health.includes(h) ? 'border-brand-red bg-brand-red/5 text-brand-red' : 'border-transparent bg-white text-text-primary shadow-sm'}`}>
+                                                <div key={h} onClick={() => toggleHealth(h)} data-prd-zone={`plan_create_exclude_${h.toLowerCase().replace(/[\s\/]+/g, '_')}`} className={`p-3 rounded-xl border-2 text-[13px] font-semibold transition-all cursor-pointer text-center ${selections.health.includes(h) ? 'border-brand-red bg-brand-red/5 text-brand-red' : 'border-transparent bg-white text-text-primary shadow-sm'}`}>
                                                     {h}
                                                 </div>
                                             ))}
@@ -238,12 +253,12 @@
 
                         {/* AI Thinking Simulation - 修正：保持 Logo 位置不变，仅内容切换 */}
                         {thinking && (
-                            <div className="absolute inset-0 z-50 flex flex-col items-center bg-bg-page animate-fade-up">
+                            <div className="absolute inset-0 z-50 flex flex-col items-center bg-bg-page animate-fade-up" data-prd-zone="plan_create_thinking">
                                 {/* 头部区域：使用 flex-col + pt-2，与之前的步骤完全对齐 */}
                                 <div className="flex flex-col items-center pt-2 px-8 text-center">
                                     <div className="mb-6 animate-pulse-slow"><SunnyLogo /></div>
                                     <div className="mt-10 space-y-4">
-                                        <h3 className="text-[18px] font-bold text-brand-blue italic">"Analyzing fat loss goals..."</h3>
+                                        <h3 className="text-[18px] font-bold text-brand-blue italic" data-i18n="plan_create_thinking_title">"Analyzing fat loss goals..."</h3>
                                         <p className="text-[13px] text-text-secondary leading-relaxed">Designing low-impact plan for <b>{selections.equip.length > 0 && selections.equip[0] !== 'None' ? selections.equip[0] : "Bodyweight"}</b>...</p>
                                         <div className="flex gap-2 justify-center pt-4"><div className="w-2 h-2 bg-brand-red rounded-full animate-bounce"></div><div className="w-2 h-2 bg-brand-red rounded-full animate-bounce" style={{animationDelay:'0.2s'}}></div><div className="w-2 h-2 bg-brand-red rounded-full animate-bounce" style={{animationDelay:'0.4s'}}></div></div>
                                     </div>
@@ -256,8 +271,8 @@
                             <div className="animate-fade-up">
                                 <div className="px-8 pt-2 flex flex-col items-center text-center">
                                     <div className="mb-6"><SunnyLogo /></div>
-                                    <h3 className="text-[22px] font-bold text-text-primary leading-tight mt-2">Your Strategy for Mastery</h3>
-                                    <p className="text-[13px] text-text-secondary mt-3 leading-relaxed">
+                                    <h3 className="text-[22px] font-bold text-text-primary leading-tight mt-2" data-i18n="plan_create_title_strategy">Your Strategy for Mastery</h3>
+                                    <p className="text-[13px] text-text-secondary mt-3 leading-relaxed" data-i18n="plan_create_subtitle_strategy">
                                         Weight loss isn't about a single workout; it’s about a metabolic shift.
                                     </p>
                                 </div>
@@ -306,15 +321,15 @@
                             <div className="animate-fade-up">
                                 <div className="px-8 pt-2 flex flex-col items-center text-center">
                                     <div className="mb-6"><SunnyLogo /></div>
-                                    <h3 className="text-[22px] font-bold text-text-primary leading-tight mt-2">The Partnership</h3>
-                                    <p className="text-[13px] text-text-secondary mt-3 leading-relaxed">
+                                    <h3 className="text-[22px] font-bold text-text-primary leading-tight mt-2" data-i18n="plan_create_title_partnership">The Partnership</h3>
+                                    <p className="text-[13px] text-text-secondary mt-3 leading-relaxed" data-i18n="plan_create_subtitle_partnership">
                                         Consistency is the only challenge. Who do you want by your side?
                                     </p>
                                 </div>
 
                                 <div className="mt-8 px-6 space-y-4">
                                     {COACHES.map(c => (
-                                        <div key={c.id} onClick={() => setSelectedCoach(c)} className={`bg-white p-5 rounded-[24px] shadow-card cursor-pointer border-2 transition-all flex items-start gap-4 ${selectedCoach?.id === c.id ? 'border-brand-red ring-1 ring-brand-red transform scale-[1.02]' : 'border-transparent active:scale-95'}`}>
+                                        <div key={c.id} onClick={() => setSelectedCoach(c)} data-prd-zone={`plan_create_coach_${c.id}`} className={`bg-white p-5 rounded-[24px] shadow-card cursor-pointer border-2 transition-all flex items-start gap-4 ${selectedCoach?.id === c.id ? 'border-brand-red ring-1 ring-brand-red transform scale-[1.02]' : 'border-transparent active:scale-95'}`}>
                                             <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl shrink-0 ${c.color} text-white shadow-md`}>
                                                 {c.avatar}
                                             </div>
@@ -335,10 +350,10 @@
                         {/* Step C: The Ignition (Persona Switch) */}
                         {step === 6 && selectedCoach && (
                             <div className="animate-fade-up">
-                                <div className="px-8 pt-6 flex flex-col items-center text-center">
+                                <div className="px-8 pt-6 flex flex-col items-center text-center" data-prd-zone="plan_create_ignition">
                                     <div className="mb-6"><SunnyLogo avatar={selectedCoach.avatar} bgColor={selectedCoach.color} className="shadow-xl scale-110" /></div>
-                                    <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2">"Good choice. I'm {selectedCoach.name}."</h3>
-                                    <p className="text-[14px] text-text-secondary mt-3 leading-relaxed px-2">
+                                    <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2" data-i18n="plan_create_title_ignition">"Good choice. I'm {selectedCoach.name}."</h3>
+                                    <p className="text-[14px] text-text-secondary mt-3 leading-relaxed px-2" data-i18n="plan_create_subtitle_ignition">
                                         I don't believe in taking the easy way out. But first, we ignite.
                                     </p>
                                 </div>
@@ -371,25 +386,26 @@
                     </div>
 
                     {/* Bottom CTA Area */}
-                    <div className="px-6 pb-12 pt-4 bg-gradient-to-t from-bg-page via-bg-page to-transparent shrink-0 z-50">
+                    <div className="px-6 pb-12 pt-4 bg-gradient-to-t from-bg-page via-bg-page to-transparent shrink-0 z-50" data-prd-zone="plan_create_cta_area">
                         {step < 3 && (
                             <button 
                                 onClick={handleNext} 
                                 disabled={step === 1 && !selections.goal}
                                 className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn active:scale-95 transition-all disabled:opacity-30"
-                            >Continue</button>
+                                data-prd-zone="plan_create_cta_continue"
+                            ><span data-i18n="plan_create_cta_continue_label">Continue</span></button>
                         )}
                         {step === 3 && !thinking && (
-                            <button onClick={handleNext} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn active:scale-95">Generate My AI Plan</button>
+                            <button onClick={handleNext} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn active:scale-95" data-prd-zone="plan_create_cta_generate">Generate My AI Plan</button>
                         )}
                         {step === 4 && (
-                            <button onClick={handleNext} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn active:scale-95 animate-pop">YES, LET'S DO THIS</button>
+                            <button onClick={handleNext} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn active:scale-95 animate-pop" data-prd-zone="plan_create_cta_yes">YES, LET'S DO THIS</button>
                         )}
                         {step === 5 && (
-                            <button onClick={handleNext} disabled={!selectedCoach} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn active:scale-95 disabled:opacity-50">Confirm Coach</button>
+                            <button onClick={handleNext} disabled={!selectedCoach} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn active:scale-95 disabled:opacity-50" data-prd-zone="plan_create_cta_confirm_coach">Confirm Coach</button>
                         )}
                         {step === 6 && (
-                            <button onClick={() => window.location.href = './First Ride.html'} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn animate-pop">START NOW</button>
+                            <button onClick={() => window.navigateTo('first_ride')} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn animate-pop" data-prd-zone="plan_create_cta_start_now">START NOW</button>
                         )}
                     </div>
                 </div>
