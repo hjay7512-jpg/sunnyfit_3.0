@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SunnyFit - Mobile Viewport Fix</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand-red: #DE2529; 
+            --brand-blue: #31426D;
+            --brand-blue-dark: #1F2A45;
+            --text-white: #FFFFFF;
+            --text-dark: #31426D; 
+            --text-dim: #A0AEC0;
+        }
+
+        /* 外层容器：居中显示手机框架 */
+        body {
+            background-color: #f0f0f0; 
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* --- 手机主容器 --- */
+        .phone-frame {
+            width: 390px; 
+            height: 844px;
+            background: radial-gradient(120% 100% at 50% 0%, #3E5285 0%, var(--brand-blue) 40%, var(--brand-blue-dark) 100%);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+            border: 8px solid #333; 
+            border-radius: 40px;
+            color: var(--text-white); /* 强制初始颜色为白色 */
+        }
+
+        /* --- iOS 标准灵动岛 --- */
+        .island-container {
+            position: absolute;
+            top: 15px; 
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            z-index: 1000;
+            pointer-events: none;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .island-capsule {
+            background: #000;
+            min-width: 120px;
+            height: 36px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            color: white;
+            pointer-events: auto;
+            cursor: pointer;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .island-sensor {
+            width: 50px;
+            height: 24px;
+            background: #000;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 12px;
+        }
+
+        .island-left { flex: 1; font-size: 11px; font-weight: 700; color: var(--brand-red); display: flex; align-items: center; gap: 4px; }
+        .island-right { flex: 1; font-size: 11px; font-weight: 700; text-align: right; }
+
+        .island-capsule.expanded {
+            min-width: 340px;
+            height: 64px;
+            border-radius: 30px;
+        }
+        .island-msg { 
+            position: absolute; width: 100%; text-align: center; 
+            font-size: 12px; font-weight: 500; opacity: 0; 
+            transition: opacity 0.3s;
+        }
+        .expanded .island-msg { opacity: 1; }
+        .expanded .island-left, .expanded .island-right { opacity: 0.3; }
+
+        /* --- TikTok 背景层 --- */
+        #tiktokLayer {
+            position: absolute;
+            inset: 0;
+            background: url('https://images.unsplash.com/photo-1541535881962-3bb380b08458?auto=format&fit=crop&w=600&q=80') center/cover no-repeat;
+            z-index: 100;
+            display: none;
+        }
+        #tiktokLayer::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 40%);
+        }
+        .tiktok-info { position: absolute; bottom: 90px; left: 20px; z-index: 101; color: white !important; }
+
+        /* --- AI 气泡 --- */
+        .header-bar { padding: 50px 24px 10px; display: flex; justify-content: space-between; align-items: center; z-index: 50; }
+        .ai-wrapper { position: relative; display: flex; align-items: center; height: 48px; }
+        .ai-logo-anchor { 
+            width: 48px; height: 48px; z-index: 20; cursor: pointer;
+            animation: breathe-scale 3s infinite ease-in-out;
+        }
+        .ai-pill { 
+            position: absolute; left: 24px; top: 6px; bottom: 6px; 
+            background: #FFF; border-radius: 0 18px 18px 0;
+            display: flex; align-items: center; padding: 0 16px 0 30px;
+            width: 0; opacity: 0; z-index: 10; transition: all 0.5s ease;
+            clip-path: inset(0 100% 0 0); box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .active .ai-pill { width: 170px; opacity: 1; clip-path: inset(0 0 0 0); }
+        .ai-text { color: var(--text-dark); font-size: 13px; font-weight: 600; white-space: nowrap; }
+
+        /* --- 业务界面组件 (还原白色字体) --- */
+        .foreground-ui { transition: all 0.4s ease; display: contents; }
+        .minimized .foreground-ui { transform: scale(0.95); opacity: 0; pointer-events: none; }
+
+        .tool-btn { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; }
+        
+        .visualizer-zone { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; }
+        .main-value { font-size: 96px; font-weight: 800; color: white !important; text-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .main-label { font-size: 14px; color: var(--text-dim); letter-spacing: 2px; }
+        
+        .ripple { position: absolute; width: 240px; height: 240px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.15); animation: ripple 4s infinite linear; }
+
+        .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 0 40px 60px; }
+        .metric-item { display: flex; flex-direction: column; align-items: center; }
+        .metric-val { font-size: 28px; font-weight: 600; color: white !important; } /* 强制白色 */
+        .metric-label { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+
+        .controls-zone { padding-bottom: 50px; display: flex; justify-content: center; gap: 40px; }
+        .btn-control { width: 72px; height: 72px; border-radius: 50%; border: none; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; }
+
+        @keyframes ripple { 0% { transform: scale(0.6); opacity: 0; } 50% { opacity: 0.4; } 100% { transform: scale(2.2); opacity: 0; } }
+        @keyframes breathe-scale { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+
+        .sim-btn { position: absolute; bottom: 40px; right: 20px; font-size: 10px; opacity: 0.3; color: white; border: 1px solid white; background: none; padding: 4px 8px; border-radius: 4px; z-index: 110; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="phone-frame" id="phoneBody">
+    
+    <div class="island-container" id="islandContainer" style="opacity: 0; transform: translateY(-20px);">
+        <div class="island-capsule" id="islandCapsule" onclick="restoreApp()">
+            <div class="island-left">● <span id="diRPM">72</span></div>
+            <div class="island-sensor"></div>
+            <div class="island-right">12:30</div>
+            <div class="island-msg">Excellent! 100.3 kcal burned! 🔥</div>
+        </div>
+    </div>
+
+    <div id="tiktokLayer">
+        <div class="tiktok-info">
+            <p style="font-weight:800; font-size:18px; margin-bottom:4px;">@SunnyFit_Studio</p>
+            <p style="font-size:14px; width:300px; line-height:1.4;">Never give up on your dreams! Keep pedaling... #fitness #motivation</p>
+        </div>
+    </div>
+
+    <button class="sim-btn" onclick="triggerMessage()">AI MSG</button>
+
+    <div class="foreground-ui" id="foregroundUI">
+        <div class="header-bar">
+            <div class="ai-wrapper" id="aiWrapper">
+                <div class="ai-logo-anchor" onclick="triggerMessage()">
+                    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M16.013 32C13.271 31.9018 10.5412 31.8755 7.87463 31.1231C3.57228 29.9252 1.23878 26.956 0.52873 22.6889C-0.165498 18.3226 -0.176144 13.8749 0.497173 9.50531C1.23001 4.58405 4.38577 1.32017 9.29472 0.537958C13.609 -0.165525 18.0077 -0.17914 22.3262 0.497619C27.7401 1.35875 30.6837 4.27187 31.513 9.76137C32.1817 14.0582 32.1521 18.4348 31.4253 22.7222C30.5207 27.9048 27.3527 30.867 22.079 31.558C20.0716 31.8176 18.0362 31.8597 16.013 32Z" fill="#DE2529"/>
+                        <path d="M15.3836 6.16027C15.9406 6.15315 16.4468 6.48357 16.6646 6.99654C16.8824 7.50952 16.7687 8.10332 16.3767 8.49943C15.9848 8.89555 15.3925 9.01542 14.8774 8.80283C14.3624 8.59024 14.027 8.08735 14.0283 7.53001C14.0358 6.78206 14.636 6.1754 15.3836 6.16027Z" fill="white"/>
+                        <path d="M19.6492 11.387C18.5149 11.7676 17.3455 12.0377 16.2287 12.4744C15.8322 12.6166 15.4556 12.8094 15.1084 13.0479C13.9776 13.8722 13.939 14.9315 14.9611 15.9768C15.7606 16.7959 16.7231 17.4115 17.5769 18.1586C18.9041 19.3214 18.9637 20.5245 17.7312 21.8118C16.4829 23.1255 14.905 23.9726 13.2676 24.6811C12.5908 24.974 11.8983 25.2283 11.2128 25.5002C11.0314 25.3255 10.9531 25.0694 11.0059 24.8232C12.0619 24.4117 13.0326 23.8082 13.8689 23.043C14.3759 22.5899 14.8315 22.0823 15.2276 21.5295C16.092 20.3018 16.0446 19.5722 15.0523 18.4445C14.3405 17.6412 13.5095 16.945 12.9134 16.0365C11.7317 14.2335 12.2928 12.0623 14.1722 10.9977C15.6747 10.1471 17.2876 9.58586 18.9234 9.06848C19.6106 8.85451 20.1226 9.11759 20.3259 9.7402C20.5766 10.5312 20.34 11.159 19.6492 11.387Z" fill="white"/>
+                    </svg>
+                </div>
+                <div class="ai-pill"><div class="ai-text" id="aiText">Shoulders down, relax.</div></div>
+            </div>
+
+            <div class="tool-zone">
+                <div class="tool-btn" onclick="minimizeApp()">❐</div>
+                <div class="tool-btn">🔊</div>
+            </div>
+        </div>
+
+        <div class="visualizer-zone">
+            <div class="ripple"></div>
+            <div class="main-data">
+                <div class="main-value" id="valRPM">72</div>
+                <div class="main-label">RPM</div>
+            </div>
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-item"><div class="metric-val">12:30</div><div class="metric-label">TIME</div></div>
+            <div class="metric-item"><div class="metric-val">145</div><div class="metric-label">KCAL</div></div>
+            <div class="metric-item"><div class="metric-val">128</div><div class="metric-label">BPM</div></div>
+            <div class="metric-item"><div class="metric-val">5</div><div class="metric-label">RESIST</div></div>
+        </div>
+
+        <div class="controls-zone">
+            <button class="btn-control" style="background:rgba(255,255,255,0.15)">❚❚</button>
+            <button class="btn-control" style="background:var(--brand-red)" onclick="window.location.href='./Workout_result_light.html'">■</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const phoneBody = document.getElementById('phoneBody');
+    const aiWrapper = document.getElementById('aiWrapper');
+    const aiText = document.getElementById('aiText');
+    const tiktokLayer = document.getElementById('tiktokLayer');
+    const islandContainer = document.getElementById('islandContainer');
+    const islandCapsule = document.getElementById('islandCapsule');
+
+    const msgs = ["Shoulders down, relax.", "Great rhythm!", "Keep it up!", "Breathe deeply."];
+
+    function minimizeApp() {
+        phoneBody.classList.add('minimized');
+        setTimeout(() => {
+            tiktokLayer.style.display = 'block';
+            islandContainer.style.opacity = '1';
+            islandContainer.style.transform = 'translateY(0)';
+            setTimeout(expandIsland, 2000);
+        }, 300);
+    }
+
+    function restoreApp() {
+        islandContainer.style.opacity = '0';
+        islandContainer.style.transform = 'translateY(-20px)';
+        tiktokLayer.style.display = 'none';
+        phoneBody.classList.remove('minimized');
+    }
+
+    function expandIsland() {
+        islandCapsule.classList.add('expanded');
+        setTimeout(() => {
+            islandCapsule.classList.remove('expanded');
+        }, 4000);
+    }
+
+    setInterval(() => {
+        const rpm = 70 + Math.floor(Math.random() * 8);
+        const rpmVal = document.getElementById('valRPM');
+        const diRPM = document.getElementById('diRPM');
+        if(rpmVal) rpmVal.innerText = rpm;
+        if(diRPM) diRPM.innerText = rpm;
+    }, 1000);
+
+    function triggerMessage() {
+        if(aiWrapper.classList.contains('active')) return;
+        aiText.innerText = msgs[Math.floor(Math.random() * msgs.length)];
+        aiWrapper.classList.add('active');
+        setTimeout(() => aiWrapper.classList.remove('active'), 4000);
+    }
+</script>
+
+</body>
+</html>

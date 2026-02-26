@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SunnyFit: Mobile Frame View</title>
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { red: '#EE4343', blue: '#31426D', beige: '#F6E2CF', green: '#2BA471', darkRed: '#8B0000', sky: '#BDD0EB' },
+                        bg: { page: '#FFFBF7', card: '#FFFFFF', neutral: '#F5F7FA', dark: '#1A1A1A' },
+                        text: { primary: '#31426D', secondary: '#666666', inverse: '#FFFFFF' }
+                    },
+                    fontFamily: { sans: ['Montserrat', 'sans-serif'] },
+                    boxShadow: {
+                        'glow': '0px 10px 30px rgba(222, 37, 41, 0.4)',
+                        'card': '0px 4px 12px rgba(0, 0, 0, 0.05)',
+                        'card-active': '0px 20px 40px rgba(139, 0, 0, 0.2)', 
+                        'float-btn': '0px 10px 40px rgba(238, 67, 67, 0.4)',
+                        'phone': '0px 0px 50px rgba(0,0,0,0.15)'
+                    },
+                    animation: {
+                        'breathe': 'breathe 4s ease-in-out infinite',
+                        'heartbeat': 'heartbeat 0.8s ease-in-out infinite',
+                        'fade-up': 'fadeUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
+                        'slide-in': 'slideIn 0.4s ease-out forwards',
+                        'radar': 'radarPing 2.5s cubic-bezier(0, 0, 0.2, 1) infinite',
+                        'pop': 'pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+                        'card-enter': 'cardEnter 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
+                    },
+                    keyframes: {
+                        breathe: {
+                            '0%, 100%': { transform: 'scale(1)', filter: 'drop-shadow(0px 10px 20px rgba(222, 37, 41, 0.4))' },
+                            '50%': { transform: 'scale(1.05)', filter: 'drop-shadow(0px 15px 30px rgba(222, 37, 41, 0.6))' },
+                        },
+                        heartbeat: { '0%, 100%': { transform: 'scale(1)' }, '50%': { transform: 'scale(1.08)' } },
+                        fadeUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+                        slideIn: { '0%': { opacity: '0', transform: 'translateX(20px)' }, '100%': { opacity: '1', transform: 'translateX(0)' } },
+                        radarPing: { '0%': { transform: 'scale(0.8)', opacity: '0.8' }, '75%, 100%': { transform: 'scale(2.5)', opacity: '0' } },
+                        pop: { '0%': { transform: 'scale(0.95)' }, '50%': { transform: 'scale(1.02)' }, '100%': { transform: 'scale(1)' } },
+                        cardEnter: { '0%': { opacity: '0', transform: 'translateY(10px) scale(0.98)' }, '100%': { opacity: '1', transform: 'translateY(0) scale(1)' } }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { -webkit-tap-highlight-color: transparent; }
+        body { 
+            margin: 0; background-color: #f0f0f0; display: flex; 
+            justify-content: center; align-items: center; height: 100vh; overflow: hidden;
+            font-family: 'Montserrat', sans-serif;
+        }
+        .mobile-viewport {
+            width: 390px; height: 844px; background-color: #FFFBF7; position: relative;
+            overflow: hidden; border-radius: 40px; border: 8px solid #333;
+            box-shadow: 0px 30px 60px rgba(0,0,0,0.3);
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 28px; width: 28px; border-radius: 50%; background: #ffffff; border: 2px solid #EE4343; box-shadow: 0 2px 6px rgba(0,0,0,0.2); margin-top: -10px; cursor: pointer; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 8px; cursor: pointer; background: #E5E7EB; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- Icons ---
+        const Icons = {
+            Bluetooth: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m7 7 10 10-5 5V2l5 5L7 17"/></svg>,
+            Check: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M20 6 9 17l-5-5"/></svg>,
+            Loader: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>,
+            ChevronLeft: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m15 18-6-6 6-6"/></svg>,
+            ChevronRight: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m9 18 6-6-6-6"/></svg>,
+            Search: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>,
+            Refresh: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>,
+            Play: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none" className={className}><polygon points="5 3 19 12 5 21 5 3"/></svg>,
+            Fire: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>,
+            Pin: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>,
+        };
+
+        const mockCommunityPosts = [
+            {
+                id: 1,
+                user: { name: "Sarah M.", avatar: "https://ts1.tc.mm.bing.net/th/id/OIP-C.OL7Qq9YW8jqU7YcWHqDXVQAAAA?w=200&h=211&c=8&rs=1&qlt=90&o=6&dpr=1.6&pid=3.1&rm=2" },
+                caption: "10 miles done, one more stronger day!",
+                workout: { title: "Full Body Fat Burning Workout", kcal: 320, distance: "10.2 mi", time: "30:13" }
+            },
+            {
+                id: 2,
+                user: { name: "David K.", avatar: "https://ts2.tc.mm.bing.net/th/id/OIP-C.eb5tO1q-sXQUb57RWgR1jAHaHa?w=118&h=108&c=7&qlt=90&bgcl=4ced49&r=0&o=6&dpr=1.6&pid=13.1" },
+                caption: "New personal record! The sweat is real. 💦",
+                workout: { title: "High Intensity Interval Ride", kcal: 450, distance: "15.5 mi", time: "45:00" }
+            },
+            {
+                id: 3,
+                user: { name: "Emma R.", avatar: "https://ts1.tc.mm.bing.net/th/id/OIP-C.WCCSy7vt-lLrrzNvemdAXgAAAA?w=200&h=211&c=8&rs=1&qlt=90&o=6&dpr=1.6&pid=3.1&rm=2" },
+                caption: "Nothing beats a sunrise ride. ☀️",
+                workout: { title: "Sunrise Scenic Cruise", kcal: 280, distance: "8.0 mi", time: "25:45" }
+            }
+        ];
+
+        const SunnyLogo = ({ variant = 'standard', animMode = 'breathe', className = "" }) => {
+            const colors = variant === 'splash' ? { path1: '#FFFFFF', path23: '#EE4343' } : { path1: '#EE4343', path23: '#FFFFFF' };
+            const animClass = animMode === 'heartbeat' ? 'animate-heartbeat' : (animMode === 'pop' ? 'animate-pop' : 'animate-breathe');
+            return (
+                <div className={`w-full h-full ${animClass}`}>
+                    <svg viewBox="0 0 32 32" fill="none" className={`w-full h-full drop-shadow-glow ${className}`}>
+                        <path d="M16.013 32C13.271 31.9018 10.5412 31.8755 7.87463 31.1231C3.57228 29.9252 1.23878 26.956 0.52873 22.6889C-0.165498 18.3226 -0.176144 13.8749 0.497173 9.50531C1.23001 4.58405 4.38577 1.32017 9.29472 0.537958C13.609 -0.165525 18.0077 -0.17914 22.3262 0.497619C27.7401 1.35875 30.6837 4.27187 31.513 9.76137C32.1817 14.0582 32.1521 18.4348 31.4253 22.7222C30.5207 27.9048 27.3527 30.867 22.079 31.558C20.0716 31.8176 18.0362 31.8597 16.013 32Z" fill={colors.path1} />
+                        <path d="M15.3836 6.16027C15.9406 6.15315 16.4468 6.48357 16.6646 6.99654C16.8824 7.50952 16.7687 8.10332 16.3767 8.49943C15.9848 8.89555 15.3925 9.01542 14.8774 8.80283C14.3624 8.59024 14.027 8.08735 14.0283 7.53001C14.0358 6.78206 14.636 6.1754 15.3836 6.16027Z" fill={colors.path23} />
+                        <path d="M19.6492 11.387C18.5149 11.7676 17.3455 12.0377 16.2287 12.4744C15.8322 12.6166 15.4556 12.8094 15.1084 13.0479C13.9776 13.8722 13.939 14.9315 14.9611 15.9768C15.7606 16.7959 16.7231 17.4115 17.5769 18.1586C18.9041 19.3214 18.9637 20.5245 17.7312 21.8118C16.4829 23.1255 14.905 23.9726 13.2676 24.6811C12.5908 24.974 11.8983 25.2283 11.2128 25.5002C11.0314 25.3255 10.9531 25.0694 11.0059 24.8232C12.0619 24.4117 13.0326 23.8082 13.8689 23.043C14.3759 22.5899 14.8315 22.0823 15.2276 21.5295C16.092 20.3018 16.0446 19.5722 15.0523 18.4445C14.3405 17.6412 13.5095 16.945 12.9134 16.0365C11.7317 14.2335 12.2928 12.0623 14.1722 10.9977C15.6747 10.1471 17.2876 9.58586 18.9234 9.06848C19.6106 8.85451 20.1226 9.11759 20.3259 9.7402C20.5766 10.5312 20.34 11.159 19.6492 11.387Z" fill={colors.path23} />
+                    </svg>
+                </div>
+            );
+        };
+
+        const UserPostCard = ({ post }) => (
+            <div className="w-full bg-brand-darkRed rounded-[24px] p-6 text-white shadow-card-active animate-card-enter flex flex-col justify-between h-[200px] max-w-sm mx-auto">
+                <div className="flex items-center">
+                    <div className="w-12 h-12 rounded-full border-2 border-white overflow-hidden shrink-0"><img src={post.user.avatar} className="w-full h-full object-cover" /></div>
+                    <div className="ml-3 text-left"><h3 className="text-[15px] font-bold leading-tight">{post.user.name}</h3><p className="text-[13px] opacity-80 line-clamp-1">{post.caption}</p></div>
+                </div>
+                <div className="bg-white rounded-[16px] p-4 flex text-text-primary mt-4">
+                    <div className="w-16 h-16 bg-brand-blue/10 rounded-md shrink-0 flex items-center justify-center"><Icons.Play className="w-8 h-8 text-brand-blue/50" /></div>
+                    <div className="ml-4 flex-1 flex flex-col justify-center text-left">
+                        <h4 className="font-bold text-[15px] leading-tight line-clamp-1 mb-1">{post.workout.title}</h4>
+                        <div className="flex items-center gap-3 text-[11px] font-medium text-text-secondary">
+                            <div className="flex items-center gap-0.5"><Icons.Fire className="w-3.5 h-3.5 text-brand-red"/> {post.workout.kcal} Kcal</div>
+                            <div className="flex items-center gap-0.5"><Icons.Pin className="w-3.5 h-3.5 text-brand-red"/> {post.workout.distance}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const DeviceConnectionFlow = ({ onBack, onComplete }) => {
+            const [flowStep, setFlowStep] = useState('prep');
+            const [showModal, setShowModal] = useState(false);
+            const [isFound, setIsFound] = useState(false);
+            const [connState, setConnState] = useState('idle');
+            const [searchModel, setSearchModel] = useState('');
+
+            const handleAllowPermission = () => { setShowModal(false); setFlowStep('scanning'); setTimeout(() => setIsFound(true), 3000); };
+            const handleConnect = () => { setConnState('connecting'); setTimeout(() => { setConnState('connected'); setTimeout(onComplete, 1200); }, 1500); };
+            const checkModel = () => { if(!searchModel) return; const isSmart = searchModel.toUpperCase() === 'SF-0001'; setFlowStep(isSmart ? 'check_bt' : 'incompatible'); };
+
+            return (
+                <div className="absolute inset-0 z-50 bg-bg-page flex flex-col animate-slide-in">
+                    <div className="px-6 pt-10 pb-4 flex items-center shrink-0">
+                        <button onClick={onBack} className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-brand-blue"><Icons.ChevronLeft className="w-6 h-6"/></button>
+                    </div>
+
+                    <div className="flex-1 flex flex-col items-center px-6 pt-8 overflow-y-auto no-scrollbar">
+                        {flowStep === 'prep' && (
+                            <div className="text-center animate-fade-up">
+                                <div className="w-[120px] h-[120px] mb-8 relative mx-auto">
+                                    <div className="absolute inset-0 bg-brand-red/10 rounded-full animate-radar scale-75"></div>
+                                    <SunnyLogo className="relative z-10" />
+                                </div>
+                                <h3 className="text-[20px] font-bold mb-3">Power on your device</h3>
+                                <p className="text-[14px] text-text-secondary px-6">Ensure your equipment is within 5 meters and plugged in.</p>
+                            </div>
+                        )}
+
+                        {flowStep === 'scanning' && (
+                            <div className="w-full text-center animate-fade-up">
+                                <div className="relative flex items-center justify-center w-[200px] h-[200px] mx-auto mb-8">
+                                    <div className="absolute border border-brand-red/20 rounded-full w-full h-full animate-radar"></div>
+                                    <div className="relative z-10 w-16 h-16 bg-white rounded-full shadow-md flex items-center justify-center text-brand-red"><Icons.Bluetooth className="w-8 h-8"/></div>
+                                </div>
+                                {isFound ? (
+                                    <div onClick={handleConnect} className={`w-full rounded-[20px] p-5 flex items-center border bg-white shadow-card animate-pop cursor-pointer ${connState==='connected' ? 'border-brand-green' : 'border-transparent'}`}>
+                                        <div className={`w-[48px] h-[48px] rounded-[16px] flex items-center justify-center text-[24px] ${connState==='connected'?'bg-brand-green text-white':'bg-bg-neutral'}`}>{connState==='connected' ? <Icons.Check className="w-6 h-6"/> : "🚲"}</div>
+                                        <div className="ml-4 text-left flex-grow"><h3 className="font-bold">Sunny Bike B100</h3><span className="text-[12px] text-text-secondary">Signal Strong</span></div>
+                                        {connState==='connecting' && <Icons.Loader className="w-5 h-5 animate-spin"/>}
+                                    </div>
+                                ) : <p className="animate-pulse text-text-secondary">Searching...</p>}
+                            </div>
+                        )}
+
+                        {flowStep === 'manual_entry' && (
+                            <div className="w-full animate-fade-up">
+                                <input type="text" placeholder="Model e.g. SF-0001" className="w-full h-14 bg-white rounded-[16px] px-5 outline-none font-bold shadow-sm" value={searchModel} onChange={(e)=>setSearchModel(e.target.value)} />
+                                <p className="text-[11px] text-text-secondary mt-3 italic text-center">Try "SF-0001" for a match simulation.</p>
+                            </div>
+                        )}
+
+                        {flowStep === 'check_bt' && (
+                            <div className="text-center animate-fade-up w-full">
+                                <div className="text-brand-green text-6xl mb-4">✔</div>
+                                <h3 className="text-[20px] font-bold mb-6">Model Supported!</h3>
+                                <div className="space-y-3 mb-10">
+                                    {['Check display console.', 'Stay within 5m.', 'Disconnect others.'].map((t,i)=><div key={i} className="bg-white p-4 rounded-[16px] text-left text-sm font-medium">{t}</div>)}
+                                </div>
+                            </div>
+                        )}
+
+                        {flowStep === 'incompatible' && (
+                            <div className="animate-fade-up w-full">
+                                <div className="bg-brand-beige rounded-[28px] p-8 text-center mb-8">
+                                    <h3 className="text-[20px] font-bold mb-4">Your equipment is a manual model</h3>
+                                    <p className="text-sm opacity-70 mb-6">Your effort always counts. Let’s build a tailored plan to track every calorie you burn.</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Bottom CTA Area - 保留了底部的统一按钮区域 */}
+                    <div className="px-6 pb-12 pt-4 bg-gradient-to-t from-bg-page via-bg-page to-transparent shrink-0">
+                        {flowStep === 'prep' && (
+                            <button onClick={()=>setShowModal(true)} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn">I'm Ready</button>
+                        )}
+                        {flowStep === 'scanning' && (
+                            <button onClick={()=>setFlowStep('manual_entry')} className="w-full text-[13px] font-bold text-brand-blue underline">Can't find device?</button>
+                        )}
+                        {flowStep === 'manual_entry' && (
+                            <button onClick={checkModel} className="w-full py-4 bg-brand-blue text-white rounded-[16px] font-bold mt-6 shadow-lg">Verify Device</button>
+                        )}
+                        {flowStep === 'check_bt' && (
+                            <button onClick={()=>setFlowStep('scanning')} className="w-full py-4 bg-brand-blue text-white rounded-[16px] font-bold">Retry Connection</button>
+                        )}
+                        {flowStep === 'incompatible' && (
+                            <button onClick={onComplete} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold">Create My Plan</button>
+                        )}
+                    </div>
+
+                    {showModal && (
+                        <div className="absolute inset-0 z-[60] bg-black/40 backdrop-blur-[2px] flex items-center justify-center p-6">
+                            <div className="bg-white/95 w-[280px] rounded-[14px] text-center overflow-hidden">
+                                <div className="p-5 pb-4"><h3 className="font-semibold mb-1">Bluetooth Permission</h3><p className="text-[13px] opacity-80">Allow SunnyFit to connect.</p></div>
+                                <div className="border-t flex text-[17px]"><button onClick={()=>setShowModal(false)} className="flex-1 py-3 text-blue-500 border-r">Deny</button><button onClick={handleAllowPermission} className="flex-1 py-3 text-blue-500 font-bold">Allow</button></div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const AIOnboardingFlow = ({ onComplete }) => {
+            const [step, setStep] = useState('seat'); 
+            const [logoMode, setLogoMode] = useState('breathe');
+            const [cadence, setCadence] = useState(0);
+            const [resistance, setResistance] = useState(8);
+            const [isPedaling, setIsPedaling] = useState(false);
+            const [activePostIndex, setActivePostIndex] = useState(0);
+
+            useEffect(() => {
+                let interval;
+                if(step === 'first_ride') {
+                    interval = setInterval(() => {
+                        setActivePostIndex(prev => (prev + 1) % mockCommunityPosts.length);
+                    }, 3000); 
+                }
+                return () => clearInterval(interval);
+            }, [step]);
+
+            useEffect(() => {
+                let interval;
+                if(step === 'pedal') {
+                    if(isPedaling) { setLogoMode('heartbeat'); interval = setInterval(() => setCadence(p => Math.min(p+5, 80)), 100); } 
+                    else { setLogoMode('breathe'); interval = setInterval(() => setCadence(p => Math.max(p-5, 0)), 100); }
+                }
+                return () => clearInterval(interval);
+            }, [step, isPedaling]);
+
+            useEffect(() => { if(step === 'pedal' && cadence > 60) setTimeout(() => setStep('resistance'), 500); }, [cadence]);
+
+            const handleResChange = (val) => {
+                setResistance(val);
+                if(val > 12 && step === 'resistance') { setLogoMode('pop'); setTimeout(() => setStep('first_ride'), 1500); }
+            };
+
+            return (
+                <div className="absolute inset-0 z-50 bg-bg-page flex flex-col h-full animate-slide-in">
+                    <div className="h-[40%] flex flex-col items-center justify-center px-8 transition-all relative">
+                         <div className="w-[88px] h-[88px] mb-6"><SunnyLogo animMode={logoMode} /></div>
+                         <h2 className="text-[24px] font-bold text-center leading-tight">
+                            {step==='seat' && "Adjust seat to fit your height."}
+                            {step==='pedal' && "Peddling on it, let me feel your power!"}
+                            {step==='resistance' && "Turn the knob right for more challenge."}
+                            {step==='first_ride' && "You are ready! Start your jounary with SunnyFams"}
+                         </h2>
+                         {step === 'pedal' && <p className="text-sm text-brand-red mt-2 animate-pulse font-medium">Cadence: {cadence} RPM</p>}
+                    </div>
+
+                    <div className="w-full flex-1 flex flex-col px-6 overflow-y-auto no-scrollbar">
+                        {step === 'seat' && (
+                            <div className="flex flex-col items-center animate-fade-up w-full">
+                                <div className="w-full bg-white rounded-[24px] h-48 mb-6 shadow-card flex items-center justify-center text-8xl">💺</div>
+                            </div>
+                        )}
+                        {step === 'pedal' && (
+                            <div className="flex flex-col items-center animate-fade-up w-full">
+                                <div className="h-32 flex items-end justify-center gap-2 mb-8 w-full">
+                                    {[1,2,3,4,5,6,7].map(i => <div key={i} className="w-3 bg-brand-red rounded-full transition-all" style={{height: `${cadence > 0 ? 20 + Math.random()*60 : 10}%`, opacity: cadence>0?1:0.2}} />)}
+                                </div>
+                            </div>
+                        )}
+                        {step === 'resistance' && (
+                            <div className="flex flex-col items-center animate-fade-up w-full">
+                                <div className="mb-8 text-center font-bold text-6xl">{resistance}</div>
+                                <div className="w-full bg-white p-6 rounded-[24px] shadow-card">
+                                    <input type="range" min="1" max="20" value={resistance} onChange={(e)=>handleResChange(parseInt(e.target.value))} />
+                                </div>
+                            </div>
+                        )}
+                        {step === 'first_ride' && (
+                            <div className="w-full animate-card-enter flex flex-col items-center">
+                                <UserPostCard post={mockCommunityPosts[activePostIndex]} />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Bottom CTA Area - 保留了底部的统一按钮区域 */}
+                    <div className="px-6 pb-12 pt-4 bg-gradient-to-t from-bg-page via-bg-page to-transparent shrink-0">
+                        {step === 'seat' && (
+                            <button onClick={() => setStep('pedal')} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-lg">Done</button>
+                        )}
+                        {step === 'pedal' && (
+                            <button onMouseDown={()=>setIsPedaling(true)} onMouseUp={()=>setIsPedaling(false)} className="w-full py-5 border-2 border-brand-red text-brand-red rounded-[16px] font-bold">Hold to Pedal</button>
+                        )}
+                        {step === 'first_ride' && (
+                            <button onClick={() => window.location.href = './First Ride.html'} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold text-lg shadow-float-btn mt-10">Start My First Ride</button>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [appState, setAppState] = useState('launching'); 
+            const handleNav = (r) => { 
+                if (r === 'device_flow') setAppState('device_flow'); 
+                // 新增：跳转逻辑
+                if (r === 'course') window.location.href = './Plan Create.html';
+            };
+            return (
+                <div className="mobile-viewport font-sans">
+                    {appState === 'launching' && <SplashLayer onComplete={() => setAppState('home')} />}
+                    <HomeScreen isVisible={appState === 'home'} onNavigate={handleNav} />
+                    {appState === 'device_flow' && <DeviceConnectionFlow onBack={() => setAppState('home')} onComplete={()=>setAppState('onboarding')} />}
+                    {appState === 'onboarding' && <AIOnboardingFlow onComplete={() => alert("Ready")} />}
+                </div>
+            );
+        };
+
+        const SplashLayer = ({ onComplete }) => {
+            const [scale, setScale] = useState(0);
+            const [logoOpacity, setLogoOpacity] = useState(0);
+            useEffect(() => { setTimeout(() => setScale(40), 100); setTimeout(() => setLogoOpacity(1), 600); setTimeout(onComplete, 2500); }, []);
+            return (
+                <div className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden">
+                    <div className="absolute w-12 h-12 bg-brand-red rounded-full transition-transform duration-[800ms]" style={{ transform: `scale(${scale})` }} />
+                    <div className="relative z-10 w-24 h-24 transition-opacity duration-1000" style={{ opacity: logoOpacity }}><SunnyLogo variant="splash" /></div>
+                </div>
+            );
+        };
+
+        const HomeScreen = ({ isVisible, onNavigate }) => {
+            const [show, setShow] = useState(false);
+            useEffect(() => { if(isVisible) setTimeout(() => setShow(true), 800); }, [isVisible]);
+            
+            const options = [
+                { id: 'device_flow', icon: '🚲', title: 'Connect Equipment', subtitle: 'Connect your Sunny / JLL gear and track' },
+                { id: 'course', icon: '🔎', title: 'Find a Course', subtitle: 'Looking for workouts suit for me' },
+                { id: 'guest', icon: '👀', title: 'Just Browsing', subtitle: 'I have no idea' }
+            ];
+
+            return (
+                <div className={`absolute inset-0 flex flex-col items-center pt-[10vh] px-6 transition-opacity duration-1000 ${isVisible?'opacity-100':'opacity-0'}`}>
+                    <div className="w-20 h-20 mb-6 flex-shrink-0"><SunnyLogo /></div>
+                    <div className="text-center mb-10 shrink-0">
+                        <h1 className="text-[28px] font-bold mb-2 text-text-primary leading-tight">Good Morning.</h1>
+                        <p className="text-text-secondary text-[14px]">What do you want to start?</p>
+                    </div>
+                    <div className="w-full flex-1 overflow-y-auto no-scrollbar pb-10">
+                        {show && options.map((opt, i) => (
+                            <div key={opt.id} onClick={() => onNavigate(opt.id)} className="w-full bg-white p-4 rounded-[20px] shadow-card flex items-center animate-fade-up mb-4 cursor-pointer active:scale-[0.97] transition-all" style={{animationDelay: `${i*0.1}s`}}>
+                                <div className="w-12 h-12 bg-bg-neutral rounded-[16px] flex items-center justify-center text-2xl flex-shrink-0">{opt.icon}</div>
+                                <div className="ml-4 flex-grow text-left pr-2">
+                                    <h3 className="font-bold text-text-primary text-[15px] leading-tight">{opt.title}</h3>
+                                    <p className="text-[11px] text-text-secondary mt-1 leading-snug">{opt.subtitle}</p>
+                                </div>
+                                <div className="w-5 h-5 flex-shrink-0 text-text-secondary opacity-30"><Icons.ChevronRight className="w-full h-full" /></div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

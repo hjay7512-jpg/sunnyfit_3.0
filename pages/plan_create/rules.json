@@ -1,0 +1,70 @@
+{
+  "page_id": "Plan_Create",
+  "page_name": "AI 计划生成向导 (Onboarding)",
+  "zones": [
+    {
+      "zone_id": "step-1-goal",
+      "module_level": "L1",
+      "module_name": "Step 1: 核心目标设定",
+      "trigger_event": "Click Option Card",
+      "logic_steps": [
+        "渲染 4 个核心目标：Weight Loss (减脂), Build Muscle (增肌), Health & Vitality (健康), Rehab & Stretch (康复)。",
+        "用户点击单选，记录至状态机 `selections.goal`。",
+        "被选中卡片触发红色高亮与背景微亮反馈。",
+        "若未选择任何目标，底部 'Continue' 按钮保持 disabled 状态。"
+      ],
+      "exit_states": []
+    },
+    {
+      "zone_id": "step-2-equip",
+      "module_level": "L1",
+      "module_name": "Step 2: 可用器材勾选",
+      "trigger_event": "Click Multiple Options",
+      "logic_steps": [
+        "支持多选逻辑。选中项右上角出现 Check 标记，记录至 `selections.equip`。",
+        "排他逻辑：若用户点击底部的 'I have no equipment yet' (None)，则自动清空其他已选器材记录。"
+      ],
+      "exit_states": []
+    },
+    {
+      "zone_id": "step-3-freq",
+      "module_level": "L2",
+      "module_name": "Step 3: 频次与健康约束",
+      "trigger_event": "Click Options",
+      "logic_steps": [
+        "训练频次 (Days per week) 为单选逻辑，默认值为 3 Days。",
+        "排除项 (Exclude Exercises) 为多选逻辑，包含 Knee Pain, Back Pain 等。"
+      ],
+      "exit_states": []
+    },
+    {
+      "zone_id": "step-5-coach",
+      "module_level": "L2",
+      "module_name": "Step 5: 教练角色绑定",
+      "trigger_event": "Select Coach Avatar",
+      "logic_steps": [
+        "展示 3 位具备不同性格的教练卡片 (Alex, Sarah, Max)。",
+        "点击后记录至 `selectedCoach`，并触发卡片的放大悬浮动效 (scale[1.02])。",
+        "选中教练后，底部 'Confirm Coach' 按钮解锁可用。"
+      ],
+      "exit_states": []
+    },
+    {
+      "zone_id": "bottom-cta",
+      "module_level": "Global",
+      "module_name": "全局底部控制器 (CTA)",
+      "trigger_event": "Click Action Button",
+      "logic_steps": [
+        "随 step 自动切换文案：Continue -> Generate My AI Plan -> YES, LET'S DO THIS -> Confirm Coach -> START NOW。",
+        "动效干预：Step 3 点击后，拦截跳转，强制展示 2.5s 的 'AI Analyzing' 全屏遮罩动效，再进入 Step 4。"
+      ],
+      "exit_states": [
+        {
+          "condition": "流程结束，点击 START NOW",
+          "action": "进入首次破冰骑行体验",
+          "next_page_id": "First_Ride"
+        }
+      ]
+    }
+  ]
+}

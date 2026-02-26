@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SunnyFit 专业跟练 - 横屏预览</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand-red: #DE2529;
+            --glass-bg: rgba(0, 0, 0, 0.5);
+            --ui-white: #FFFFFF;
+        }
+
+        /* 外部背景，使横屏框架居中 */
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        /* --- 横屏手机主框架 --- */
+        .landscape-phone {
+            width: 844px; /* 横向宽度 */
+            height: 390px; /* 横向高度 */
+            background: #000;
+            position: relative;
+            overflow: hidden;
+            border: 8px solid #333; /* 模拟手机边框 */
+            border-radius: 40px;    /* 模拟手机圆角 */
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .workout-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        /* --- 视频画面层 --- */
+        .video-layer {
+            position: absolute;
+            transition: all 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+            overflow: hidden;
+            background: #111;
+        }
+        .main-view { width: 100%; height: 100%; z-index: 1; }
+        .sub-view {
+            width: 200px; /* 缩小副窗口以适应横屏布局 */
+            height: 112px;
+            bottom: 20px;
+            right: 20px;
+            z-index: 50;
+            border: 2px solid rgba(255,255,255,0.4);
+            border-radius: 12px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+        }
+        video { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+
+        .tag {
+            position: absolute; top: 12px; left: 12px;
+            background: var(--brand-red); font-size: 10px; font-weight: 800;
+            padding: 2px 8px; border-radius: 4px; z-index: 2;
+        }
+
+        /* --- 顶部进度条 --- */
+        .top-timeline {
+            position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+            display: flex; gap: 4px; padding: 0 20px; box-sizing: border-box; z-index: 100;
+        }
+        .segment { flex: 1; height: 100%; background: rgba(255,255,255,0.2); }
+        .segment.active { background: var(--brand-red); }
+
+        /* --- 左侧数据看板 --- */
+        .side-stats {
+            position: absolute; top: 30px; left: 30px; z-index: 100;
+            display: flex; flex-direction: column; gap: 15px;
+            pointer-events: none;
+        }
+        .workout-name { font-size: 18px; font-weight: 800; text-shadow: 0 4px 10px rgba(0,0,0,0.5); color: #fff; }
+        
+        .data-column {
+            background: var(--glass-bg); backdrop-filter: blur(15px);
+            padding: 15px; border-radius: 20px; width: 120px;
+            display: flex; flex-direction: column; gap: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .counter-ring-box {
+            position: relative; width: 70px; height: 70px; margin: 0 auto;
+        }
+        .ring-svg { transform: rotate(-90deg); width: 70px; height: 70px; }
+        .ring-bg { fill: none; stroke: rgba(255,255,255,0.1); stroke-width: 6; }
+        .ring-active { 
+            fill: none; stroke: var(--brand-red); stroke-width: 8; 
+            stroke-dasharray: 283; stroke-dashoffset: 180; stroke-linecap: round;
+        }
+        .ring-content {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: #fff;
+        }
+        .ring-num { font-size: 20px; font-weight: 800; line-height: 1; }
+        .ring-total { font-size: 10px; opacity: 0.6; }
+
+        .metric { display: flex; flex-direction: column; color: #fff; }
+        .m-val { font-family: 'Roboto Mono', monospace; font-size: 20px; font-weight: 700; line-height: 1.1; }
+        .m-lbl { font-size: 9px; color: #ccc; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+
+        /* --- 中央控制层 --- */
+        .center-controls {
+            position: absolute; inset: 0; z-index: 200;
+            background: rgba(0,0,0,0.4);
+            display: flex; justify-content: center; align-items: center; gap: 60px;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .center-controls.active { opacity: 1; pointer-events: auto; }
+
+        .ctrl-btn {
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+            transition: transform 0.2s ease; cursor: pointer; color: #fff;
+        }
+        .ctrl-btn:hover { transform: scale(1.1); }
+        .ctrl-icon-circle {
+            width: 70px; height: 70px; border-radius: 50%;
+            background: rgba(255,255,255,0.2); backdrop-filter: blur(10px);
+            display: flex; align-items: center; justify-content: center;
+            border: 2px solid rgba(255,255,255,0.5);
+        }
+        .pause-icon { width: 20px; height: 25px; border-left: 7px solid #fff; border-right: 7px solid #fff; box-sizing: border-box; }
+        .stop-icon { width: 25px; height: 25px; background: #fff; border-radius: 4px; }
+        .ctrl-label { font-size: 12px; font-weight: 700; letter-spacing: 1px; }
+
+    </style>
+</head>
+<body>
+
+<div class="landscape-phone">
+    <div class="workout-container" onclick="toggleControls()">
+        
+        <div class="top-timeline">
+            <div class="segment active" style="width: 30%;"></div>
+            <script>for(let i=0; i<12; i++) document.write('<div class="segment"></div>')</script>
+        </div>
+
+        <div id="coachLayer" class="video-layer main-view">
+            <div class="tag">COACH VIDEO</div>
+            <video id="coachVideo" autoplay muted loop>
+                <source src="./S168.mp4" type="video/mp4">
+            </video>
+        </div>
+
+        <div id="userLayer" class="video-layer sub-view" onclick="event.stopPropagation(); toggleViews();">
+            <div class="tag">YOUR CAMERA</div>
+            <video id="userCam" autoplay muted playsinline></video>
+        </div>
+
+        <div class="side-stats">
+            <div class="workout-name">1/15 Jumping Jack</div>
+            <div class="data-column">
+                <div class="counter-ring-box">
+                    <svg viewBox="0 0 100 100" class="ring-svg">
+                        <circle cx="50" cy="50" r="45" class="ring-bg"/>
+                        <circle cx="50" cy="50" r="45" class="ring-active"/>
+                    </svg>
+                    <div class="ring-content">
+                        <span class="ring-num">3</span>
+                        <span class="ring-total">/10</span>
+                    </div>
+                </div>
+
+                <div class="metric">
+                    <span class="m-val">02:03</span>
+                    <span class="m-lbl">Time Elapsed</span>
+                </div>
+                <div class="metric">
+                    <span class="m-val">223</span>
+                    <span class="m-lbl">Calories (kcal)</span>
+                </div>
+                <div class="metric">
+                    <span class="m-val" id="hrValue">98</span>
+                    <span class="m-lbl">Heart Rate</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="center-controls" id="centerControls">
+            <div class="ctrl-btn" onclick="event.stopPropagation(); handlePause();">
+                <div class="ctrl-icon-circle">
+                    <div class="pause-icon"></div>
+                </div>
+                <span class="ctrl-label">PAUSE</span>
+            </div>
+            <div class="ctrl-btn" onclick="event.stopPropagation(); handleStop();">
+                <div class="ctrl-icon-circle" style="background: var(--brand-red); border-color: transparent;">
+                    <div class="stop-icon"></div>
+                </div>
+                <span class="ctrl-label">EXIT</span>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    let timer;
+
+    async function setupCam() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            document.getElementById('userCam').srcObject = stream;
+        } catch (e) {
+            document.getElementById('userCam').poster = "https://via.placeholder.com/400x225/222/555?text=USER+CAM";
+        }
+    }
+
+    let coachIsMain = true;
+    function toggleViews() {
+        const coach = document.getElementById('coachLayer');
+        const user = document.getElementById('userLayer');
+        coach.classList.toggle('main-view'); coach.classList.toggle('sub-view');
+        user.classList.toggle('main-view'); user.classList.toggle('sub-view');
+        coachIsMain = !coachIsMain;
+    }
+
+    function toggleControls() {
+        const ctrl = document.getElementById('centerControls');
+        ctrl.classList.add('active');
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+            ctrl.classList.remove('active');
+        }, 3000);
+    }
+
+    function handlePause() {
+        const v = document.getElementById('coachVideo');
+        if (v.paused) {
+            v.play();
+        } else {
+            v.pause();
+        }
+    }
+
+    function handleStop() {
+        if(confirm("Exit this workout?")) {
+            window.location.href = './Workout_result_light.html';
+        }
+    }
+
+    setInterval(() => {
+        const hr = document.getElementById('hrValue');
+        if(hr) hr.innerText = 95 + Math.floor(Math.random() * 8);
+    }, 2000);
+
+    setupCam();
+</script>
+
+</body>
+</html>

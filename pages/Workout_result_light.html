@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SunnyFit - Mobile Viewport View</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-beige: #F9F6F2;
+            --brand-red: #DE2529; 
+            --brand-blue: #31426D;
+            --brand-blue-card: #232D45;
+            --text-primary: #31426D;
+            --text-secondary: #8E9BB3;
+            --surface-white: #FFFFFF;
+            --card-shadow: 0 12px 30px rgba(49, 66, 109, 0.06);
+        }
+
+        /* 外部容器：使手机框架在浏览器中居中 */
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #E0E0E0; /* 外部页面的灰色背景 */
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        /* --- 手机主容器 (限制尺寸) --- */
+        .phone-frame {
+            width: 390px;
+            height: 844px;
+            background-color: var(--bg-beige);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            border: 8px solid #333; /* 模拟手机物理边框 */
+            border-radius: 40px;    /* 模拟手机圆角 */
+        }
+
+        /* --- 1. TOP NAV --- */
+        .top-nav {
+            padding: 50px 24px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 20;
+            opacity: 0; 
+            animation: fade-in 0.6s ease forwards;
+        }
+        .nav-btn {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: rgba(255,255,255,0.8);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; color: var(--text-secondary); cursor: pointer;
+        }
+
+        /* --- 2. HEADER --- */
+        .header-section { 
+            text-align: center; padding: 10px 24px 20px; 
+            opacity: 0;
+            animation: cascade-down 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s forwards;
+        }
+        .victory-badge {
+            width: 80px; height: 80px; margin: 0 auto 16px;
+            background: white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            position: relative; box-shadow: 0 10px 25px rgba(222, 37, 41, 0.1);
+            transform: scale(0.5); opacity: 0;
+            animation: pop-scale 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s forwards;
+        }
+        .fire-icon { font-size: 40px; }
+        .check-mark {
+            position: absolute; bottom: 0; right: 0;
+            width: 26px; height: 26px; background: var(--brand-blue); 
+            border: 3px solid var(--bg-beige); border-radius: 50%;
+            color: white; font-size: 14px; font-weight: 800;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .ai-title { font-size: 28px; font-weight: 800; color: var(--brand-blue); margin-bottom: 4px; }
+        .ai-subtitle { font-size: 13px; color: var(--text-secondary); font-weight: 600; }
+
+        /* --- 3. DATA CARD --- */
+        .data-card {
+            background: var(--surface-white); margin: 0 24px;
+            border-radius: 28px; padding: 28px 24px;
+            box-shadow: var(--card-shadow);
+            position: relative; z-index: 10;
+            opacity: 0;
+            animation: cascade-up 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.3s forwards;
+        }
+        .data-grid {
+            display: grid; grid-template-columns: 1fr 1px 1fr;
+            grid-template-rows: auto auto; row-gap: 28px; align-items: center;
+        }
+        .divider-vertical { width: 1px; height: 100%; background: #F0F0F0; grid-column: 2; grid-row: 1 / span 2; }
+        .stat-item { text-align: center; }
+        .item-1 { grid-column: 1; grid-row: 1; } .item-2 { grid-column: 3; grid-row: 1; }
+        .item-3 { grid-column: 1; grid-row: 2; } .item-4 { grid-column: 3; grid-row: 2; }
+        .stat-val { font-size: 32px; font-weight: 800; color: var(--brand-blue); line-height: 1; letter-spacing: -0.5px; }
+        .stat-label { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-top: 6px; letter-spacing: 1px; }
+        .divider-horizontal { height: 1px; background: #F4F4F4; margin: 24px 0 20px; }
+        
+        .advanced-entry { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+        .adv-left { display: flex; align-items: center; gap: 12px; }
+        .adv-icon-box { 
+            width: 36px; height: 36px; background: #FFF5F5; border-radius: 10px; 
+            display: flex; align-items: center; justify-content: center; 
+            color: var(--brand-red); font-size: 18px;
+        }
+        .adv-text h4 { margin: 0; font-size: 13px; font-weight: 800; color: var(--brand-blue); } 
+        .adv-text p { margin: 2px 0 0; font-size: 11px; color: var(--text-secondary); font-weight: 500; } 
+        .view-btn { font-size: 12px; font-weight: 700; color: var(--brand-red); }
+
+        /* --- 4. AI CONTEXTUAL CARD --- */
+        .ai-dock-container {
+            position: absolute; bottom: 40px; left: 24px; right: 24px; z-index: 100;
+            perspective: 1000px;
+        }
+
+        .ai-card {
+            background: var(--brand-blue-card);
+            border-radius: 24px;
+            padding: 24px;
+            color: white;
+            box-shadow: 0 20px 50px rgba(46, 58, 89, 0.4);
+            position: relative;
+            overflow: hidden;
+            min-height: 140px; 
+            display: flex; flex-direction: column; justify-content: center;
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            opacity: 0; transform: translateY(40px) scale(0.95);
+            animation: ai-enter 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.6s forwards;
+        }
+
+        .ai-header-row {
+            display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+        }
+        .ai-avatar {
+            width: 32px; height: 32px; background: var(--brand-red); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); flex-shrink: 0;
+        }
+        .ai-avatar svg { width: 16px; height: 16px; }
+        
+        .ai-header-text { 
+            font-size: 14px; font-weight: 600; opacity: 1; transition: all 0.3s ease;
+        }
+        .ai-card.showing-output .ai-header-text {
+            font-size: 18px; font-weight: 800;
+        }
+
+        .content-slider {
+            position: relative; height: 54px; width: 100%;
+        }
+
+        .input-layer {
+            position: absolute; top: 0; left: 0; width: 100%;
+            display: flex; justify-content: space-between; gap: 8px;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .emoji-btn {
+            width: 48px; height: 48px;
+            background: rgba(255,255,255,0.1); border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; cursor: pointer; border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.2s;
+        }
+        .emoji-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.2); }
+
+        .output-layer {
+            position: absolute; top: 0; left: 0; width: 100%;
+            opacity: 0; transform: translateX(30px); pointer-events: none;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+
+        .hook-text p { margin: 0; font-size: 12px; color: rgba(255,255,255,0.7); line-height: 1.4; max-width: 220px; }
+        
+        .preview-btn {
+            height: 40px; padding: 0 16px;
+            background: rgba(255,255,255,0.15); 
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            display: flex; align-items: center; gap: 6px;
+            font-size: 12px; font-weight: 700; color: white;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .preview-btn:hover { background: rgba(255,255,255,0.25); }
+
+        .loader {
+            width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); 
+            border-top: 2px solid white; border-radius: 50%;
+            animation: spin 1s linear infinite; display: none;
+        }
+
+        .ai-card.showing-output .input-layer { opacity: 0; transform: translateX(-30px); pointer-events: none; }
+        .ai-card.showing-output .output-layer { opacity: 1; transform: translateX(0); pointer-events: auto; }
+        
+        @keyframes fade-in { to { opacity: 1; } }
+        @keyframes cascade-down { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes cascade-up { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pop-scale { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
+        @keyframes ai-enter { 
+            0% { opacity: 0; transform: translateY(40px) scale(0.95); } 
+            60% { transform: translateY(-5px) scale(1.02); } 
+            100% { opacity: 1; transform: translateY(0) scale(1); } 
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    </style>
+</head>
+<body>
+
+<div class="phone-frame">
+    <div class="top-nav">
+        <div class="nav-btn">✕</div>
+        <div class="nav-btn" style="color: var(--brand-blue);" onclick="window.location.href='./Video Call.html'">🔗</div>
+    </div>
+
+    <div class="header-section">
+        <div class="victory-badge">
+            <span class="fire-icon">🔥</span>
+            <div class="check-mark">✓</div>
+        </div>
+        <div class="ai-title">Victory!</div>
+        <div class="ai-subtitle">You just set your benchmark.</div>
+    </div>
+
+    <div class="data-card">
+        <div class="data-grid">
+            <div class="stat-item item-1">
+                <div class="stat-val">145</div>
+                <div class="stat-label">Kcal 🍔</div>
+            </div>
+            <div class="stat-item item-2">
+                <div class="stat-val">12:30</div>
+                <div class="stat-label">Duration</div>
+            </div>
+            <div class="divider-vertical"></div>
+            <div class="stat-item item-3">
+                <div class="stat-val">5.2<span style="font-size:16px; margin-left:2px;">km</span></div>
+                <div class="stat-label">Distance</div>
+            </div>
+            <div class="stat-item item-4">
+                <div class="stat-val">3k</div>
+                <div class="stat-label">Steps</div>
+            </div>
+        </div>
+        <div class="divider-horizontal"></div>
+        
+        <div class="advanced-entry">
+            <div class="adv-left">
+                <div class="adv-icon-box">⚡</div>
+                <div class="adv-text">
+                    <h4>Endurance improved by 5%</h4>
+                    <p>Power Zone Analysis</p>
+                </div>
+            </div>
+            <div class="view-btn">View ›</div>
+        </div>
+    </div>
+
+    <div class="ai-dock-container">
+        <div class="ai-card" id="aiCard">
+            
+            <div class="ai-header-row">
+                <div class="ai-avatar" id="aiAvatar">
+                    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M16 32c-2.7 0-5.4-.1-8.1-.9C3.6 29.9 1.2 27 .5 22.7-.2 18.3-.2 13.9.5 9.5 1.2 4.6 4.4 1.3 9.3.5c4.3-.7 8.7-.7 13 .5 5.4.9 8.4 3.8 9.2 9.3.7 4.3.7 8.7 0 13-.9 5.2-4.1 8.1-9.4 8.8-2 .3-4 .3-6.1.4z" fill="transparent"/>
+                        <path d="M15.4 6.2c.6 0 1 .3 1.3.8.2.5.1 1.1-.3 1.5-.4.4-1 .5-1.5.3-.5-.2-.8-.7-.8-1.3 0-.7.6-1.3 1.3-1.3z" fill="white"/>
+                        <path d="M19.6 11.4c-1.1.4-2.3.7-3.4 1.1-.4.1-.8.3-1.1.5-1.1.8-1.2 1.9-.2 2.9.8.8 1.8 1.4 2.6 2.2 1.3 1.2 1.4 2.4.2 3.6-1.2 1.3-2.8 2.1-4.4 2.9-.7.3-1.4.5-2.1.8-.2-.2-.3-.4-.2-.7 1-.4 2-1 2.9-1.8.5-.5 1-1 1.3-1.5.9-1.2.8-1.9-.2-3-.7-.8-1.5-1.5-2.1-2.4-1.2-1.8-.6-4 1.3-5 1.5-.9 3.1-1.4 4.8-1.9.7-.2 1.2 0 1.4.7.2.8 0 1.4-.8 1.6z" fill="white"/>
+                    </svg>
+                    <div class="loader" id="aiLoader"></div>
+                </div>
+                <div class="ai-header-text" id="aiHeaderText">How was the intensity?</div>
+            </div>
+
+            <div class="content-slider">
+                <div class="input-layer">
+                    <div class="emoji-btn" onclick="triggerHook('easy')">😌</div>
+                    <div class="emoji-btn" onclick="triggerHook('good')">😅</div>
+                    <div class="emoji-btn" onclick="triggerHook('great')">🤩</div>
+                    <div class="emoji-btn" onclick="triggerHook('hard')">🥵</div>
+                    <div class="emoji-btn" onclick="triggerHook('dead')">💀</div>
+                </div>
+
+                <div class="output-layer" id="outputLayer">
+                    <div class="hook-text">
+                        <p id="hookDesc">Based on your intensity, we've adjusted your next week.</p>
+                    </div>
+                    <div class="preview-btn" onclick="window.location.href='./Home.html'">GO ›</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const card = document.getElementById('aiCard');
+    const headerText = document.getElementById('aiHeaderText');
+    const hookDesc = document.getElementById('hookDesc');
+    const loader = document.getElementById('aiLoader');
+    const svgIcon = document.querySelector('.ai-avatar svg');
+
+    const logic = {
+        easy: { title: "Ready for more?", desc: "Your 7-Day Outlook has been upgraded to 'Intense'." },
+        good: { title: "Great consistency!", desc: "See the 7-Day Plan we built to keep this streak." },
+        great: { title: "You're on fire!", desc: "Wanna try making a 3-day mini-plan?" },
+        hard: { title: "Recovery Optimized", desc: "We adjusted your 7-Day Plan to include more rest." },
+        dead: { title: "Rest is key.", desc: "Your 7-Day Outlook now focuses on active recovery." }
+    };
+
+    function triggerHook(level) {
+        headerText.innerText = "Analyzing effort...";
+        svgIcon.style.display = "none";
+        loader.style.display = "block";
+        
+        setTimeout(() => {
+            const data = logic[level];
+            headerText.innerText = data.title;
+            hookDesc.innerText = data.desc;
+            
+            loader.style.display = "none";
+            svgIcon.style.display = "block";
+
+            card.classList.add('showing-output');
+        }, 600);
+    }
+</script>
+
+</body>
+</html>

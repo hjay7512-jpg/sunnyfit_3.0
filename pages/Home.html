@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SunnyFit - Visual Balanced</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(180deg, #FFF5F7 0%, #F5F7FA 100%);
+            --card-white: #FFFFFF;
+            --brand-red: #EE4343;
+            --brand-blue: #2F3542;
+            --text-main: #2F3542;
+            --text-sub: #A4B0BE;
+            --shadow-card: 0 8px 24px rgba(0,0,0,0.05);
+            --glass-overlay: rgba(0, 0, 0, 0.4);
+        }
+
+        body { 
+            font-family: 'Montserrat', sans-serif; 
+            background-color: #ddd; 
+            margin: 0; 
+            height: 100vh; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            overflow: hidden; 
+        }
+
+        .phone-frame {
+            width: 390px; 
+            height: 844px;
+            background: var(--bg-gradient); 
+            position: relative; 
+            overflow: hidden;
+            display: flex; 
+            flex-direction: column; 
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            border: 8px solid #333; 
+            border-radius: 40px;    
+        }
+
+        /* Top Bar */
+        .top-bar { 
+            padding: 44px 24px 10px;
+            display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+        }
+        .streak-pill { background: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+        @keyframes flame-shake { 0%, 100% { transform: scale(1); } 25% { transform: scale(1.3) rotate(-15deg); } 75% { transform: scale(1.3) rotate(15deg); } }
+        .shake { animation: flame-shake 0.5s ease-in-out 2; }
+
+        /* Scroll Content */
+        .scroll-content { 
+            flex: 1; overflow-y: auto; 
+            padding: 10px 20px 200px; /* 顶部留白微调 */
+            display: flex; flex-direction: column; 
+            gap: 16px; 
+            scroll-behavior: smooth; 
+        }
+        .scroll-content::-webkit-scrollbar { display: none; }
+
+        .card-enter { opacity: 0; transform: translateY(20px); animation: slideUpFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+        @keyframes slideUpFade { to { opacity: 1; transform: translateY(0); } }
+
+        /* 1. Active Plan Card - 视觉减重 */
+        .plan-card {
+            background: var(--card-white);
+            border-radius: 24px; 
+            padding: 16px 20px; /* 上下紧凑，左右宽敞 */
+            box-shadow: var(--shadow-card);
+            display: flex; flex-direction: column; gap: 14px; /* 间距缩小 */
+        }
+        .plan-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .plan-meta { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-main); }
+        .target-icon { font-size: 14px; color: var(--brand-red); }
+        .plan-arrow { color: var(--text-main); font-size: 18px; cursor: pointer; }
+        .plan-title { font-size: 18px; font-weight: 800; color: var(--text-main); margin-top: -4px; }
+        
+        .plan-body { display: flex; align-items: center; gap: 20px; }
+        
+        /* 环形图微缩 (72px) */
+        .ring-container { position: relative; width: 72px; height: 72px; flex-shrink: 0; }
+        .ring-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+        .ring-bg { fill: none; stroke: #F0F0F0; stroke-width: 6; }
+        .ring-val { fill: none; stroke-linecap: round; stroke-width: 6; transition: stroke-dashoffset 1.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        
+        .plan-stats { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+        .stat-row { font-size: 12px; color: var(--text-main); font-weight: 500; display: flex; align-items: baseline; gap: 4px; }
+        .stat-val { font-size: 14px; font-weight: 800; }
+        .val-red { color: #FF4757; }
+        .val-blue { color: #5352ED; }
+        .val-yellow { color: #FFA502; }
+        .stat-unit { color: var(--text-sub); font-size: 11px; font-weight: 500; margin-left: 2px; }
+
+        /* 2. No Plan Card */
+        .daily-card {
+            background: var(--card-white);
+            border-radius: 24px; padding: 16px 20px;
+            box-shadow: var(--shadow-card);
+            display: none; flex-direction: column; gap: 16px;
+        }
+        .daily-header { font-size: 16px; font-weight: 800; color: var(--text-main); }
+        .daily-stats-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 0 4px; }
+        .daily-stat-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+        .daily-val { font-size: 24px; font-weight: 700; color: #CED6E0; line-height: 1; transition: color 0.5s; }
+        .daily-val.active { color: var(--text-main); }
+        .daily-unit { font-size: 12px; font-weight: 600; margin-left: 1px; color: var(--text-sub); }
+        .daily-label { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-main); font-weight: 600; }
+        .stat-icon { font-size: 14px; }
+        .upsell-banner {
+            background: #4A4A4A; border-radius: 12px; padding: 12px 16px;
+            display: flex; align-items: center; justify-content: space-between;
+            color: white; position: relative; overflow: hidden;
+        }
+        .banner-content { display: flex; align-items: center; gap: 8px; flex: 1; z-index: 1; }
+        .sparkle-icon { font-size: 16px; color: #FFD700; flex-shrink: 0; }
+        .banner-text { font-size: 11px; font-weight: 600; line-height: 1.3; }
+        .try-btn {
+            background: var(--brand-red); color: white; border: none; padding: 5px 12px; border-radius: 20px;
+            font-size: 10px; font-weight: 700; cursor: pointer; white-space: nowrap; flex-shrink: 0; margin-left: 8px; z-index: 1;
+        }
+
+        /* AI Section */
+        .ai-recommendation-container { 
+            background: white; border-radius: 24px; padding: 16px 20px; box-shadow: var(--shadow-card); 
+            display: flex; flex-direction: column; gap: 12px;
+            opacity: 0; transform: translateY(20px); transition: all 0.5s ease; 
+        }
+        .ai-recommendation-container.visible { opacity: 1; transform: translateY(0); }
+        .ai-recommendation-container.refreshing { opacity: 0.6; transform: scale(0.98); filter: blur(2px); pointer-events: none; }
+        
+        .ai-header-group { display: flex; gap: 10px; align-items: flex-start; }
+        .ai-avatar { width: 32px; height: 32px; border-radius: 50%; background: #F0F2F5; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+        .ai-text-content { font-size: 12px; line-height: 1.4; color: var(--text-main); padding-top: 2px; }
+        .word-fade { display: inline-block; opacity: 0; transform: translateY(4px); animation: wordIn 0.4s forwards; }
+        @keyframes wordIn { to { opacity: 1; transform: translateY(0); } }
+        
+        .embedded-task-card { border: 1px solid #F1F2F6; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; background: #FAFAFA; position: relative; }
+        
+        /* 增加底部权重 (115px) */
+        .task-cover { height: 115px; width: 100%; background-size: cover; background-position: center; transition: background-image 0.5s ease; }
+        .task-info { padding: 10px 14px; position: relative; }
+        .mini-go-btn { position: absolute; right: 14px; top: -22px; width: 44px; height: 44px; border-radius: 50%; background: var(--brand-red); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px; box-shadow: 0 4px 10px rgba(238, 67, 67, 0.4); cursor: pointer; z-index: 10; transition: background 0.3s; }
+        .task-title { font-weight: 800; font-size: 14px; color: var(--text-main); margin-bottom: 2px; }
+        .task-meta { font-size: 10px; color: var(--text-sub); font-weight: 500; }
+        
+        .ai-feedback-footer { 
+            border-top: 1px solid #F5F7FA; padding-top: 8px; margin-top: 0px; 
+            display: flex; justify-content: flex-end; gap: 16px; 
+        }
+        .feedback-btn { display: flex; align-items: center; gap: 4px; font-size: 14px; color: #CED6E0; cursor: pointer; transition: all 0.2s; }
+        .feedback-btn:hover { color: var(--brand-blue); transform: scale(1.1); }
+        .feedback-btn.active { color: var(--brand-red); animation: pulse 0.3s ease; }
+
+        /* Bottom Fixed (Shortcuts + Input) */
+        .bottom-fixed { 
+            position: absolute; bottom: 0; left: 0; width: 100%; 
+            background: linear-gradient(to top, white 90%, rgba(255,255,255,0)); 
+            padding-top: 10px; z-index: 50; 
+        }
+        
+        .chips-row { 
+            display: flex; gap: 8px; margin: 0 16px 8px; 
+            overflow-x: auto; padding-left: 2px; padding-bottom: 4px;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .chips-row::-webkit-scrollbar { display: none; }
+        
+        .chip { 
+            background: var(--card-white); border: 1px solid rgba(0,0,0,0.05);
+            padding: 6px 12px; border-radius: 16px; 
+            font-size: 10px; font-weight: 700; color: var(--text-main);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
+            white-space: nowrap; cursor: pointer; display: flex; align-items: center; gap: 4px;
+            transition: transform 0.2s;
+        }
+        .chip:hover { transform: translateY(-1px); }
+        .chip:active { transform: scale(0.96); }
+        .chip.promo { border: 1px solid rgba(238, 67, 67, 0.2); color: var(--brand-red); background: #FFF5F5; }
+
+        .input-box { margin: 0 16px 12px; background: white; border-radius: 14px; height: 48px; display: flex; align-items: center; padding: 0 14px; border: 1px solid #F1F2F6; box-shadow: 0 4px 15px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.2s; }
+        .input-box:active { transform: scale(0.98); }
+        .magic-input { flex: 1; border: none; outline: none; font-size: 12px; font-family: inherit; background: transparent; pointer-events: none; }
+        .mic-icon { color: var(--text-sub); font-size: 20px; }
+        
+        .tab-bar { height: 65px; background: white; border-top: 1px solid #F1F2F6; display: flex; justify-content: space-around; align-items: center; padding-bottom: 8px; }
+        .tab-item { color: #CED6E0; font-size: 18px; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+        .tab-item.active { color: var(--brand-red); }
+        .tab-label { font-size: 9px; font-weight: 600; }
+
+        /* Chat Sheet */
+        .sheet-overlay { position: absolute; inset: 0; background: var(--glass-overlay); z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; backdrop-filter: blur(4px); }
+        .sheet-overlay.open { opacity: 1; pointer-events: auto; }
+        .chat-sheet { position: absolute; bottom: -100%; left: 0; width: 100%; height: 85%; background: #F9FAFC; border-radius: 32px 32px 0 0; box-shadow: 0 -10px 40px rgba(0,0,0,0.15); transition: bottom 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); display: flex; flex-direction: column; z-index: 101; overflow: visible !important; }
+        .sheet-overlay.open .chat-sheet { bottom: 0; }
+        .chat-sheet-header { position: relative; height: 60px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding: 20px 24px 0; }
+        .coach-profile-pop { position: absolute; top: 0; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; cursor: pointer; z-index: 10; }
+        .coach-profile-pop:active { transform: translate(-50%, -50%) scale(0.95); }
+        .coach-avatar-wrapper { width: 72px; height: 72px; border-radius: 50%; overflow: hidden; border: 4px solid #F9FAFC; box-shadow: 0 10px 25px rgba(0,0,0,0.15); margin-bottom: 6px; background: white; }
+        .coach-avatar-img { width: 100%; height: 100%; object-fit: cover; }
+        .coach-name-badge { font-size: 13px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.9); padding: 4px 10px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .coach-swap-icon { font-size: 14px; color: var(--brand-red); }
+        .header-tools { display: flex; gap: 16px; }
+        .tool-icon { color: var(--brand-blue); cursor: pointer; opacity: 0.5; transition: opacity 0.2s; font-size: 24px; }
+        .tool-icon:hover { opacity: 1; }
+        .sheet-handle-small { width: 36px; height: 4px; background: #E2E8F0; border-radius: 2px; margin: 0 auto; position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 0; }
+        
+        .chat-history { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; padding-top: 10px; }
+        
+        /* Chat Suggestions (Initial & Dynamic) */
+        .chat-suggestions {
+            display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap;
+            margin-left: 2px;
+            animation: fadeIn 0.5s ease backwards 0.3s;
+        }
+        .suggestion-chip {
+            background: white; border: 1px solid #E2E8F0;
+            padding: 8px 14px; border-radius: 18px;
+            font-size: 11px; font-weight: 600; color: var(--text-main);
+            cursor: pointer; transition: all 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+        }
+        .suggestion-chip:hover { border-color: var(--brand-red); color: var(--brand-red); transform: translateY(-1px); }
+        .suggestion-chip:active { transform: scale(0.95); }
+
+        .chat-input-area { background: white; padding: 16px 20px 30px; border-top: 1px solid #F0F0F0; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+        .input-wrapper { flex: 1; position: relative; display: flex; align-items: center; }
+        .chat-input { width: 100%; height: 44px; background: #F5F7FA; border-radius: 22px; border: none; padding: 0 40px 0 16px; font-size: 13px; outline: none; }
+        .mic-icon-input { position: absolute; right: 12px; color: var(--text-sub); cursor: pointer; font-size: 20px; transition: color 0.2s; }
+        .mic-icon-input:hover { color: var(--brand-red); }
+        .send-btn { width: 44px; height: 44px; background: var(--brand-red); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer; font-size: 18px; }
+
+        .chat-bubble { max-width: 85%; padding: 14px 16px; border-radius: 20px; font-size: 13px; line-height: 1.5; position: relative; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .bubble-user { align-self: flex-end; background: var(--brand-red); color: white; border-bottom-right-radius: 4px; }
+        .bubble-ai { align-self: flex-start; background: white; color: var(--text-main); border-bottom-left-radius: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+
+        .composite-content { display: flex; flex-direction: column; gap: 12px; }
+        .composite-card { background: #F5F7FA; border-radius: 12px; overflow: hidden; border: 1px solid #E2E8F0; margin-top: 4px; }
+        .composite-card-img { height: 90px; background-size: cover; background-position: center; position: relative; }
+        .composite-tag { position: absolute; top: 6px; left: 6px; background: rgba(0,0,0,0.7); color: white; padding: 3px 6px; font-size: 9px; border-radius: 4px; font-weight: 700; }
+        .composite-card-body { padding: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .composite-info { flex: 1; }
+        .composite-card-title { font-weight: 700; font-size: 13px; color: var(--text-main); margin-bottom: 2px; }
+        .composite-card-meta { font-size: 10px; color: var(--text-sub); }
+        .btn-chat-start { padding: 8px 16px; background: var(--brand-red); color: white; border: none; border-radius: 20px; font-weight: 700; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 4px 10px rgba(238, 67, 67, 0.3); }
+
+        .typing-indicator span { display: inline-block; width: 4px; height: 4px; background: #ccc; border-radius: 50%; animation: typing 1.4s infinite ease-in-out both; margin: 0 1px; }
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+        @keyframes popIn { from { opacity: 0; transform: translateY(10px) scale(0.9); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes pulse { 50% { transform: scale(1.3); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .toggle-state-btn { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); z-index: 200; background: rgba(0,0,0,0.4); color: rgba(255,255,255,0.9); border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(4px); padding: 6px 16px; border-radius: 20px; font-size: 10px; font-weight: 600; cursor: pointer; letter-spacing: 0.5px; transition: all 0.2s; }
+        .toggle-state-btn:hover { background: rgba(0,0,0,0.6); }
+        .toast { position: absolute; top: 100px; left: 50%; transform: translateX(-50%) translateY(-20px); background: rgba(47, 53, 66, 0.95); color: white; padding: 10px 20px; border-radius: 30px; font-size: 12px; font-weight: 600; opacity: 0; pointer-events: none; transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); display: flex; align-items: center; gap: 8px; z-index: 200; box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    </style>
+</head>
+<body>
+
+<div class="phone-frame">
+    <button class="toggle-state-btn" onclick="toggleCardState()">Toggle State</button>
+    <div id="toast" class="toast"><span>✅</span> Action Triggered</div>
+
+    <div class="top-bar">
+        <div style="font-size:20px;">☰</div>
+        <div class="streak-pill">
+            <span id="flameIcon">🔥</span> <span id="streakNum">2</span>
+        </div>
+        <div style="font-size:20px;">🔔</div>
+        <div>📅</div>
+        <div>⌚</div>
+    </div>
+
+    <div class="scroll-content">
+        <div class="plan-card card-enter" id="cardActive" onclick="window.location.href='./Plan Dashboard.html'">
+            <div class="plan-header">
+                <div class="plan-meta">
+                    <span class="material-icons-round target-icon">gps_fixed</span> 
+                    Stage I - Episode 6
+                </div>
+                <span class="material-icons-round plan-arrow">chevron_right</span>
+            </div>
+            <div class="plan-title">Improve Endurance</div>
+            <div class="plan-body">
+                <div class="ring-container">
+                    <svg class="ring-svg">
+                        <circle cx="36" cy="36" r="30" class="ring-bg"></circle>
+                        <circle cx="36" cy="36" r="22" class="ring-bg"></circle>
+                        <circle cx="36" cy="36" r="14" class="ring-bg"></circle>
+                        <circle id="ringRed" cx="36" cy="36" r="30" class="ring-val" stroke="#FF4757" stroke-dasharray="188" stroke-dashoffset="188"></circle>
+                        <circle id="ringBlue" cx="36" cy="36" r="22" class="ring-val" stroke="#5352ED" stroke-dasharray="138" stroke-dashoffset="138"></circle>
+                        <circle id="ringYellow" cx="36" cy="36" r="14" class="ring-val" stroke="#FFA502" stroke-dasharray="87" stroke-dashoffset="87"></circle>
+                    </svg>
+                </div>
+                <div class="plan-stats">
+                    <div class="stat-row"><span class="stat-val val-red" id="txtMin">0</span> / 15 mins <span class="stat-unit">Cardio Done</span></div>
+                    <div class="stat-row"><span class="stat-val val-blue" id="txtKcal">0</span> / 150 kcal <span class="stat-unit">Burned</span></div>
+                    <div class="stat-row"><span class="stat-val val-yellow" id="txtWater">0</span> / 8 cups <span class="stat-unit">Water Intake</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="daily-card card-enter" id="cardNoPlan">
+            <div class="daily-header">Today</div>
+            <div class="daily-stats-row">
+                <div class="daily-stat-item">
+                    <div class="daily-val">0<span class="daily-unit">min</span></div>
+                    <div class="daily-label"><span class="material-icons-round stat-icon" style="color:#A4B0BE">timer</span> Time</div>
+                </div>
+                <div class="daily-stat-item">
+                    <div class="daily-val">0<span class="daily-unit">kcal</span></div>
+                    <div class="daily-label"><span class="material-icons-round stat-icon" style="color:#29B6F6">water_drop</span> Burn</div>
+                </div>
+                <div class="daily-stat-item">
+                    <div class="daily-val">0<span class="daily-unit">mi</span></div>
+                    <div class="daily-label"><span class="material-icons-round stat-icon" style="color:#FF4757">place</span> Running</div>
+                </div>
+            </div>
+            <div class="upsell-banner">
+                <div class="banner-content">
+                    <span class="material-icons-round sparkle-icon">auto_awesome</span>
+                    <span class="banner-text">Boost your fat burn with a customized plan</span>
+                </div>
+                <button class="try-btn">Try Now</button>
+            </div>
+        </div>
+
+        <div class="ai-recommendation-container" id="aiContainer">
+            <div class="ai-header-group">
+                <div class="ai-avatar">🤖</div>
+                <div class="ai-text-content" id="aiMainText"></div>
+            </div>
+            <div class="embedded-task-card">
+                <div id="taskCover" class="task-cover" style="background-image: url('https://images.unsplash.com/photo-1552674605-46d536369c78?auto=format&fit=crop&w=600&q=80');"></div>
+                <div class="task-info">
+                    <div id="miniGoBtn" class="mini-go-btn" onclick="goToWorkout()">GO</div>
+                    <div id="taskTitle" class="task-title">20 Min Interval Run</div>
+                    <div id="taskMeta" class="task-meta">🏃 Outdoor • 🔥 240 kcal</div>
+                </div>
+            </div>
+            <div class="ai-feedback-footer">
+                <div class="feedback-btn" onclick="regenerateSuggestion(this)" title="Regenerate"><span class="material-icons-round" style="font-size:18px">refresh</span></div>
+                <div class="feedback-btn" onclick="this.classList.toggle('active')"><span class="material-icons-round" style="font-size:18px">thumb_down</span></div>
+                <div class="feedback-btn" onclick="this.classList.toggle('active')"><span class="material-icons-round" style="font-size:18px">thumb_up</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-fixed">
+        <div class="chips-row">
+            <div class="chip" onclick="handleChipClick('feature', '📸 Track Meal')"><span>📸</span> Track Meal</div>
+            <div class="chip" onclick="handleChipClick('feature', '⚖️ Log Weight')"><span>⚖️</span> Log Weight</div>
+            <div class="chip promo" onclick="handleChipClick('promo', '🔥 Join Challenge')"><span>🔥</span> Summer Burn</div>
+            <div class="chip" onclick="handleChipClick('ai', 'Adjust Plan')"><span>📅</span> Adjust Plan</div>
+        </div>
+
+        <div class="input-box" onclick="openChat()">
+            <span style="color:#FFA502; margin-right:8px;">✨</span>
+            <input type="text" class="magic-input" placeholder="Customize your plan..." readonly>
+            <span class="material-icons-round mic-icon">mic</span>
+        </div>
+        <div class="tab-bar">
+            <div class="tab-item active">🏠<div class="tab-label">Home</div></div>
+            <div class="tab-item">💪<div class="tab-label">Workout</div></div>
+            <div class="tab-item">🏅<div class="tab-label">Challenge</div></div>
+            <div class="tab-item">👤<div class="tab-label">Social</div></div>
+        </div>
+    </div>
+
+    <div class="sheet-overlay" id="sheetOverlay" onclick="closeChat()">
+        <div class="chat-sheet" onclick="event.stopPropagation()">
+            <div class="chat-sheet-header">
+                <div class="sheet-handle-small"></div>
+                <div class="header-tools">
+                    <span class="material-icons-round tool-icon">history</span>
+                    <span class="material-icons-round tool-icon">folder_open</span>
+                </div>
+                <div class="coach-profile-pop" onclick="alert('Switch Coach')">
+                    <div class="coach-avatar-wrapper">
+                        <img src="https://ts1.tc.mm.bing.net/th/id/OIP-C.OL7Qq9YW8jqU7YcWHqDXVQAAAA?w=200&h=211&c=8&rs=1&qlt=90&o=6&dpr=1.6&pid=3.1&rm=2" class="coach-avatar-img" alt="Coach">
+                    </div>
+                    <div class="coach-name-badge">Sunny <span class="material-icons-round coach-swap-icon">swap_horiz</span></div>
+                </div>
+                <div style="width: 48px;"></div>
+            </div>
+
+            <div class="chat-history" id="chatHistory">
+                <div class="chat-bubble bubble-ai">Hi Alex! Need to adjust today's plan? Let me know how you feel.</div>
+                
+                <div class="chat-suggestions">
+                    <div class="suggestion-chip" onclick="handleSuggestion('Start Plan 🚀')">Start Plan 🚀</div>
+                    <div class="suggestion-chip" onclick="handleSuggestion('I\'m tired 😴')">I'm tired 😴</div>
+                    <div class="suggestion-chip" onclick="handleSuggestion('Change Goal 🎯')">Change Goal 🎯</div>
+                </div>
+            </div>
+            
+            <div class="chat-input-area">
+                <div class="input-wrapper">
+                    <input type="text" id="sheetInput" class="chat-input" placeholder="Type a message...">
+                    <span class="material-icons-round mic-icon-input">mic</span>
+                </div>
+                <div class="send-btn" onclick="handleUserSend()">↑</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    let hasPlan = true;
+    const cardActive = document.getElementById('cardActive');
+    const cardNoPlan = document.getElementById('cardNoPlan');
+    const overlay = document.getElementById('sheetOverlay');
+    const sheetInput = document.getElementById('sheetInput');
+    const chatHistory = document.getElementById('chatHistory');
+    const toast = document.getElementById('toast');
+    const aiContainer = document.getElementById('aiContainer');
+    const aiMainText = document.getElementById('aiMainText');
+    const taskCover = document.getElementById('taskCover');
+    const taskTitle = document.getElementById('taskTitle');
+    const taskMeta = document.getElementById('taskMeta');
+    const miniGoBtn = document.getElementById('miniGoBtn');
+
+    window.onload = async () => {
+        const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+        animateValue("streakNum", 2, 3, 1000);
+        document.getElementById('flameIcon').classList.add('shake');
+        await sleep(400);
+        document.getElementById('ringRed').style.strokeDashoffset = 150;
+        document.getElementById('ringBlue').style.strokeDashoffset = 100;
+        document.getElementById('ringYellow').style.strokeDashoffset = 40;
+        countTo("txtMin", 0, 5, 1000);
+        countTo("txtKcal", 0, 36, 1200);
+        countTo("txtWater", 0, 5, 1000);
+        await sleep(800);
+        aiContainer.classList.add('visible');
+        await flowText("aiMainText", "Morning! ☀️ Based on your recovery, I recommend a high-burn interval session today.");
+    };
+
+    function toggleCardState() {
+        hasPlan = !hasPlan;
+        if (hasPlan) {
+            cardActive.style.display = 'flex';
+            cardNoPlan.style.display = 'none';
+        } else {
+            cardActive.style.display = 'none';
+            cardNoPlan.style.display = 'flex';
+        }
+    }
+
+    function handleChipClick(type, label) {
+        if (type === 'ai') {
+            openChat();
+            if(sheetInput) {
+                sheetInput.value = "I want to " + label.toLowerCase();
+                sheetInput.focus();
+            }
+        } else {
+            showToast("Opening " + label + "...");
+            setTimeout(() => {
+                if(type === 'promo') alert("Redirecting to Challenge Page...");
+            }, 500);
+        }
+    }
+
+    function handleSuggestion(text) {
+        sheetInput.value = text;
+        handleUserSend();
+    }
+
+    function showToast(msg) {
+        toast.innerHTML = `<span>🚀</span> ${msg}`;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    function openChat() { overlay.classList.add('open'); setTimeout(() => sheetInput.focus(), 500); }
+    function closeChat() { overlay.classList.remove('open'); }
+    function goToWorkout() { window.location.href = './Movement Mode.html'; }
+    const wait = (ms) => new Promise(r => setTimeout(r, ms));
+
+    async function regenerateSuggestion(btn) {
+        btn.classList.add('active');
+        aiContainer.classList.add('refreshing');
+        await wait(1000);
+        aiMainText.innerText = "Got it! How about a steady state ride to build stamina?";
+        taskTitle.innerText = "30 Min Scenic Ride";
+        taskMeta.innerText = "🚲 Indoor • 🔥 320 kcal";
+        taskCover.style.backgroundImage = "url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=600&q=80')";
+        aiContainer.classList.remove('refreshing');
+        btn.classList.remove('active');
+    }
+
+    async function handleUserSend() {
+        const text = sheetInput.value || "My knee feels a bit uncomfortable today."; 
+        sheetInput.value = text;
+        
+        await wait(600);
+        addBubble(text, 'user');
+        sheetInput.value = "";
+        
+        // Remove old suggestions
+        const existing = document.querySelector('.chat-suggestions');
+        if(existing) existing.remove();
+
+        const loadingId = addTypingIndicator();
+        await wait(2000); 
+        removeBubble(loadingId);
+        syncHomeView(); 
+        addUnifiedBubble();
+    }
+
+    function syncHomeView() {
+        aiContainer.classList.add('refreshing');
+        setTimeout(() => {
+            aiMainText.innerHTML = "Plan updated for knee recovery. Take it slow! 🧘‍♀️";
+            taskCover.style.backgroundImage = "url('https://images.unsplash.com/photo-1544367563-12123d8965cd?auto=format&fit=crop&w=600&q=80')";
+            taskTitle.innerText = "20 Min Recovery Yoga";
+            taskMeta.innerText = "🧘 Indoor • 🔥 80 kcal";
+            miniGoBtn.style.backgroundColor = "#2ED573";
+            aiContainer.classList.remove('refreshing');
+        }, 800);
+    }
+
+    function addUnifiedBubble() {
+        const div = document.createElement('div');
+        div.className = 'chat-bubble bubble-ai';
+        div.innerHTML = `
+            <div class="composite-content">
+                <div>I hear you. Knee safety is priority! I've switched your plan to a low-impact recovery flow.</div>
+                <div class="composite-card">
+                    <div class="composite-card-img" style="background-image: url('https://images.unsplash.com/photo-1544367563-12123d8965cd?auto=format&fit=crop&w=600&q=80')">
+                        <div class="composite-tag">RECOVERY</div>
+                    </div>
+                    <div class="composite-card-body">
+                        <div class="composite-info">
+                            <div class="composite-card-title">20 Min Recovery Yoga</div>
+                            <div class="composite-card-meta">🧘 Low Impact • 🔥 80 kcal</div>
+                        </div>
+                        <button class="btn-chat-start" onclick="goToWorkout()">
+                            START <span class="material-icons-round" style="font-size:14px">arrow_forward</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        chatHistory.appendChild(div);
+        
+        // Add dynamic suggestions
+        addSuggestionChips(['Sounds good! 🚀', 'Too hard 🥵', 'Change duration ⏱️']);
+        
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
+
+    function addSuggestionChips(labels) {
+        const chipsContainer = document.createElement('div');
+        chipsContainer.className = 'chat-suggestions';
+        labels.forEach(label => {
+            const chip = document.createElement('div');
+            chip.className = 'suggestion-chip';
+            chip.innerText = label;
+            chip.onclick = () => handleSuggestion(label);
+            chipsContainer.appendChild(chip);
+        });
+        chatHistory.appendChild(chipsContainer);
+    }
+
+    function addBubble(text, type) {
+        const div = document.createElement('div');
+        div.className = `chat-bubble bubble-${type}`;
+        div.innerText = text;
+        chatHistory.appendChild(div);
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
+    
+    function addTypingIndicator() {
+        const id = 'typing-' + Date.now();
+        const div = document.createElement('div');
+        div.id = id;
+        div.className = 'chat-bubble bubble-ai typing-indicator';
+        div.innerHTML = '<span></span><span></span><span></span>';
+        chatHistory.appendChild(div);
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+        return id;
+    }
+    
+    function removeBubble(id) {
+        const el = document.getElementById(id);
+        if(el) el.remove();
+    }
+
+    async function flowText(id, text) {
+        const container = document.getElementById(id);
+        container.innerHTML = "";
+        const parts = text.split(/(\s+)/); 
+        for (let i = 0; i < parts.length; i++) {
+            const span = document.createElement('span');
+            span.className = 'word-fade';
+            span.innerText = parts[i]; 
+            span.style.animationDelay = `${i * 0.05}s`;
+            container.appendChild(span);
+            await new Promise(r => setTimeout(r, 20));
+        }
+    }
+
+    function countTo(id, start, end, duration) {
+        let obj = document.getElementById(id);
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            obj.innerHTML = Math.floor(progress * (end - start) + start);
+            if (progress < 1) window.requestAnimationFrame(step);
+        };
+        window.requestAnimationFrame(step);
+    }
+
+    function animateValue(id, start, end, duration) {
+        return new Promise(resolve => {
+            let obj = document.getElementById(id);
+            let startTime = null;
+            const step = (ts) => {
+                if(!startTime) startTime = ts;
+                const progress = Math.min((ts - startTime) / duration, 1);
+                obj.innerText = Math.floor(progress * (end - start) + start);
+                if(progress < 1) window.requestAnimationFrame(step);
+                else resolve();
+            };
+            window.requestAnimationFrame(step);
+        });
+    }
+</script>
+
+</body>
+</html>

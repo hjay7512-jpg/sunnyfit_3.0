@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SunnyFit - Seamless Modal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- 基础样式保持不变 --- */
+        :root {
+            --brand-red: #EE4343;
+            --brand-black: #1E272E;
+            --ai-cyan: #00D2D3;
+            --bg-body: #2d3436;
+            --bg-card: #FFFFFF;
+            --text-main: #2F3542;
+            --text-sub: #A4B0BE;
+            --success-green: #2ED573;
+        }
+        body { font-family: 'Montserrat', sans-serif; background-color: var(--bg-body); margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .phone-frame { width: 390px; height: 844px; background: #F7F8FA; border-radius: 44px; position: relative; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 30px 80px rgba(0,0,0,0.5); }
+        .header { padding: 55px 24px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .nav-icon { font-size: 20px; color: var(--brand-black); }
+        .header-title { font-weight: 800; font-size: 18px; color: var(--brand-black); }
+        .content { flex: 1; overflow-y: auto; padding: 10px 20px 120px; }
+        .content::-webkit-scrollbar { display: none; }
+        .hero-card { background: var(--bg-card); border-radius: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); margin-bottom: 25px; overflow: hidden; position: relative; }
+        .hero-main { padding: 24px 24px 20px; position: relative; z-index: 2; }
+        .stage-meta { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+        .stage-tag { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; color: var(--text-sub); background: #F1F2F6; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; }
+        .stage-title { font-size: 24px; font-weight: 800; color: var(--brand-black); line-height: 1.1; margin-bottom: 25px; }
+        .progress-block { margin-bottom: 5px; }
+        .p-track { height: 10px; background: #F1F2F6; border-radius: 5px; position: relative; overflow: hidden; }
+        .p-fill { height: 100%; width: 28%; background: var(--brand-red); border-radius: 5px; position: relative; transition: width 0.5s ease; }
+        .p-info { display: flex; justify-content: space-between; margin-top: 10px; font-size: 12px; font-weight: 600; color: var(--text-sub); }
+        .p-current { color: var(--brand-black); font-weight: 800; }
+        .coach-insight { background: var(--brand-black); padding: 16px 20px; display: flex; gap: 15px; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); }
+        .coach-avatar { min-width: 40px; height: 40px; background: rgba(255,255,255,0.1); border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 20px; }
+        .coach-text { color: white; font-size: 12px; line-height: 1.4; opacity: 0.9; }
+        .section-header { font-size: 12px; font-weight: 800; color: var(--text-sub); margin-bottom: 12px; letter-spacing: 1px; text-transform: uppercase; padding-left: 10px; }
+        .pref-group { background: white; border-radius: 24px; padding: 5px 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
+        .pref-item { padding: 20px 0; border-bottom: 1px solid #F1F2F6; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .pref-item:last-child { border: none; }
+        .pref-label { font-weight: 700; color: var(--brand-black); font-size: 14px; display: flex; align-items: center; gap: 12px; }
+        .pref-icon { font-size: 16px; opacity: 0.8; width: 24px; text-align: center; }
+        .pref-value { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: var(--brand-red); display: flex; align-items: center; gap: 6px; }
+        .footer { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px 24px 40px; background: linear-gradient(to top, #F7F8FA 90%, rgba(247,248,250,0)); z-index: 10; }
+        .cta-btn { background: var(--brand-black); color: white; height: 56px; width: 100%; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; box-shadow: 0 10px 30px rgba(30,39,46,0.25); }
+
+        /* --- NEW MODAL STYLES (Smart Cards) --- */
+        .modal-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); z-index: 20;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        .modal-sheet {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: white; border-radius: 32px 32px 0 0;
+            padding: 30px 24px; z-index: 21;
+            transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        .modal-active .modal-overlay { opacity: 1; pointer-events: auto; }
+        .modal-active .modal-sheet { transform: translateY(0); }
+
+        .modal-title { font-size: 18px; font-weight: 800; color: var(--brand-black); margin-bottom: 25px; }
+
+        /* Integrated Option List */
+        .smart-options { display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px; }
+        
+        .smart-card {
+            background: #F7F8FA; border-radius: 18px; padding: 16px 20px;
+            border: 2px solid transparent; cursor: pointer;
+            display: flex; justify-content: space-between; align-items: center;
+            transition: all 0.2s;
+        }
+        
+        /* Selected State */
+        .smart-card.selected {
+            background: white; border-color: var(--brand-black);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+            transform: scale(1.02);
+        }
+
+        .sc-left { display: flex; flex-direction: column; }
+        .sc-title { font-size: 15px; font-weight: 700; color: var(--brand-black); }
+        .sc-desc { font-size: 11px; color: var(--text-sub); margin-top: 4px; font-weight: 500; }
+
+        /* The Integrated Result Tag */
+        .sc-result {
+            font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700;
+            background: #EAF2FF; color: #5352ED; padding: 6px 10px; border-radius: 8px;
+            opacity: 0; transform: translateX(10px); transition: all 0.2s;
+        }
+        
+        /* Show result only when selected */
+        .smart-card.selected .sc-result { opacity: 1; transform: translateX(0); }
+        
+        /* Different colors for impacts */
+        .sc-result.green { background: rgba(46, 213, 115, 0.1); color: var(--success-green); }
+
+        .confirm-btn {
+            background: var(--brand-black); color: white; height: 56px; width: 100%;
+            border-radius: 18px; display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 15px; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div class="phone-frame" id="phoneFrame">
+    <div class="header">
+        <span class="nav-icon">←</span>
+        <span class="header-title">Plan Settings</span>
+        <span class="nav-icon">•••</span>
+    </div>
+
+    <div class="content">
+        <div class="hero-card">
+            <div class="hero-main">
+                <div class="stage-meta">
+                    <span class="stage-tag">STAGE 1 / 3</span>
+                    <span class="stage-tag" id="estDateHero" style="background:transparent; color:var(--brand-black);">EST: FEB 12</span>
+                </div>
+                <div class="stage-title">Metabolic Awakening</div>
+                <div class="progress-block">
+                    <div class="p-track"><div class="p-fill"></div></div>
+                    <div class="p-info">
+                        <span class="p-current">Ep. 6 <span style="font-weight:400; color:#A4B0BE;">/ 21</span></span>
+                        <span>28% Complete</span>
+                    </div>
+                </div>
+            </div>
+            <div class="coach-insight">
+                <div class="coach-avatar">🤖</div>
+                <div class="coach-text" id="coachText">
+                    "I've analyzed your pace. You're consistent, but we can optimize the timeline if you're ready."
+                </div>
+            </div>
+        </div>
+
+        <div class="section-header">Calibration Protocol</div>
+        <div class="pref-group">
+            <div class="pref-item"><div class="pref-label"><span class="pref-icon">🎯</span> Target Area</div><div class="pref-value">Arms & Core ></div></div>
+            
+            <div class="pref-item" onclick="openModal()">
+                <div class="pref-label"><span class="pref-icon">📅</span> Frequency</div>
+                <div class="pref-value" id="freqValueMain">3 Ep. / Wk ></div>
+            </div>
+
+            <div class="pref-item"><div class="pref-label"><span class="pref-icon">⏱️</span> Duration</div><div class="pref-value">15 - 20 Min ></div></div>
+            <div class="pref-item"><div class="pref-label"><span class="pref-icon">🛡️</span> Constraints</div><div class="pref-value" style="color:var(--text-sub);">None ></div></div>
+        </div>
+    </div>
+    <div class="footer"><div class="cta-btn" onclick="window.location.href='./Home.html'>RESUME EPISODE 6</div></div>
+
+    <div class="modal-overlay" onclick="closeModal()"></div>
+    <div class="modal-sheet">
+        <div class="modal-title">Adjust Frequency</div>
+        
+        <div class="smart-options">
+            
+            <div class="smart-card selected" id="opt3" onclick="selectOpt(3)">
+                <div class="sc-left">
+                    <span class="sc-title">3 Days / Week</span>
+                    <span class="sc-desc">Maintain current pace</span>
+                </div>
+            </div>
+
+            <div class="smart-card" id="opt4" onclick="selectOpt(4)">
+                <div class="sc-left">
+                    <span class="sc-title">4 Days / Week</span>
+                    <span class="sc-desc">Slightly faster</span>
+                </div>
+            </div>
+
+            <div class="smart-card" id="opt5" onclick="selectOpt(5)">
+                <div class="sc-left">
+                    <span class="sc-title">5 Days / Week</span>
+                    <span class="sc-desc">Aggressive progress</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="confirm-btn" onclick="confirmChange()">Update Plan</div>
+    </div>
+</div>
+
+<script>
+    let currentFreq = 3;
+    let tempFreq = 3;
+
+    function openModal() {
+        document.getElementById('phoneFrame').classList.add('modal-active');
+        selectOpt(currentFreq);
+    }
+    function closeModal() {
+        document.getElementById('phoneFrame').classList.remove('modal-active');
+    }
+
+    function selectOpt(val) {
+        tempFreq = val;
+        // Reset Logic
+        [3,4,5].forEach(v => document.getElementById('opt'+v).classList.remove('selected'));
+        // Select Logic
+        document.getElementById('opt'+val).classList.add('selected');
+    }
+
+    function confirmChange() {
+        currentFreq = tempFreq;
+        
+        // Update Main UI
+        document.getElementById('freqValueMain').innerText = currentFreq + " Ep. / Wk >";
+        const estDate = document.getElementById('estDateHero');
+
+        if (currentFreq === 5) {
+            estDate.innerText = "EST: FEB 04";
+            estDate.style.color = "#2ED573";
+            estDate.style.fontWeight = "800";
+            document.getElementById('coachText').innerText = "Trajectory updated! We are targeting an early finish on Feb 04.";
+        } else {
+            estDate.innerText = "EST: FEB 12";
+            estDate.style.color = "#1E272E";
+        }
+        closeModal();
+    }
+</script>
+
+</body>
+</html>

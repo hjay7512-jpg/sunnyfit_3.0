@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SunnyFit - AI Vision Mobile View</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand-red: #FF4757;
+            --brand-green: #2ED573;
+            --glass-dark: rgba(0, 0, 0, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.2);
+        }
+
+        /* 外部容器：使手机框架居中 */
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background: #222; /* 外部深灰色背景 */
+            display: flex; justify-content: center; align-items: center;
+            font-family: 'Montserrat', sans-serif;
+            overflow: hidden; color: #fff;
+        }
+
+        /* --- 手机主容器 (限制竖屏尺寸) --- */
+        .phone-frame {
+            width: 390px; 
+            height: 844px;
+            background: #000; 
+            position: relative;
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: column;
+            border: 8px solid #333; /* 模拟手机边框 */
+            border-radius: 40px;    /* 模拟手机圆角 */
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        /* --- iOS Dynamic Island --- */
+        .island-container {
+            position: absolute; top: 12px; left: 0; right: 0;
+            display: flex; justify-content: center; z-index: 1000;
+        }
+        .island {
+            background: #000; min-width: 140px; height: 36px; border-radius: 20px;
+            display: flex; align-items: center; padding: 0 16px;
+            font-size: 12px; font-weight: 700; gap: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .island-live-dot { width: 8px; height: 8px; background: var(--brand-red); border-radius: 50%; animation: blink 1s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        /* --- Full Screen User View --- */
+        .user-view { flex: 1; position: relative; background: #111; }
+        video { width: 100%; height: 100%; object-fit: cover; }
+        .view-label { 
+            position: absolute; top: 60px; left: 16px; 
+            font-size: 10px; font-weight: 800; background: rgba(0,0,0,0.6); 
+            padding: 4px 8px; border-radius: 4px; letter-spacing: 1px; z-index: 10;
+        }
+
+        /* --- AI Skeleton Dots --- */
+        .joint {
+            position: absolute; width: 12px; height: 12px; background: var(--brand-green);
+            border-radius: 50%; box-shadow: 0 0 15px var(--brand-green);
+            z-index: 100; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .joint.alert { background: var(--brand-red); box-shadow: 0 0 25px var(--brand-red); transform: scale(1.6); }
+
+        /* --- Centered AI Captions --- */
+        .caption-box {
+            position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
+            width: 85%; z-index: 500; text-align: center; pointer-events: none;
+        }
+        .caption-bubble {
+            background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(20px);
+            padding: 16px 24px; border-radius: 24px; border: 1px solid var(--glass-border);
+            display: inline-block; box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+            transition: opacity 0.4s; opacity: 0;
+        }
+        .caption-bubble.active { opacity: 1; }
+        .word { display: inline-block; opacity: 0; transform: translateY(10px); animation: wordFadeIn 0.5s forwards; margin-right: 5px; font-weight: 600; font-size: 15px; }
+        @keyframes wordFadeIn { to { opacity: 1; transform: translateY(0); } }
+
+        /* --- Bottom Controls --- */
+        .bottom-ui {
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            height: 180px; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+            padding-bottom: 40px; gap: 20px; z-index: 600;
+        }
+        .status-bar { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 2px; }
+        .btn-group { display: flex; gap: 32px; align-items: center; }
+        
+        .control-btn {
+            display: flex; flex-direction: column; align-items: center; gap: 8px;
+            cursor: pointer;
+        }
+        .btn-circle {
+            width: 60px; height: 60px; border-radius: 50%; background: var(--glass-dark);
+            border: 1.5px solid var(--glass-border); display: flex; align-items: center; justify-content: center;
+            font-size: 20px; backdrop-filter: blur(10px); transition: transform 0.2s;
+        }
+        .control-btn:active .btn-circle { transform: scale(0.9); }
+        .btn-label { font-size: 10px; font-weight: 700; opacity: 0.8; letter-spacing: 0.5px; }
+        
+        .exit-btn { background: var(--brand-red); border: none; font-size: 24px; transform: rotate(135deg); }
+    </style>
+</head>
+<body>
+
+<div class="phone-frame">
+    <div class="island-container">
+        <div class="island">
+            <div class="island-live-dot"></div>
+            <span>12:05</span>
+            <span style="opacity: 0.2;">|</span>
+            <span style="color: var(--brand-red);">♥ 128 BPM</span>
+        </div>
+    </div>
+
+    <div class="user-view">
+        <div class="view-label">AI VISION • TRACKING</div>
+        <video id="webcam" autoplay muted playsinline></video>
+        
+        <div class="joint" style="top: 20%; left: 50%;"></div> <div id="shoulderJoint" class="joint" style="top: 35%; left: 40%;"></div> <div id="hipJoint" class="joint" style="top: 55%; left: 50%;"></div> <div class="joint" style="top: 85%; left: 45%;"></div> <div class="joint" style="top: 85%; left: 55%;"></div> <div class="caption-box">
+            <div id="aiBubble" class="caption-bubble"></div>
+        </div>
+    </div>
+
+    <div class="bottom-ui">
+        <div class="status-bar" id="aiStatus">AI Engine: Scanning Form...</div>
+        <div class="btn-group">
+            <div class="control-btn" onclick="toggleCaption()">
+                <div class="btn-circle">字幕</div>
+                <div class="btn-label">CAPTION</div>
+            </div>
+            <div class="control-btn">
+                <div class="btn-circle">🎥</div>
+                <div class="btn-label">CAMERA</div>
+            </div>
+            <div class="control-btn" onclick="window.location.reload()">
+                <div class="btn-circle exit-btn">📞</div>
+                <div class="btn-label">EXIT</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const wait = (ms) => new Promise(r => setTimeout(r, ms));
+
+    // Initialize Camera
+    async function setupCamera() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            document.getElementById('webcam').srcObject = stream;
+        } catch (e) {
+            console.warn("Using placeholder for webcam.");
+        }
+    }
+
+    // Smooth Word-by-Word Captioning
+    async function speak(text) {
+        const bubble = document.getElementById('aiBubble');
+        bubble.innerHTML = "";
+        bubble.classList.add('active');
+        const words = text.split(' ');
+        for (let i = 0; i < words.length; i++) {
+            const span = document.createElement('span');
+            span.className = 'word';
+            span.innerText = words[i];
+            bubble.appendChild(span);
+            await wait(120);
+        }
+        await wait(2500);
+        bubble.classList.remove('active');
+    }
+
+    // Demo Sequence
+    async function startAILogic() {
+        await wait(2500);
+        
+        // Step 1: Encouragement
+        await speak("Excellent depth on those squats! Keep going.");
+        
+        await wait(3000);
+        
+        // Step 2: Detection and Correction
+        const shoulder = document.getElementById('shoulderJoint');
+        const status = document.getElementById('aiStatus');
+        
+        shoulder.classList.add('alert');
+        status.innerText = "Correction Detected";
+        status.style.color = "#FF4757";
+        
+        await speak("Careful! Relax your shoulders and keep your chest up.");
+        
+        await wait(3500);
+        
+        // Step 3: Success
+        shoulder.classList.remove('alert');
+        status.innerText = "AI Engine: Perfect Form";
+        status.style.color = "#2ED573";
+        await speak("Perfect correction. That's much better!");
+    }
+
+    function toggleCaption() {
+        const bubble = document.getElementById('aiBubble');
+        bubble.style.visibility = bubble.style.visibility === 'hidden' ? 'visible' : 'hidden';
+    }
+
+    setupCamera();
+    startAILogic();
+</script>
+
+</body>
+</html>
