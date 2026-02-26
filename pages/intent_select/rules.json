@@ -1,0 +1,50 @@
+{
+  "page_id": "intent_select",
+  "page_name": "App 冷启动与意图分流 (Intent Select)",
+  "zones": [
+    {
+      "zone_id": "intent_select_splash",
+      "module_level": "Global",
+      "module_name": "开屏加载与初始化",
+      "trigger_event": "App Launch",
+      "logic_steps": [
+        "展示品牌 Logo 动效，期间静默执行 Token 校验与本地状态检查。",
+        "判断用户是否已存在尚未完结的计划：若有，直接路由至 Home 主控台；若无，进入意图分流阶段。"
+      ],
+      "exit_states": []
+    },
+    {
+      "zone_id": "intent_select_opt_device_connect",
+      "module_level": "L1",
+      "module_name": "意图一：连接自有硬件",
+      "trigger_event": "Click Option",
+      "logic_steps": [
+        "针对硬件用户的最短路径设计，直接唤起底层蓝牙配对流程。",
+        "暂不强制拦截要求注册，通过硬件配对产生的沉没成本，提高后续注册转化率。"
+      ],
+      "exit_states": [{"action": "页面级路由跳转", "next_page_id": "device_connect"}]
+    },
+    {
+      "zone_id": "intent_select_opt_plan_create",
+      "module_level": "L1",
+      "module_name": "意图二：获取定制计划",
+      "trigger_event": "Click Option",
+      "logic_steps": [
+        "用户希望进行有目的性的锻炼。",
+        "跳过传统枯燥的注册表单，进入 AI 沉浸式数据收集向导进行个性化建档。"
+      ],
+      "exit_states": [{"action": "页面级路由跳转", "next_page_id": "plan_create"}]
+    },
+    {
+      "zone_id": "intent_select_opt_guest_explore",
+      "module_level": "L1",
+      "module_name": "意图三：随便逛逛 (Guest Mode)",
+      "trigger_event": "Click Option",
+      "logic_steps": [
+        "针对没有明确目的或硬件的用户，采用极轻量的心情 (Mood Check) 交互来破冰。",
+        "降低决策成本，直接分发试看体验课程，建立即时产品信任感。"
+      ],
+      "exit_states": [{"action": "页面级路由跳转", "next_page_id": "guest_explore"}]
+    }
+  ]
+}
