@@ -48,6 +48,7 @@
                         'heartbeat': 'heartbeat 0.8s ease-in-out infinite',
                         'fade-up': 'fadeUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
                         'slide-in': 'slideIn 0.4s ease-out forwards',
+                        'slide-up': 'slideUp 0.35s ease-out forwards',
                         'radar': 'radarPing 2.5s cubic-bezier(0, 0, 0.2, 1) infinite',
                         'pop': 'pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards'
                     },
@@ -57,7 +58,8 @@
                         fadeUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
                         slideIn: { '0%': { opacity: '0', transform: 'translateX(20px)' }, '100%': { opacity: '1', transform: 'translateX(0)' } },
                         radarPing: { '0%': { transform: 'scale(0.8)', opacity: '0.8' }, '75%, 100%': { transform: 'scale(2.5)', opacity: '0' } },
-                        pop: { '0%': { transform: 'scale(0.95)' }, '50%': { transform: 'scale(1.02)' }, '100%': { transform: 'scale(1)' } }
+                        pop: { '0%': { transform: 'scale(0.95)' }, '50%': { transform: 'scale(1.02)' }, '100%': { transform: 'scale(1)' } },
+                        slideUp: { '0%': { transform: 'translateY(100%)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } }
                     }
                 }
             }
@@ -68,6 +70,8 @@
         body { margin: 0; background-color: #f0f0f0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: 'Montserrat', sans-serif; }
         .mobile-viewport { width: 390px; height: 844px; background-color: #FFFBF7; position: relative; overflow: hidden; border-radius: 40px; border: 8px solid #333; box-shadow: 0px 30px 60px rgba(0,0,0,0.3); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        .blur-lock { filter: blur(6px); opacity: 0.6; pointer-events: none; position: relative; }
+        .blur-lock::after { content: ''; position: absolute; inset: 0; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2331426D' stroke-width='2'%3E%3Crect x='3' y='11' width='18' height='11' rx='2' ry='2'/%3E%3Cpath d='M7 11V7a5 5 0 0 1 10 0v4'/%3E%3C/svg%3E") center/32px no-repeat; }
     </style>
 </head>
 <body>
@@ -80,48 +84,99 @@
             Bluetooth: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m7 7 10 10-5 5V2l5 5L7 17"/></svg>,
             Check: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M20 6 9 17l-5-5"/></svg>,
             Loader: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>,
-            ChevronLeft: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"/></svg>
+            ChevronLeft: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"/></svg>,
+            Heart: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
+            Fire: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>,
+            Pin: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>,
+            Play: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none" className={className}><polygon points="5 3 19 12 5 21 5 3"/></svg>
         };
 
-        const SunnyLogo = ({ className = "" }) => {
-            return (
-                <div className="w-full h-full animate-breathe">
-                    <svg viewBox="0 0 32 32" fill="none" className={`w-full h-full drop-shadow-glow ${className}`}>
-                        <path d="M16.013 32C13.271 31.9018 10.5412 31.8755 7.87463 31.1231C3.57228 29.9252 1.23878 26.956 0.52873 22.6889C-0.165498 18.3226 -0.176144 13.8749 0.497173 9.50531C1.23001 4.58405 4.38577 1.32017 9.29472 0.537958C13.609 -0.165525 18.0077 -0.17914 22.3262 0.497619C27.7401 1.35875 30.6837 4.27187 31.513 9.76137C32.1817 14.0582 32.1521 18.4348 31.4253 22.7222C30.5207 27.9048 27.3527 30.867 22.079 31.558C20.0716 31.8176 18.0362 31.8597 16.013 32Z" fill="#EE4343" />
-                        <path d="M15.3836 6.16027C15.9406 6.15315 16.4468 6.48357 16.6646 6.99654C16.8824 7.50952 16.7687 8.10332 16.3767 8.49943C15.9848 8.89555 15.3925 9.01542 14.8774 8.80283C14.3624 8.59024 14.027 8.08735 14.0283 7.53001C14.0358 6.78206 14.636 6.1754 15.3836 6.16027Z" fill="#FFFFFF" />
-                        <path d="M19.6492 11.387C18.5149 11.7676 17.3455 12.0377 16.2287 12.4744C15.8322 12.6166 15.4556 12.8094 15.1084 13.0479C13.9776 13.8722 13.939 14.9315 14.9611 15.9768C15.7606 16.7959 16.7231 17.4115 17.5769 18.1586C18.9041 19.3214 18.9637 20.5245 17.7312 21.8118C16.4829 23.1255 14.905 23.9726 13.2676 24.6811C12.5908 24.974 11.8983 25.2283 11.2128 25.5002C11.0314 25.3255 10.9531 25.0694 11.0059 24.8232C12.0619 24.4117 13.0326 23.8082 13.8689 23.043C14.3759 22.5899 14.8315 22.0823 15.2276 21.5295C16.092 20.3018 16.0446 19.5722 15.0523 18.4445C14.3405 17.6412 13.5095 16.945 12.9134 16.0365C11.7317 14.2335 12.2928 12.0623 14.1722 10.9977C15.6747 10.1471 17.2876 9.58586 18.9234 9.06848C19.6106 8.85451 20.1226 9.11759 20.3259 9.7402C20.5766 10.5312 20.34 11.159 19.6492 11.387Z" fill="#FFFFFF" />
-                    </svg>
-                </div>
-            );
-        };
+        const mockCommunityPosts = [
+            { id: 1, user: { name: "Sarah M.", avatar: "https://ts1.tc.mm.bing.net/th/id/OIP-C.OL7Qq9YW8jqU7YcWHqDXVQAAAA?w=200&h=211&c=8&rs=1&qlt=90&o=6&dpr=1.6&pid=3.1&rm=2" }, caption: "10 miles done, one more stronger day!", workout: { title: "Full Body Fat Burning Workout", kcal: 320, distance: "10.2 mi", time: "30:13" } },
+            { id: 2, user: { name: "David K.", avatar: "https://ts2.tc.mm.bing.net/th/id/OIP-C.eb5tO1q-sXQUb57RWgR1jAHaHa?w=118&h=108&c=7&qlt=90&bgcl=4ced49&r=0&o=6&dpr=1.6&pid=13.1" }, caption: "New personal record! The sweat is real.", workout: { title: "High Intensity Interval Ride", kcal: 450, distance: "15.5 mi", time: "45:00" } },
+            { id: 3, user: { name: "Emma R.", avatar: "https://ts1.tc.mm.bing.net/th/id/OIP-C.WCCSy7vt-lLrrzNvemdAXgAAAA?w=200&h=211&c=8&rs=1&qlt=90&o=6&dpr=1.6&pid=3.1&rm=2" }, caption: "Nothing beats a sunrise ride.", workout: { title: "Sunrise Scenic Cruise", kcal: 280, distance: "8.0 mi", time: "25:45" } }
+        ];
+        const UserPostCard = ({ post }) => (
+            <div className="w-full bg-brand-darkRed rounded-[24px] p-6 text-white shadow-card-active flex flex-col justify-between h-[180px]">
+                <div className="flex items-center"><div className="w-12 h-12 rounded-full border-2 border-white overflow-hidden shrink-0"><img src={post.user.avatar} className="w-full h-full object-cover" alt="" /></div><div className="ml-3 text-left"><h3 className="text-[15px] font-bold leading-tight">{post.user.name}</h3><p className="text-[13px] opacity-80 line-clamp-1">{post.caption}</p></div></div>
+                <div className="bg-white rounded-[16px] p-4 flex text-text-primary mt-4"><div className="w-12 h-12 bg-brand-blue/10 rounded-md shrink-0 flex items-center justify-center"><Icons.Play className="w-6 h-6 text-brand-blue/50" /></div><div className="ml-3 flex-1 flex flex-col justify-center text-left min-w-0"><h4 className="font-bold text-[14px] leading-tight line-clamp-1 mb-1">{post.workout.title}</h4><div className="flex items-center gap-2 text-[11px] font-medium text-text-secondary"><span className="flex items-center gap-0.5"><Icons.Fire className="w-3.5 h-3.5 text-brand-red"/> {post.workout.kcal} Kcal</span><span className="flex items-center gap-0.5"><Icons.Pin className="w-3.5 h-3.5 text-brand-red"/> {post.workout.distance}</span></div></div></div>
+            </div>
+        );
+
+        const SunnyLogo = ({ className = "" }) => (
+            <div className="w-full h-full animate-breathe">
+                <svg viewBox="0 0 32 32" fill="none" className={`w-full h-full drop-shadow-glow ${className}`}>
+                    <path d="M16.013 32C13.271 31.9018 10.5412 31.8755 7.87463 31.1231C3.57228 29.9252 1.23878 26.956 0.52873 22.6889C-0.165498 18.3226 -0.176144 13.8749 0.497173 9.50531C1.23001 4.58405 4.38577 1.32017 9.29472 0.537958C13.609 -0.165525 18.0077 -0.17914 22.3262 0.497619C27.7401 1.35875 30.6837 4.27187 31.513 9.76137C32.1817 14.0582 32.1521 18.4348 31.4253 22.7222C30.5207 27.9048 27.3527 30.867 22.079 31.558C20.0716 31.8176 18.0362 31.8597 16.013 32Z" fill="#EE4343" />
+                    <path d="M15.3836 6.16027C15.9406 6.15315 16.4468 6.48357 16.6646 6.99654C16.8824 7.50952 16.7687 8.10332 16.3767 8.49943C15.9848 8.89555 15.3925 9.01542 14.8774 8.80283C14.3624 8.59024 14.027 8.08735 14.0283 7.53001C14.0358 6.78206 14.636 6.1754 15.3836 6.16027Z" fill="#FFFFFF" />
+                    <path d="M19.6492 11.387C18.5149 11.7676 17.3455 12.0377 16.2287 12.4744C15.8322 12.6166 15.4556 12.8094 15.1084 13.0479C13.9776 13.8722 13.939 14.9315 14.9611 15.9768C15.7606 16.7959 16.7231 17.4115 17.5769 18.1586C18.9041 19.3214 18.9637 20.5245 17.7312 21.8118C16.4829 23.1255 14.905 23.9726 13.2676 24.6811C12.5908 24.974 11.8983 25.2283 11.2128 25.5002C11.0314 25.3255 10.9531 25.0694 11.0059 24.8232C12.0619 24.4117 13.0326 23.8082 13.8689 23.043C14.3759 22.5899 14.8315 22.0823 15.2276 21.5295C16.092 20.3018 16.0446 19.5722 15.0523 18.4445C14.3405 17.6412 13.5095 16.945 12.9134 16.0365C11.7317 14.2335 12.2928 12.0623 14.1722 10.9977C15.6747 10.1471 17.2876 9.58586 18.9234 9.06848C19.6106 8.85451 20.1226 9.11759 20.3259 9.7402C20.5766 10.5312 20.34 11.159 19.6492 11.387Z" fill="#FFFFFF" />
+                </svg>
+            </div>
+        );
+
+        const DEVICE_OPTIONS = [
+            { id: 'cadence', name: 'Cadence', model: 'SF-E3955', emoji: '⚙️', type: 'cadence' },
+            { id: 'scale', name: 'BMI Smart Scale', model: 'SF-E3955', emoji: '⚖️', type: 'scale' },
+            { id: 'equipment', name: 'Elliptical', model: 'SF-T723007', emoji: '🚲', type: 'equipment' },
+            { id: 'hr', name: 'Elite Interactive Se...', model: 'SF-RBE420049', emoji: '💓', type: 'hr' }
+        ];
+
+        const LocationIcon = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>;
+        const NearbyIcon = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}><circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>;
+
+        const CADENCE_MODELS = [
+            { id: 'sb-100', name: 'Sunny Bike SB-100 (Classic)' },
+            { id: 'sb-200', name: 'Sunny Bike SB-200 (Classic)' },
+            { id: 'se-100', name: 'Sunny Elliptical SE-100' },
+            { id: 'se-200', name: 'Sunny Elliptical SE-200' }
+        ];
 
         const DeviceConnectionFlow = () => {
-            const [flowStep, setFlowStep] = useState('prep');
-            const [showModal, setShowModal] = useState(false);
+            const [flowStep, setFlowStep] = useState('permission');
             const [showScanFailedModal, setShowScanFailedModal] = useState(false);
+            const [showScanResultsModal, setShowScanResultsModal] = useState(false);
             const [isFound, setIsFound] = useState(false);
             const [connState, setConnState] = useState('idle');
+            const [selectedDevice, setSelectedDevice] = useState(null);
             const [searchModel, setSearchModel] = useState('');
-            const [connectedSuccess, setConnectedSuccess] = useState(false);
+            const [branchState, setBranchState] = useState(null);
+            const [scaleMeasured, setScaleMeasured] = useState(false);
+            const [hrBpm, setHrBpm] = useState(72);
+            const [activePostIndex, setActivePostIndex] = useState(0);
 
-            // 10s 扫描超时
             useEffect(() => {
                 if (flowStep !== 'scanning' || isFound) return;
                 const t = setTimeout(() => setShowScanFailedModal(true), 10000);
                 return () => clearTimeout(t);
             }, [flowStep, isFound]);
 
-            const handleAllowPermission = () => {
-                setShowModal(false);
+            useEffect(() => {
+                if (isFound && flowStep === 'scanning') setShowScanResultsModal(true);
+            }, [isFound, flowStep]);
+
+            useEffect(() => {
+                if (branchState === 'hr' && flowStep === 'branch_hr') {
+                    const iv = setInterval(() => setHrBpm((p) => (p >= 75 ? 68 : p + 2)), 800);
+                    return () => clearInterval(iv);
+                }
+            }, [branchState, flowStep]);
+
+            const handleConfirmPermission = () => {
                 setFlowStep('scanning');
-                setTimeout(() => setIsFound(true), 3000);
+                setTimeout(() => setIsFound(true), 2500);
             };
 
-            const handleConnect = () => {
+            const handleConnect = (device) => {
+                if (connState !== 'idle') return;
+                setSelectedDevice(device);
                 setConnState('connecting');
                 setTimeout(() => {
                     setConnState('connected');
-                    setTimeout(() => setConnectedSuccess(true), 1200);
+                    setBranchState(device.type);
+                    setShowScanResultsModal(false);
+                    if (device.type === 'scale') setFlowStep('branch_scale');
+                    else if (device.type === 'cadence') setFlowStep('branch_cadence');
+                    else if (device.type === 'hr') setFlowStep('branch_hr');
+                    else setFlowStep('branch_equipment');
                 }, 1500);
             };
 
@@ -131,54 +186,183 @@
                 setFlowStep(isSmart ? 'check_bt' : 'incompatible');
             };
 
+            const handleCadenceSelect = (model) => {
+                setFlowStep('branch_equipment');
+                setSelectedDevice((prev) => prev ? { ...prev, boundModel: model } : null);
+            };
+
+            useEffect(() => {
+                if (flowStep === 'branch_scale' && !scaleMeasured) {
+                    const t = setTimeout(() => setScaleMeasured(true), 2000);
+                    return () => clearTimeout(t);
+                }
+            }, [flowStep, scaleMeasured]);
+
+            useEffect(() => {
+                const onSuccess = flowStep === 'branch_equipment' || (flowStep === 'branch_hr' && branchState === 'hr');
+                if (!onSuccess) return;
+                setActivePostIndex(0);
+                const iv = setInterval(() => setActivePostIndex((p) => (p + 1) % mockCommunityPosts.length), 5000);
+                return () => clearInterval(iv);
+            }, [flowStep, branchState]);
+
+            const showEquipSuccess = flowStep === 'branch_equipment';
+            const showHrSuccess = branchState === 'hr' && flowStep === 'branch_hr';
+
+            const handleBack = () => {
+                if (flowStep === 'permission') window.navigateTo('intent_select');
+                else if (flowStep === 'scanning') setFlowStep('permission');
+                else if (flowStep === 'manual_entry') setFlowStep('scanning');
+                else if (flowStep === 'check_bt' || flowStep === 'incompatible') setFlowStep('manual_entry');
+                else if (['branch_equipment', 'branch_cadence', 'branch_hr', 'branch_scale'].includes(flowStep)) {
+                    setFlowStep('scanning');
+                    setConnState('idle');
+                    setBranchState(null);
+                    setSelectedDevice(null);
+                    setScaleMeasured(false);
+                }
+            };
+
             return (
                 <div className="absolute inset-0 z-50 bg-bg-page flex flex-col animate-slide-in">
                     <div className="px-6 pt-10 pb-4 flex items-center shrink-0" data-zone-id="device_connect_header" data-prd-zone="device_connect_header">
-                        <button onClick={() => window.navigateTo('intent_select')} className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-brand-blue">
+                        <button onClick={handleBack} className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-brand-blue">
                             <Icons.ChevronLeft />
                         </button>
                     </div>
 
-                    <div className="flex-1 flex flex-col items-center px-6 pt-8 overflow-y-auto no-scrollbar">
-                        {flowStep === 'prep' && (
-                            <div className="text-center animate-fade-up w-full" data-zone-id="device_connect_prep" data-prd-zone="device_connect_prep">
-                                <div className="w-[120px] h-[120px] mb-8 relative mx-auto">
-                                    <div className="absolute inset-0 bg-brand-red/10 rounded-full animate-radar scale-75"></div>
-                                    <div className="relative z-10 w-full h-full"><SunnyLogo /></div>
-                                </div>
-                                <h3 className="text-[20px] font-bold mb-3" data-i18n="device_prep_title">Power on your device</h3>
-                                <p className="text-[14px] text-text-secondary px-6" data-i18n="device_prep_subtitle">Ensure your equipment is within 5 meters and plugged in.</p>
-                            </div>
-                        )}
-
-                        {flowStep === 'scanning' && !connectedSuccess && (
-                            <div className="w-full text-center animate-fade-up" data-zone-id="device_connect_scanning" data-prd-zone="device_connect_scanning">
-                                <div className="relative flex items-center justify-center w-[200px] h-[200px] mx-auto mb-8">
-                                    <div className="absolute border border-brand-red/20 rounded-full w-full h-full animate-radar"></div>
-                                    <div className="relative z-10 w-16 h-16 bg-white rounded-full shadow-md flex items-center justify-center text-brand-red"><Icons.Bluetooth className="w-8 h-8"/></div>
-                                </div>
-                                {isFound ? (
-                                    <div onClick={handleConnect} data-zone-id="device_connect_branch_equipment" data-prd-zone="device_connect_branch_equipment" className={`w-full rounded-[20px] p-5 flex items-center border bg-white shadow-card animate-pop cursor-pointer ${connState === 'connected' ? 'border-brand-green' : 'border-transparent'}`}>
-                                        <div className={`w-[48px] h-[48px] rounded-[16px] flex items-center justify-center text-[24px] ${connState === 'connected' ? 'bg-brand-green text-white' : 'bg-bg-neutral'}`}>{connState === 'connected' ? <Icons.Check className="w-6 h-6"/> : "🚲"}</div>
-                                        <div className="ml-4 text-left flex-grow"><h3 className="font-bold">Sunny Bike B100</h3><span className="text-[12px] text-text-secondary">Signal Strong</span></div>
-                                        {connState === 'connecting' && <Icons.Loader className="w-5 h-5 animate-spin text-brand-blue"/>}
+                    <div className="flex-1 flex flex-col items-center px-6 pt-4 overflow-y-auto no-scrollbar">
+                        {flowStep === 'permission' && (
+                            <div className="w-full animate-fade-up" data-zone-id="device_connect_permission" data-prd-zone="device_connect_permission">
+                                <h3 className="text-[20px] font-bold text-brand-blue mb-2">Connect Equipment</h3>
+                                <p className="text-[14px] text-text-secondary mb-6">We need you to provide the following permissions to discover and connect your equipment.</p>
+                                <div className="space-y-4 mb-8">
+                                    <div className="bg-white rounded-[16px] p-4 shadow-card flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-bg-neutral flex items-center justify-center text-brand-blue"><Icons.Bluetooth className="w-5 h-5"/></div>
+                                            <div><h4 className="font-semibold text-[15px]">Bluetooth</h4><p className="text-[12px] text-text-secondary">Turn on the Bluetooth of your mobile phone</p></div>
+                                        </div>
+                                        <div className="w-8 h-8 rounded-full bg-brand-green flex items-center justify-center text-white"><Icons.Check className="w-4 h-4"/></div>
                                     </div>
-                                ) : <p className="animate-pulse text-text-secondary">Searching...</p>}
+                                    <div className="bg-white rounded-[16px] p-4 shadow-card flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-bg-neutral flex items-center justify-center text-brand-blue"><LocationIcon className="w-5 h-5"/></div>
+                                            <div><h4 className="font-semibold text-[15px]">Location</h4><p className="text-[12px] text-text-secondary">Location access for SunnyFit</p></div>
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                const granted = window.confirm('SunnyFit wants to access your location to discover nearby equipment. Allow?');
+                                                if (granted) handleConfirmPermission();
+                                            }}
+                                            className="px-4 py-2 rounded-lg bg-brand-red text-white text-[13px] font-semibold"
+                                        >
+                                            Open
+                                        </button>
+                                    </div>
+                                    <div className="bg-white rounded-[16px] p-4 shadow-card flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-bg-neutral flex items-center justify-center text-brand-blue"><NearbyIcon className="w-5 h-5"/></div>
+                                            <div><h4 className="font-semibold text-[15px]">Nearby Devices</h4><p className="text-[12px] text-text-secondary">Nearby Devices access for SunnyFit</p></div>
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                const granted = window.confirm('SunnyFit wants to access nearby devices to connect your equipment. Allow?');
+                                                if (granted) handleConfirmPermission();
+                                            }}
+                                            className="px-4 py-2 rounded-lg bg-brand-red text-white text-[13px] font-semibold"
+                                        >
+                                            Open
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         )}
 
-                        {connectedSuccess && (
-                            <div className="w-full text-center animate-fade-up" data-zone-id="device_connect_branch_equipment" data-prd-zone="device_connect_branch_equipment">
-                                <div className="text-brand-green text-7xl mb-6 animate-pop">✓</div>
-                                <h3 className="text-[24px] font-bold mb-3">Connected!</h3>
-                                <p className="text-[14px] text-text-secondary mb-8">Your Sunny Bike is ready. Start your first workout.</p>
+                        {flowStep === 'scanning' && !branchState && (
+                            <div className="w-full text-center animate-fade-up" data-zone-id="device_connect_scanning" data-prd-zone="device_connect_scanning">
+                                <div className="relative flex items-center justify-center w-[200px] h-[200px] mx-auto mb-6">
+                                    <div className="absolute border-2 border-brand-red/30 rounded-full w-full h-full animate-radar"></div>
+                                    <div className="absolute border border-brand-red/20 rounded-full w-[140px] h-[140px] animate-radar" style={{ animationDelay: '0.3s' }}></div>
+                                    <div className="relative z-10 w-20 h-20 bg-brand-red rounded-full flex items-center justify-center text-white">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-10 h-10"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                                    </div>
+                                </div>
+                                <h3 className="text-[18px] font-semibold text-brand-blue mb-2">Scaning Equipments Nearby...</h3>
+                                <p className="text-[14px] text-text-secondary">Please keep the device turned on</p>
+                            </div>
+                        )}
+
+                        {showEquipSuccess && (
+                            <div className="w-full animate-fade-up" data-zone-id="device_connect_branch_equipment" data-prd-zone="device_connect_branch_equipment">
+                                <div className="text-center mb-6"><div className="text-brand-green text-7xl mb-4 animate-pop">✓</div><h3 className="text-[24px] font-bold mb-2">Connected!</h3><p className="text-[14px] text-text-secondary">Your equipment is ready.</p></div>
+                                <div className="w-full pb-2 flex justify-center"><UserPostCard post={mockCommunityPosts[activePostIndex]} /></div>
+                            </div>
+                        )}
+
+                        {flowStep === 'branch_cadence' && (
+                            <div className="w-full animate-fade-up" data-zone-id="device_connect_branch_cadence" data-prd-zone="device_connect_branch_cadence">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="w-12 h-12 rounded-full bg-brand-green flex items-center justify-center text-white"><Icons.Check className="w-6 h-6"/></div>
+                                    <div><h3 className="font-bold text-brand-blue">Cadence Connected</h3><span className="text-[12px] text-text-secondary">Select your bike/elliptical</span></div>
+                                </div>
+                                <p className="text-[15px] text-text-primary mb-4 font-medium">"Great! Which classic Sunny bike/elliptical are you attaching it to?"</p>
+                                <div className="space-y-2">
+                                    {CADENCE_MODELS.map((m) => (
+                                        <button key={m.id} onClick={() => handleCadenceSelect(m)} className="w-full p-4 rounded-[16px] bg-white shadow-card text-left font-medium hover:border-2 hover:border-brand-red transition-colors">{"\u27A1"} {m.name}</button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {flowStep === 'branch_scale' && (
+                            <div className="w-full animate-fade-up" data-zone-id="device_connect_branch_scale" data-prd-zone="device_connect_branch_scale">
+                                {!scaleMeasured ? (
+                                    <>
+                                        <h3 className="text-[20px] font-bold text-brand-blue mb-2">Connect Device</h3>
+                                        <p className="text-[14px] text-text-secondary mb-6">Please stand on the scale again and keep the scale lit up.</p>
+                                        <div className="bg-white rounded-[24px] p-8 shadow-card text-center mb-6 flex flex-col items-center">
+                                            <div className="w-48 h-32 bg-bg-neutral rounded-2xl flex items-center justify-center mb-4 relative overflow-hidden">
+                                                <span className="text-5xl font-bold text-brand-blue">87.7</span>
+                                                <div className="absolute bottom-0 left-0 right-0 h-8 bg-gray-200 rounded-b-2xl flex items-center justify-center text-[10px] text-gray-500">SunnyFit</div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center justify-center gap-2 text-brand-red">
+                                            <Icons.Loader className="w-5 h-5 animate-spin"/>
+                                            <span className="text-[14px] font-medium">Scanning for nearby devices...</span>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="flex items-center gap-3 mb-6">
+                                            <div className="w-12 h-12 rounded-full bg-brand-green flex items-center justify-center text-white"><Icons.Check className="w-6 h-6"/></div>
+                                            <div><h3 className="font-bold text-brand-blue">Measurement Complete</h3></div>
+                                        </div>
+                                        <div className="bg-white rounded-[24px] p-8 shadow-card text-center mb-6">
+                                            <p className="text-[13px] text-text-secondary mb-4">Weight</p>
+                                            <p className="text-4xl font-bold text-brand-blue">87.7 <span className="text-lg font-normal">kg</span></p>
+                                            <div className="mt-6 space-y-3">
+                                                <div className="blur-lock rounded-xl bg-bg-neutral h-12 flex items-center justify-center"><span className="text-[12px] text-text-secondary">Body Fat %</span></div>
+                                                <div className="blur-lock rounded-xl bg-bg-neutral h-12 flex items-center justify-center"><span className="text-[12px] text-text-secondary">BMI</span></div>
+                                                <div className="blur-lock rounded-xl bg-bg-neutral h-12 flex items-center justify-center"><span className="text-[12px] text-text-secondary">Skeletal Muscle</span></div>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        )}
+
+                        {showHrSuccess && (
+                            <div className="w-full animate-fade-up" data-zone-id="device_connect_branch_hr" data-prd-zone="device_connect_branch_hr">
+                                <div className="text-center mb-6"><div className="relative inline-flex items-center justify-center w-[30px] h-[120px] mb-4"><Icons.Heart className="w-16 h-16 text-brand-red animate-heartbeat"/><span className="absolute text-3xl font-bold text-brand-blue">{hrBpm}</span></div><p className="text-[14px] text-text-secondary mb-1">BPM</p><h3 className="text-[20px] font-bold mb-2">Heart rate secured.</h3><p className="text-[14px] text-text-secondary">"Let's get moving!"</p></div>
+                                <div className="w-full pb-2 flex justify-center"><UserPostCard post={mockCommunityPosts[activePostIndex]} /></div>
                             </div>
                         )}
 
                         {flowStep === 'manual_entry' && (
                             <div className="w-full animate-fade-up" data-zone-id="device_connect_manual_entry" data-prd-zone="device_connect_manual_entry">
+                                <h3 className="text-[18px] font-bold mb-4">Verify Model</h3>
                                 <input type="text" placeholder="Model e.g. SF-0001" className="w-full h-14 bg-white rounded-[16px] px-5 outline-none font-bold shadow-sm border border-gray-200" value={searchModel} onChange={(e) => setSearchModel(e.target.value)} />
-                                <p className="text-[11px] text-text-secondary mt-3 italic text-center">Try "SF-0001" for a match simulation.</p>
+                                <p className="text-[11px] text-text-secondary mt-3 italic">Try "SF-0001" for a match simulation.</p>
                             </div>
                         )}
 
@@ -203,45 +387,69 @@
                     </div>
 
                     <div className="px-6 pb-12 pt-4 bg-gradient-to-t from-bg-page via-bg-page to-transparent shrink-0" data-zone-id="device_connect_cta" data-prd-zone="device_connect_cta">
-                        {flowStep === 'prep' && (
-                            <button onClick={() => setShowModal(true)} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn" data-i18n="device_btn_ready">I'm Ready</button>
-                        )}
-                        {flowStep === 'scanning' && !connectedSuccess && (
-                            <button onClick={() => setFlowStep('manual_entry')} className="w-full text-[13px] font-bold text-brand-blue underline">Can't find device?</button>
-                        )}
                         {flowStep === 'manual_entry' && (
                             <button onClick={checkModel} className="w-full py-4 bg-brand-blue text-white rounded-[16px] font-bold mt-6 shadow-lg">Verify Device</button>
                         )}
                         {flowStep === 'check_bt' && (
-                            <button onClick={() => setFlowStep('scanning')} className="w-full py-4 bg-brand-blue text-white rounded-[16px] font-bold">Retry Connection</button>
+                            <button onClick={() => { setFlowStep('scanning'); setIsFound(false); setTimeout(() => setIsFound(true), 2000); }} className="w-full py-4 bg-brand-blue text-white rounded-[16px] font-bold">Retry Connection</button>
                         )}
                         {flowStep === 'incompatible' && (
                             <button onClick={() => window.navigateTo('plan_create')} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold">Create My Plan</button>
                         )}
-                        {connectedSuccess && (
+                        {(showEquipSuccess || showHrSuccess) && (
                             <button onClick={() => window.navigateTo('workout_reminder')} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn">Start First Workout</button>
+                        )}
+                        {flowStep === 'branch_scale' && scaleMeasured && (
+                            <button onClick={() => window.navigateTo('plan_create')} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn">Register to unlock full report</button>
                         )}
                     </div>
 
-                    {showModal && (
-                        <div className="absolute inset-0 z-[60] bg-black/40 backdrop-blur-[2px] flex items-center justify-center p-6" data-zone-id="device_connect_permission" data-prd-zone="device_connect_permission">
-                            <div className="bg-white/95 w-[280px] rounded-[14px] text-center overflow-hidden">
-                                <div className="p-5 pb-4"><h3 className="font-semibold mb-1">Bluetooth Permission</h3><p className="text-[13px] opacity-80" data-i18n="device_permission_text">To find your Sunny equipment, I need Bluetooth access.</p></div>
-                                <div className="border-t flex text-[17px]"><button onClick={() => setShowModal(false)} className="flex-1 py-3 text-blue-500 border-r">Deny</button><button onClick={handleAllowPermission} className="flex-1 py-3 text-blue-500 font-bold">Allow</button></div>
+                    {showScanResultsModal && (
+                        <div className="absolute inset-0 z-[60] bg-black/40 flex items-end justify-center" data-zone-id="device_connect_scan_results" data-prd-zone="device_connect_scan_results">
+                            <div className="w-full max-w-[390px] bg-white rounded-t-[24px] max-h-[80vh] overflow-hidden shadow-2xl animate-slide-up">
+                                <div className="px-6 py-4 border-b">
+                                    <h3 className="font-bold text-[18px] text-brand-blue">Add Equipment</h3>
+                                </div>
+                                <p className="px-6 py-2 text-[14px] text-text-secondary">Nearby devices have been searched</p>
+                                <div className="px-6 py-4 space-y-3 overflow-y-auto max-h-[50vh] no-scrollbar">
+                                    {DEVICE_OPTIONS.map((d) => {
+                                        const isConnecting = selectedDevice?.id === d.id && connState === 'connecting';
+                                        return (
+                                            <div
+                                                key={d.id}
+                                                onClick={() => !isConnecting && connState === 'idle' && handleConnect(d)}
+                                                data-zone-id={d.type === 'equipment' ? 'device_connect_branch_equipment' : d.type === 'cadence' ? 'device_connect_branch_cadence' : d.type === 'hr' ? 'device_connect_branch_hr' : 'device_connect_branch_scale'}
+                                                data-prd-zone={d.type === 'equipment' ? 'device_connect_branch_equipment' : d.type === 'cadence' ? 'device_connect_branch_cadence' : d.type === 'hr' ? 'device_connect_branch_hr' : 'device_connect_branch_scale'}
+                                                className={`flex items-center justify-between p-4 rounded-[16px] bg-bg-neutral ${isConnecting ? 'cursor-wait' : 'hover:bg-gray-100 cursor-pointer'}`}
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-12 h-12 rounded-[12px] bg-white flex items-center justify-center text-[24px] shadow-sm">{d.emoji}</div>
+                                                    <div><h4 className="font-bold text-[15px] text-brand-blue">{d.name}</h4><p className="text-[12px] text-text-secondary">{d.model}</p></div>
+                                                </div>
+                                                {isConnecting ? <Icons.Loader className="w-5 h-5 animate-spin text-brand-blue"/> : <span className="text-brand-red font-bold text-[14px]">Add &gt;</span>}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                <div className="px-6 py-4 border-t space-y-3">
+                                    <button onClick={() => { setShowScanResultsModal(false); setIsFound(false); setTimeout(() => setIsFound(true), 2000); }} className="w-full py-3.5 bg-brand-red text-white rounded-[16px] font-bold">Retry Search</button>
+                                    <button onClick={() => { setShowScanResultsModal(false); setFlowStep('manual_entry'); }} className="w-full text-[13px] font-bold text-brand-blue underline">Can't find my device?</button>
+                                </div>
                             </div>
                         </div>
                     )}
 
                     {showScanFailedModal && (
                         <div className="absolute inset-0 z-[60] bg-black/40 backdrop-blur-[2px] flex items-center justify-center p-6" data-zone-id="device_connect_scan_failed" data-prd-zone="device_connect_scan_failed">
-                            <div className="bg-white w-[300px] rounded-[20px] p-6 text-center">
+                            <div className="bg-white w-[320px] rounded-[20px] p-6 text-center">
                                 <h3 className="font-bold text-[18px] mb-2">Scan Failed</h3>
                                 <p className="text-[14px] text-text-secondary mb-6">No device found within 10 seconds. Check that your equipment is powered on and within 5m.</p>
                                 <button onClick={() => { setShowScanFailedModal(false); setFlowStep('manual_entry'); }} className="w-full py-3 bg-brand-blue text-white rounded-[12px] font-bold mb-3">Verify Model</button>
-                                <button onClick={() => setShowScanFailedModal(false)} className="w-full py-3 text-text-secondary font-medium">Retry Scan</button>
+                                <button onClick={() => { setShowScanFailedModal(false); setIsFound(false); setTimeout(() => setIsFound(true), 2000); }} className="w-full py-3 text-text-secondary font-medium">Retry Scan</button>
                             </div>
                         </div>
                     )}
+
                 </div>
             );
         };

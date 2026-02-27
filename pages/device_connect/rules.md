@@ -16,16 +16,16 @@
 
 ---
 
-### ⚡ Step 1: 准备与权限 `[device_connect_prep]`
+### ⚡ Step 1: 权限获取（独立引导页）`[device_connect_permission]`
 
 | 触发方式 | 🧩 模块层级 | 🔗 页面出口 |
 | :--- | :--- | :--- |
-| 点击 I'm Ready | L1 核心 | 弹权限请求 → 授权后进入扫描 |
+| 页面进入 | L1 核心 | Continue → 扫描 |
 
 **📝 业务逻辑**：
-* **直达扫描**：跳过中间介绍，直接拉起权限请求。
-* **权限文案**：iOS 蓝牙 / Android 蓝牙+附件+位置。「为了帮您找到专属的 Sunny 器械，我需要使用您的蓝牙权限」。
-* **准备提示**：Power on your device，设备需在 5m 内并通电。
+* **独立引导页**：权限页为全屏独立引导，非弹窗。
+* **权限卡片**：Bluetooth（已勾选）、Location（Open）、Nearby Devices（Open）。
+* **确认授权**：点击 Continue 后进入扫描页。
 
 ---
 
@@ -36,9 +36,22 @@
 | 蓝牙扫描 | Global | 发现设备 / 10s 超时 |
 
 **📝 业务逻辑**：
-* **扫描态**：雷达动效 + 蓝牙图标，展示 Searching...
-* **设备发现**：展示设备卡片（型号、信号），点击发起连接。
+* **扫描态**：雷达动效 + 放大镜图标，文案 "Scaning Equipments Nearby..."，"Please keep the device turned on"。
+* **设备发现**：以底部弹窗展示设备列表，标题 "Add Equipment"，副标题 "Nearby devices have been searched"，每项带 "Add >" 按钮。
 * **超时**：10s 未扫到设备 → 弹出扫描失败弹窗，提供型号校验入口。
+
+---
+
+### 📋 扫描结果弹窗 `[device_connect_scan_results]`
+
+| 触发方式 | 🧩 模块层级 | 🔗 页面出口 |
+| :--- | :--- | :--- |
+| 扫描到设备 | L1 核心 | Add → 连接 / Retry Search / X 关闭 |
+
+**📝 业务逻辑**：
+* **弹窗形式**：底部升起弹窗，覆盖扫描页背景。
+* **设备列表**：Cadence / BMI Smart Scale / Elliptical / HR 等，每项 "Add >" 发起连接。
+* **Retry Search**：重试扫描。**X**：关闭弹窗，留屏。
 
 ---
 
@@ -124,9 +137,21 @@
 | 连接 Scale 后 | L1 核心 | 测量 → 注册拦截 |
 
 **📝 业务逻辑**：
-* **文案**："Please stand on the scale again and keep it light on."
+* **文案**："Please stand on the scale bare-footed." / "Please stand on the scale again and keep it light on."
 * **展示**：仅清晰展示体重 (Weight)，体脂/BMI/骨骼肌等做高斯模糊/加锁。
-* **拦截**：弹窗 "Register to monitor more body data and unlock your full report." → 注册流程。
+* **拦截**：测量完成后弹窗 "Register to monitor more body data and unlock your full report." → 注册流程。
+
+---
+
+### 🔒 Scale 注册拦截弹窗 `[device_connect_scale_register]`
+
+| 触发方式 | 🧩 模块层级 | 🔗 页面出口 |
+| :--- | :--- | :--- |
+| Scale 测量完成 | L1 核心 | Register Now → plan_create / Maybe Later → 留屏 |
+
+**📝 业务逻辑**：
+* **弹窗**：强转化卡片，主按钮 "Register Now" 进入注册/plan_create。
+* **Maybe Later**：关闭弹窗，展示 Create My Plan 兜底 CTA。
 
 ---
 
@@ -147,4 +172,4 @@
 
 | 触发方式 | 🧩 模块层级 | 🔗 说明 |
 | :--- | :--- | :--- |
-| 按流程步骤 | Global | I'm Ready / Can't find device? / Verify / Retry / Create My Plan / Start First Workout |
+| 按流程步骤 | Global | Can't find device? / Verify Device / Retry / Create My Plan / Start First Workout |
