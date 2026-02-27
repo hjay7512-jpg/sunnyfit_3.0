@@ -158,25 +158,21 @@
             const iframe = document.getElementById('ui-iframe');
             iframe.src = `${projectUrl}/pages/${pageDir}/ui.html`;
 
-            // 2. 拉取并渲染右侧 JSON 规则（优先 rules.json，若无则尝试 rules.md）
+            // 2. 拉取并渲染右侧规则（优先 rules.json，若无则尝试 rules.md 合并格式）
             const rulesContainer = document.getElementById('rules-container');
             try {
                 let res = await fetch(`${projectUrl}/pages/${pageDir}/rules.json`);
-                if (!res.ok) {
-                    res = await fetch(`${projectUrl}/pages/${pageDir}/rules.md`);
-                    if (!res.ok) throw new Error('未找到业务规则文件 (rules.json 或 rules.md)');
+                let rulesData = null;
+                if (res.ok) {
+                    try {
+                        rulesData = await res.json();
+                    } catch (_) { rulesData = null; }
                 }
-                if (!res.ok) throw new Error('未找到业务规则文件 (rules.json)');
-                
-                const rulesData = await res.json();
-                
-                // 更新右侧标题
-                document.getElementById('page-title').innerText = rulesData.page_name || '未命名页面';
-                document.getElementById('page-id-display').innerText = `ID: ${pageId}`;
-
-                // 渲染卡片
-                let cardsHtml = '';
-                if (rulesData.zones && rulesData.zones.length > 0) {
+                if (rulesData && rulesData.zones) {
+                    // JSON 格式：按 zone 逐条渲染
+                    document.getElementById('page-title').innerText = rulesData.page_name || '未命名页面';
+                    document.getElementById('page-id-display').innerText = `ID: ${pageId}`;
+                    let cardsHtml = '';
                     rulesData.zones.forEach(zone => {
                         cardsHtml += `
                             <div class="rule-card" data-zone="${zone.zone_id}">
@@ -188,10 +184,17 @@
                             </div>
                         `;
                     });
+                    rulesContainer.innerHTML = cardsHtml || '<p style="color:#999; font-size:14px;">暂无逻辑配置</p>';
                 } else {
-                    cardsHtml = '<p style="color:#999; font-size:14px;">暂无逻辑配置</p>';
+                    // Markdown 格式：合并描述，直接渲染
+                    res = await fetch(`${projectUrl}/pages/${pageDir}/rules.md`);
+                    if (!res.ok) throw new Error('未找到业务规则文件 (rules.json 或 rules.md)');
+                    const markdownText = await res.text();
+                    const htmlContent = marked.parse(markdownText);
+                    document.getElementById('page-title').innerText = pageId;
+                    document.getElementById('page-id-display').innerText = `ID: ${pageId}`;
+                    rulesContainer.innerHTML = `<div class="markdown-body">${htmlContent}</div>`;
                 }
-                rulesContainer.innerHTML = cardsHtml;
 
             } catch (error) {
                 rulesContainer.innerHTML = `<p class="error-msg">解析规则失败: ${error.message}</p>`;
