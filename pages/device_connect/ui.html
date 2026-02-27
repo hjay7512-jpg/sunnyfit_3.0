@@ -103,6 +103,21 @@
             </div>
         );
 
+        const mockCourseCards = [
+            { id: 1, image: "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=400&h=300&fit=crop", title: "10min Light Cardio", description: "Gentle cardio to get your heart pumping." },
+            { id: 2, image: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400&h=300&fit=crop", title: "Heart Rate HIIT", description: "High intensity intervals for maximum burn." },
+            { id: 3, image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=300&fit=crop", title: "Cardio Blast", description: "Quick sweat session with real-time BPM tracking." }
+        ];
+        const CourseCard = ({ course }) => (
+            <div className="w-full bg-white rounded-[20px] overflow-hidden shadow-card flex">
+                <div className="w-[100px] h-[100px] shrink-0 bg-bg-neutral overflow-hidden"><img src={course.image} className="w-full h-full object-cover" alt="" /></div>
+                <div className="flex-1 p-4 flex flex-col justify-center text-left min-w-0">
+                    <h4 className="font-bold text-[15px] text-brand-blue leading-tight mb-1">{course.title}</h4>
+                    <p className="text-[13px] text-text-secondary line-clamp-2">{course.description}</p>
+                </div>
+            </div>
+        );
+
         const SunnyLogo = ({ className = "" }) => (
             <div className="w-full h-full animate-breathe">
                 <svg viewBox="0 0 32 32" fill="none" className={`w-full h-full drop-shadow-glow ${className}`}>
@@ -142,6 +157,7 @@
             const [scaleMeasured, setScaleMeasured] = useState(false);
             const [hrBpm, setHrBpm] = useState(72);
             const [activePostIndex, setActivePostIndex] = useState(0);
+            const [activeCourseIndex, setActiveCourseIndex] = useState(0);
 
             useEffect(() => {
                 if (flowStep !== 'scanning' || isFound) return;
@@ -199,10 +215,16 @@
             }, [flowStep, scaleMeasured]);
 
             useEffect(() => {
-                const onSuccess = flowStep === 'branch_equipment' || (flowStep === 'branch_hr' && branchState === 'hr');
-                if (!onSuccess) return;
+                if (flowStep !== 'branch_equipment') return;
                 setActivePostIndex(0);
                 const iv = setInterval(() => setActivePostIndex((p) => (p + 1) % mockCommunityPosts.length), 5000);
+                return () => clearInterval(iv);
+            }, [flowStep]);
+
+            useEffect(() => {
+                if (flowStep !== 'branch_hr' || branchState !== 'hr') return;
+                setActiveCourseIndex(0);
+                const iv = setInterval(() => setActiveCourseIndex((c) => (c + 1) % mockCourseCards.length), 5000);
                 return () => clearInterval(iv);
             }, [flowStep, branchState]);
 
@@ -294,7 +316,7 @@
 
                         {showEquipSuccess && (
                             <div className="w-full animate-fade-up" data-zone-id="device_connect_branch_equipment" data-prd-zone="device_connect_branch_equipment">
-                                <div className="text-center mb-6"><div className="text-brand-green text-7xl mb-4 animate-pop">✓</div><h3 className="text-[24px] font-bold mb-2">Connected!</h3><p className="text-[14px] text-text-secondary">Your equipment is ready.</p></div>
+                                <div className="text-center mb-6"><div className="text-brand-green text-7xl mb-4 animate-pop">✓</div><h3 className="text-[24px] font-bold mb-2">Connected!</h3><p className="text-[14px] text-text-secondary">Start your jounary with SunnyFams</p></div>
                                 <div className="w-full pb-2 flex justify-center"><UserPostCard post={mockCommunityPosts[activePostIndex]} /></div>
                             </div>
                         )}
@@ -353,8 +375,8 @@
 
                         {showHrSuccess && (
                             <div className="w-full animate-fade-up" data-zone-id="device_connect_branch_hr" data-prd-zone="device_connect_branch_hr">
-                                <div className="text-center mb-6"><div className="relative inline-flex items-center justify-center w-[30px] h-[120px] mb-4"><Icons.Heart className="w-16 h-16 text-brand-red animate-heartbeat"/><span className="absolute text-3xl font-bold text-brand-blue">{hrBpm}</span></div><p className="text-[14px] text-text-secondary mb-1">BPM</p><h3 className="text-[20px] font-bold mb-2">Heart rate secured.</h3><p className="text-[14px] text-text-secondary">"Let's get moving!"</p></div>
-                                <div className="w-full pb-2 flex justify-center"><UserPostCard post={mockCommunityPosts[activePostIndex]} /></div>
+                                <div className="text-center mb-6"><div className="relative inline-flex items-center justify-center w-[120px] h-[120px] mb-4"><Icons.Heart className="w-16 h-16 text-brand-red animate-heartbeat"/><span className="absolute text-3xl font-bold text-brand-blue">{hrBpm}</span></div><p className="text-[14px] text-text-secondary mb-1">BPM</p><h3 className="text-[20px] font-bold mb-2">Heart rate secured.</h3><p className="text-[14px] text-text-secondary">"Let's get moving!"</p></div>
+                                <div className="w-full pb-2 flex justify-center"><CourseCard course={mockCourseCards[activeCourseIndex]} /></div>
                             </div>
                         )}
 
