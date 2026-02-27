@@ -166,7 +166,7 @@
                         
                         {/* Step 1: Goal */}
                         {step === 1 && (
-                            <div className="animate-fade-up">
+                            <div className="animate-fade-up" data-zone-id="plan_create_step_goal">
                                 <div className="flex flex-col items-center pt-2 px-8 text-center">
                                     <div className="mb-6"><SunnyLogo /></div>
                                     <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2 mb-2" data-i18n-key="plan_create_title_focus">What is your core focus?</h3>
@@ -221,7 +221,7 @@
 
                         {/* Step 3: Frequency & Health */}
                         {step === 3 && !thinking && (
-                            <div className="animate-fade-up px-6">
+                            <div className="animate-fade-up px-6" data-zone-id="plan_create_step_frequency">
                                 <div className="flex flex-col items-center pt-2 text-center px-2">
                                     <div className="mb-6"><SunnyLogo /></div>
                                     <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2 mb-6" data-i18n="plan_create_title_frequency">Frequency & Condition</h3>
@@ -253,7 +253,7 @@
 
                         {/* AI Thinking Simulation - 修正：保持 Logo 位置不变，仅内容切换 */}
                         {thinking && (
-                            <div className="absolute inset-0 z-50 flex flex-col items-center bg-bg-page animate-fade-up" data-prd-zone="plan_create_thinking">
+                            <div className="absolute inset-0 z-50 flex flex-col items-center bg-bg-page animate-fade-up" data-zone-id="plan_create_thinking" data-prd-zone="plan_create_thinking">
                                 {/* 头部区域：使用 flex-col + pt-2，与之前的步骤完全对齐 */}
                                 <div className="flex flex-col items-center pt-2 px-8 text-center">
                                     <div className="mb-6 animate-pulse-slow"><SunnyLogo /></div>
@@ -268,7 +268,7 @@
 
                         {/* Step A: The Vision & Commitment (Step 4) */}
                         {step === 4 && (
-                            <div className="animate-fade-up">
+                            <div className="animate-fade-up" data-zone-id="plan_create_step_vision">
                                 <div className="px-8 pt-2 flex flex-col items-center text-center">
                                     <div className="mb-6"><SunnyLogo /></div>
                                     <h3 className="text-[22px] font-bold text-text-primary leading-tight mt-2" data-i18n="plan_create_title_strategy">Your Strategy for Mastery</h3>
@@ -318,7 +318,7 @@
 
                         {/* Step B: The Partnership (Coach Selection) */}
                         {step === 5 && (
-                            <div className="animate-fade-up">
+                            <div className="animate-fade-up" data-zone-id="plan_create_step_coach">
                                 <div className="px-8 pt-2 flex flex-col items-center text-center">
                                     <div className="mb-6"><SunnyLogo /></div>
                                     <h3 className="text-[22px] font-bold text-text-primary leading-tight mt-2" data-i18n="plan_create_title_partnership">The Partnership</h3>
@@ -349,7 +349,7 @@
 
                         {/* Step C: The Ignition (Persona Switch) */}
                         {step === 6 && selectedCoach && (
-                            <div className="animate-fade-up">
+                            <div className="animate-fade-up" data-zone-id="plan_create_ignition">
                                 <div className="px-8 pt-6 flex flex-col items-center text-center" data-prd-zone="plan_create_ignition">
                                     <div className="mb-6"><SunnyLogo avatar={selectedCoach.avatar} bgColor={selectedCoach.color} className="shadow-xl scale-110" /></div>
                                     <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2" data-i18n="plan_create_title_ignition">"Good choice. I'm {selectedCoach.name}."</h3>
@@ -386,7 +386,7 @@
                     </div>
 
                     {/* Bottom CTA Area */}
-                    <div className="px-6 pb-12 pt-4 bg-gradient-to-t from-bg-page via-bg-page to-transparent shrink-0 z-50" data-prd-zone="plan_create_cta_area">
+                    <div className="px-6 pb-12 pt-4 bg-gradient-to-t from-bg-page via-bg-page to-transparent shrink-0 z-50" data-zone-id="plan_create_cta_area" data-prd-zone="plan_create_cta_area">
                         {step < 3 && (
                             <button 
                                 onClick={handleNext} 

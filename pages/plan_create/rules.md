@@ -1,90 +1,102 @@
-# plan_create 业务逻辑
+# 🤖 AI 计划生成向导 (Plan Create)
 
-> 按步骤/模块整理，关联 zone 用于 UI 双向联动。
-
----
-
-## Step1 目标选择（四选一）
-
-**交互：** 点击目标卡片
-
-**逻辑：**
-- 四选一：fat_loss | muscle | vitality | rehab
-- 用户点击后记录至状态机 `selections.goal = '{value}'`
-- 被选中卡片呈现 `border-brand-red`、`bg-brand-red/5` 高亮
-- 未选目标时底部 `plan_create_cta_continue` 保持 disabled
-
-**关联 zone：** `plan_create_goal_fat_loss` \| `plan_create_goal_muscle` \| `plan_create_goal_vitality` \| `plan_create_goal_rehab`
+> **页面定位**：App 核心的新用户破冰与建档流程（Onboarding）。通过 6 步沉浸式对话式 UI，收集用户的身体目标与硬件条件，最终为其生成专属 AI 训练计划及教练人设。
 
 ---
 
-## Step2 器材选择
+### 🎯 Step 1: 核心目标选择 `[plan_create_step_goal]`
 
-**交互：** 点击器材卡片 / 无器材
+| 触发方式 | 🧩 模块层级 | 🔗 页面出口 |
+| :--- | :--- | :--- |
+| 点击卡片单选 | L1 核心 | 留屏，解锁 Continue 按钮 |
 
-**逻辑：**
-- **无器材**：点击后 `selections.equip = ['None']`，与所有有器材选项互斥
-- **有氧/配件**：多选，记录至 `selections.equip`；若当前含 `None` 则选择具体器材时移除 `None`
-- 选中项显示 Check 图标
-
-**关联 zone：** `plan_create_equip_none` \| `plan_create_equip_cardio_accessories`
-
----
-
-## Step3 频次（三选一）
-
-**交互：** 点击频次选项
-
-**逻辑：**
-- 单选，`selections.freq = '{3|4|5}'`
-- 3/4/5 天/周 对应标签 Newbie / Pro / Elite
-
-**关联 zone：** `plan_create_freq_3` \| `plan_create_freq_4` \| `plan_create_freq_5`
+**📝 业务逻辑**：
+* **交互规则**：单选逻辑。用户必须在 4 个核心目标（Lose Weight / Build Muscle / Keep Fit / Improve Endurance）中选择一项。
+* **状态控制**：未选择时，底部的 `Continue` 按钮为 Disabled (透明度 30%) 且不可点击；选中后按钮高亮可用。
+* **数据埋点**：记录用户初始偏好标签，用于冷启动时推荐算法的权重初始化。
 
 ---
 
-## Step3 排除项（多选）
+### 🚲 Step 2: 硬件器材收集 `[plan_create_step_equipment]`
 
-**交互：** 点击排除项
+| 触发方式 | 🧩 模块层级 | 🔗 页面出口 |
+| :--- | :--- | :--- |
+| 点击卡片多选 | L1 核心 | 留屏，解锁 Continue 按钮 |
 
-**逻辑：**
-- Knee Pain、Back Pain、No Jumping、Heart/BP 多选
-- 记录至 `selections.health`，用于生成计划时排除对应动作
-
-**关联 zone：** `plan_create_exclude_health`
-
----
-
-## Step3 CTA - AI 分析中
-
-**交互：** 点击「Generate My AI Plan」后
-
-**逻辑：**
-- 先展示 2.5s 全屏 thinking 动效（selections.goal / equip 相关文案 + 三点跳动）
-- 完成后 `setStep(4)`
-
-**关联 zone：** `plan_create_thinking`
+**📝 业务逻辑**：
+* **交互规则 (多选与排他)**：
+  1. 默认状态为空。用户可多选具体器材（Treadmill / Bike / Elliptical / Rower）。
+  2. **排他逻辑**：当用户点击 `None, just bodyweight` 时，自动清空并互斥掉其他已选的器材；反之，若在选中 None 的状态下点击具体器材，则自动取消 None 的选中状态。
+* **状态控制**：至少选中任意一项（含 None）才允许进入下一步。
 
 ---
 
-## Step5 教练选择（三选一）
+### 📅 Step 3: 锻炼频次与偏好 `[plan_create_step_frequency]`
 
-**交互：** 点击教练卡片
+| 触发方式 | 🧩 模块层级 | 🔗 页面出口 |
+| :--- | :--- | :--- |
+| 滑动 Slider | L1 核心 | `👉 触发 AI 生成状态` |
 
-**逻辑：**
-- 三选一，`selectedCoach = { id: '{alex|sarah|max}', ... }`
-- 选中卡片 `scale-[1.02]`、`border-brand-red`
-
-**关联 zone：** `plan_create_coach_alex` \| `plan_create_coach_sarah` \| `plan_create_coach_max`
+**📝 业务逻辑**：
+* **频率滑块 (Slider)**：默认值为 3 days/week。区间为 1-7 天，步长为 1，滑动时上方数字实时联动。
+* **排除日期 (Exclude Days)**：提供周六/周日的快速排除标签（Toggle 逻辑）。若用户滑动频率到 7 天，但又勾选了排除周六日，系统需在前端进行拦截提示或自动将频率降为 5 天（*注：当前 Demo 仅做收集，真实业务需加校验*）。
+* **动作流转**：点击 `Generate My AI Plan` 后，提交 Step 1-3 收集的所有表单数据，页面进入 Step 4 (AI 思考状态)。
 
 ---
 
-## 底部 CTA 组
+### ⏳ Step 4: AI 计算与生成动效 (中间态) `[plan_create_thinking]`
 
-| zone | 显示时机 | 逻辑 |
-|------|----------|------|
-| `plan_create_cta_continue` | Step1/2 | 需 `selections.goal` 已选(Step1) 才可点；点击 `setStep(step+1)` |
-| `plan_create_cta_generate` | Step3 且 !thinking | 点击后 `setThinking(true)`，2.5s 后 `setStep(4)` |
-| `plan_create_cta_yes` | Step4 | 点击 `setStep(5)` |
-| `plan_create_cta_confirm_coach` | Step5 | 需 `selectedCoach` 已选；点击 `setStep(6)` |
-| `plan_create_cta_start_now` | Step6 | 点击后 `navigateTo('first_ride')` |
+| 触发方式 | 🧩 模块层级 | 🔗 页面出口 |
+| :--- | :--- | :--- |
+| 自动流转 | Global 全局 | `👉 自动进入 Step 5` |
+
+**📝 业务逻辑**：
+* **沉浸式动效**：隐藏底部操作按钮。展示呼吸态的 Sunny Logo 和“Analyzing your profile...”等文本。
+* **假加载策略 (Mock Loading)**：为增强“AI 量身定制”的仪式感，前端强制设定 2.5 秒的最小停留时间，期间通过定时器依次切换 3 句加载文案。
+* **异常处理**：若后端接口超时或失败，需在 10s 后出 Toast 提示并退回 Step 3。
+
+---
+
+### 📊 Step 4b: 策略展示 `[plan_create_step_vision]`
+
+| 触发方式 | 🧩 模块层级 | 🔗 页面出口 |
+| :--- | :--- | :--- |
+| 自动流转 | L1 核心 | 点击 YES, LET'S DO THIS 进入教练选择 |
+
+**📝 业务逻辑**：
+* **策略可视化**：展示代谢阶段（Wake Up / Burn / Shape / Habit）柱状图与“One Final Question”。
+* **转化承接**：用户确认后进入教练人设选择。
+
+---
+
+### 🗣️ Step 5: 专属教练人设选择 `[plan_create_step_coach]`
+
+| 触发方式 | 🧩 模块层级 | 🔗 页面出口 |
+| :--- | :--- | :--- |
+| 点击卡片单选 | L1 核心 | 留屏，解锁 Confirm 按钮 |
+
+**📝 业务逻辑**：
+* **内容渲染**：在屏幕上方展示已生成的“计划大纲”（总时长、周频率等）。
+* **教练选择 (单选)**：为计划分配 AI 教练语音/指导风格。提供 Emma(鼓励型)、David(严厉型)、Sarah(技术型) 三种人设。
+* **状态控制**：必须选中一名教练，底部的 `Confirm Coach` 按钮才可点击。
+
+---
+
+### 🚀 Step 6: 建档完成与首骑破冰 `[plan_create_ignition]`
+
+| 触发方式 | 🧩 模块层级 | 🔗 页面出口 |
+| :--- | :--- | :--- |
+| 点击 START NOW | L1 核心 | `👉 /pages/first_ride` |
+
+**📝 业务逻辑**：
+* **最终确认**：展示庆祝动效与最终配置清单。
+* **注册拦截 (核心漏斗)**：在真实业务中，点击 `START NOW` 将唤起手机号/Apple/Google 的一键注册/登录弹窗。因为此时用户已经被 AI 计划吸引，注册转化率达到峰值。
+* **数据上报**：注册成功后，合并 Guest 态的 Device ID 与正式 User ID，将 Step 1-5 的建档数据持久化落库。
+
+---
+
+### 🔘 底部 CTA 区 `[plan_create_cta_area]`
+
+| 触发方式 | 🧩 模块层级 | 🔗 说明 |
+| :--- | :--- | :--- |
+| 固定于底部 | Global | Continue / Generate / Confirm Coach / START NOW 等按钮 |
