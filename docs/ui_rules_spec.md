@@ -124,6 +124,49 @@
 - [ ] 是否覆盖超时、失败、跳过等异常路径？
 - [ ] 是否可据此写出可执行代码？
 
+#### 1.5.7 【关键】业务逻辑 vs Demo 模拟逻辑 — 禁止混淆
+
+**rules.md 描述的是「业务逻辑」，而非「Demo 实现」或「UI 技术细节」。**
+
+| 类型 | 定义 | rules 应写 | 禁止写 |
+|------|------|------------|--------|
+| **业务逻辑** | 产品/业务层面的规则，与实现无关 | 用户目标、系统职责、数据约束、异常路径、路由出口 | — |
+| **Demo 模拟逻辑** | 为演示而写的 mock 行为 | — | 定时器 2.5s、setTimeout、mock 数据、前端硬编码 |
+| **实现细节** | 前端/后端技术实现 | — | 「定时器切换 3 句文案」「setState」「调用某 API」 |
+
+**判断原则**：
+- 写 **做什么**（What），不写 **怎么做**（How）
+- 写 **真实业务要求**，不写 **Demo 的 mock 实现**
+- 枚举（选项、文案）必须以 **权威来源** 为准（PRD / description.txt / 当前 ui.html），三者不一致时需注明来源
+
+**示例 — 错误 vs 正确：**
+
+| 错误（混入 Demo/实现） | 正确（纯业务逻辑） |
+|------------------------|--------------------|
+| 「假加载策略：前端强制设定 2.5 秒最小停留，定时器切换 3 句加载文案」 | 「加载态：调用计划生成接口，等待期间展示 Sunny Logo 与加载文案；接口超时 10s 则 Toast 并退回上一步」 |
+| 「提供 Emma、David、Sarah 三种人设」（与实际 Demo 的 Alex/Sarah/Max 不符） | 以 PRD/description 为准写出人设；若 Demo 与 PRD 不同，写 PRD 内容并加 *注：Demo 中为 Alex/Sarah/Max* |
+| 「排除日期：周六/周日 Toggle」（Demo 实际是 Exclude Exercises：Knee Pain 等） | 以实际业务为准；若 PRD 为周六日，Demo 为身体部位，应写 PRD 逻辑并注明 *Demo 当前展示 Exclude Exercises* |
+
+#### 1.5.8 业务逻辑数据源优先级
+
+| 优先级 | 来源 | 用途 |
+|--------|------|------|
+| 1 | description.txt / orgin_knowledge/*.txt | 业务规则、文案、枚举的主来源 |
+| 2 | PRD / 产品文档 | 与 description 冲突时，以 PRD 为准 |
+| 3 | 当前 ui.html | 仅用于校验一致性；若与 PRD 不符，rules 写 PRD，并注明 Demo 差异 |
+
+**强制**：撰写 rules 前必须阅读 description / orgin_knowledge，禁止仅凭 ui.html 逆向推导业务逻辑。
+
+#### 1.5.9 禁止表述清单
+
+以下表述不得出现在 **📝 业务逻辑** 中：
+
+- `前端强制设定 X 秒`、`定时器`、`setTimeout`
+- `Mock Loading`、`假加载`（应写：加载态、等待接口返回）
+- 与当前 Demo/PRD 不符的枚举（人设名、目标选项、器材列表等）
+- 未在 description/PRD 中出现的交互（如「周六/周日排除」若 PRD 无则禁止写）
+- `*注：当前 Demo 仅做收集*` 等模糊兜底（应明确真实业务要求，Demo 差异单独注明）
+
 ---
 
 ## 二、ui.html 规范
@@ -192,6 +235,7 @@
 
 ### 2.6 国际化
 
+- 页面文案默认使用英文
 - 需翻译文案使用 `data-i18n-key` 或 `data-i18n`
 - 示例：`<h1 data-i18n-key="intent_select_greeting">Hi, I'm your AI Coach.</h1>`
 
@@ -203,8 +247,9 @@
 |--------|------|
 | zone_id 一一对应 | rules.md 中每个 `[zone_id]` 在 ui.html 均有对应 `data-zone-id` |
 | 路由出口可落地 | rules 中 `👉 page_id` 在 global_state_machine 中存在 |
-| 文案一致 | rules 中描述的主/副标题与 ui 展示一致 |
+| 文案一致 | rules 中描述的主/副标题、枚举与 description/PRD 一致；若与 Demo 不同需注明 |
 | 分支覆盖 | 规则中定义的分支（如 A/B/C/D）在 ui 中有实现或占位 |
+| **业务逻辑非 Demo 模拟** | 无「2.5s 定时器」「Mock Loading」「setTimeout」等 Demo 实现；无与 PRD/description 不符的枚举 |
 
 ---
 
@@ -217,8 +262,8 @@
 
 ## 五、新增/优化模块执行顺序
 
-1. **前置**：阅读 `global_state_machine.md` 与业务描述（description.txt / orgin_knowledge/*.txt）
-2. **rules.md**：按 1.1 结构编写，zone_id 命名遵循 1.2
+1. **前置（必做）**：阅读 `global_state_machine.md` 与 **业务描述**（`description.txt` / `orgin_knowledge/*.txt`），以业务描述为 rules 的主数据源，禁止仅凭 ui.html 逆向推导
+2. **rules.md**：按 1.1 结构编写，zone_id 命名遵循 1.2；业务逻辑遵循 1.5.7–1.5.9，描述真实业务规则，禁止混入 Demo 模拟逻辑
 3. **ui.html**：实现 Demo，关键区块按 2.3 埋点，zone 与 rules 一一对应
-4. **校验**：在 prd_view.html 中打开该页，确认规则 ↔ Demo 双向高亮正常
+4. **校验**：在 prd_view.html 中打开该页，确认规则 ↔ Demo 双向高亮；逐条核对 rules 业务逻辑是否与 description/PRD 一致，无 Demo 实现表述
 5. **收尾**：更新 global_state_machine 若有新增出口
