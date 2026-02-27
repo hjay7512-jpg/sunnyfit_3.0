@@ -150,14 +150,22 @@
             detailView.classList.add('active');
             breadcrumbs.innerHTML = `<a href="?project=${projectUrl}">项目主页</a> / <span>${pageId}</span>`;
             
+            // 页面 ID → 目录名映射（文档用 home/workout_result_light，实际目录为 home_page/workout_result）
+            const pageDirMap = { home: 'home_page', workout_result_light: 'workout_result' };
+            const pageDir = pageDirMap[pageId] || pageId;
+
             // 1. 设置左侧 Iframe 路径
             const iframe = document.getElementById('ui-iframe');
-            iframe.src = `${projectUrl}/pages/${pageId}/ui.html`;
+            iframe.src = `${projectUrl}/pages/${pageDir}/ui.html`;
 
-            // 2. 拉取并渲染右侧 JSON 规则
+            // 2. 拉取并渲染右侧 JSON 规则（优先 rules.json，若无则尝试 rules.md）
             const rulesContainer = document.getElementById('rules-container');
             try {
-                const res = await fetch(`${projectUrl}/pages/${pageId}/rules.json`);
+                let res = await fetch(`${projectUrl}/pages/${pageDir}/rules.json`);
+                if (!res.ok) {
+                    res = await fetch(`${projectUrl}/pages/${pageDir}/rules.md`);
+                    if (!res.ok) throw new Error('未找到业务规则文件 (rules.json 或 rules.md)');
+                }
                 if (!res.ok) throw new Error('未找到业务规则文件 (rules.json)');
                 
                 const rulesData = await res.json();
