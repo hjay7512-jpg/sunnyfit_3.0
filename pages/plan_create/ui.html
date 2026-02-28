@@ -188,7 +188,11 @@
                 <div className="mobile-viewport bg-bg-page flex flex-col font-sans">
                     {/* Header */}
                     <div className="px-6 pt-10 pb-4 flex items-center shrink-0">
-                        <button onClick={() => step > 1 && !thinking && setStep(step - 1)} className={`w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-brand-blue ${step === 1 || thinking ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}><Icons.ChevronLeft /></button>
+                        <button 
+                            onClick={() => { if (thinking) return; step === 1 ? window.navigateTo('intent_select') : setStep(step - 1); }} 
+                            className={`w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-brand-blue active:scale-95 transition-all ${thinking ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+                            data-zone-id="plan_create_header_back"
+                        ><Icons.ChevronLeft /></button>
                     </div>
 
                     <div className="flex-1 flex flex-col overflow-y-auto no-scrollbar relative">
