@@ -1,0 +1,519 @@
+
+    <script>
+      (function() {
+        try {
+          // 尝试访问，如果报错则说明被禁用
+          window.localStorage.getItem('test_probe');
+        } catch (e) {
+          console.warn('⚠️ Environment forbids localStorage. Injecting In-Memory Polyfill.');
+          var store = {};
+          // 强制覆盖 window.localStorage
+          Object.defineProperty(window, 'localStorage', {
+            value: {
+              getItem: function(key) { return store[key] || null; },
+              setItem: function(key, value) { store[key] = String(value); },
+              removeItem: function(key) { delete store[key]; },
+              clear: function() { store = {}; },
+              key: function(i) { return Object.keys(store)[i] || null; },
+              get length() { return Object.keys(store).length; }
+            },
+            writable: true,
+            configurable: true
+          });
+        }
+      })();
+    </script>
+  
+    <script>
+      document.addEventListener('click', (e) => {
+        if (e.ctrlKey && e.altKey) {
+          e.preventDefault();
+          e.stopPropagation();
+          const t = e.target;
+          // 智能获取选择器
+          let sel = t.tagName.toLowerCase();
+          if(t.id) sel += '#' + t.id;
+          else if(t.className && typeof t.className==='string' && t.className.trim()) sel += '.' + t.className.trim().split(' ')[0];
+          
+          window.parent.postMessage({
+            type: 'REQ_ANNOTATE',
+            x: e.clientX,
+            y: e.clientY,
+            selector: sel
+          }, '*');
+        }
+      }, true);
+    </script>
+  <!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SunnyFit Guest Mode PRD - Interactive (Stable)</title>
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { red: '#EE4343', blue: '#31426D', beige: '#F6E2CF', green: '#2BA471', darkRed: '#8B0000', sky: '#BDD0EB' },
+                        bg: { page: '#FFFBF7', card: '#FFFFFF', neutral: '#F5F7FA' },
+                        text: { primary: '#31426D', secondary: '#666666' }
+                    },
+                    fontFamily: { sans: ['Montserrat', 'sans-serif'] },
+                    boxShadow: {
+                        'glow': '0px 10px 30px rgba(222, 37, 41, 0.4)',
+                        'float-btn': '0px 10px 20px rgba(238, 67, 67, 0.3)',
+                        'card': '0px 4px 20px rgba(0,0,0,0.05)',
+                    },
+                    animation: {
+                        'fade-up': 'fadeUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
+                        'breathe': 'breathe 4s ease-in-out infinite',
+                        'pop': 'pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+                        'slide-in': 'slideIn 0.4s ease-out forwards',
+                    },
+                    keyframes: {
+                        fadeUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+                        breathe: { 
+                            '0%, 100%': { transform: 'scale(1)', filter: 'drop-shadow(0px 10px 20px rgba(222, 37, 41, 0.3))' }, 
+                            '50%': { transform: 'scale(1.05)', filter: 'drop-shadow(0px 15px 30px rgba(222, 37, 41, 0.5))' } 
+                        },
+                        pop: { '0%': { transform: 'scale(0.95)' }, '50%': { transform: 'scale(1.02)' }, '100%': { transform: 'scale(1)' } },
+                        slideIn: { '0%': { opacity: '0', transform: 'translateX(20px)' }, '100%': { opacity: '1', transform: 'translateX(0)' } }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; background-color: #1a1a1a; height: 100vh; overflow: hidden; font-family: 'Montserrat', sans-serif; }
+        .mobile-viewport { width: 390px; height: 844px; background-color: #FFFBF7; position: relative; overflow: hidden; border-radius: 40px; border: 8px solid #333; box-shadow: 0px 30px 60px rgba(0,0,0,0.5); transform: scale(0.95); transition: transform 0.3s; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        /* Editor Styles */
+        .editor-scroll::-webkit-scrollbar { width: 6px; }
+        .editor-scroll::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+        .editor-scroll::-webkit-scrollbar-track { background: #1a1a1a; }
+        .edit-input { background: transparent; border-bottom: 1px solid #ddd; width: 100%; outline: none; padding: 2px 0; transition: border-color 0.2s; }
+        .edit-input:focus { border-color: #31426D; }
+        .edit-textarea { background: #fafafa; border: 1px solid #eee; width: 100%; padding: 8px; border-radius: 4px; font-size: 12px; resize: vertical; min-height: 60px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel" id="app-logic">
+        const { useState, useEffect } = React;
+
+        // --- LAYER B: BUSINESS SPECS (数据与规则层) ---
+        // --SPECS_START--
+        const BUSINESS_SPECS = {
+            metadata: {
+                title: "SunnyFit: Guest Mode (Mood Check)",
+                version: "2.1.3",
+                lastUpdated: "2023-11-06",
+                overview: {
+                    title: "功能概述",
+                    content: "针对未注册/游客用户提供的“随便看看”体验流程。通过轻量级的心情/状态选择（Stress, Tired, Stiff, Energetic），直接推荐单节体验课，旨在降低决策成本，建立即时信任。",
+                    docs: [] 
+                },
+                changelog: [
+                    { version: "2.1.3", date: "2023-11-06", content: "修复保存文件黑屏问题 (Code Reconstruct Method)。", author: "Tooling Engineer" },
+                    { version: "2.1.0", date: "2023-11-05", content: "升级为可交互 PRD，支持实时配置推荐逻辑。", author: "Product Team" }
+                ]
+            },
+            scenes: {
+                stressed: {
+                    id: 'stressed', label: 'Stressed', icon: '😫',
+                    dialogueTitle: "I hear you. It’s been a long day, right?",
+                    dialogueBody: "Let's not overthink it. Just 8 minutes of gentle movement to help you breathe. No equipment needed, just you and the floor.",
+                    courseTitle: "8-Min Stress Relief Flow",
+                    courseTag: "Yoga • 🧘 Low Impact",
+                    image: "https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?auto=format&fit=crop&w=600&q=80",
+                    rules: [
+                        "对话语气需具备共情能力 (Empathy first)",
+                        "推荐课程时长不得超过 10 分钟",
+                        "禁止推荐高强度 (HIIT) 课程"
+                    ]
+                },
+                tired: {
+                    id: 'tired', label: 'Tired', icon: '🥱',
+                    dialogueTitle: "Low energy? That’s okay. We can work with that.",
+                    dialogueBody: "I've picked a 'Pajama Routine' for you. No jumping, no sweat—just pure stretching to help you sleep better.",
+                    courseTitle: "5-Min Bedtime Stretch",
+                    courseTag: "Stretch • 🌙 Relax",
+                    image: "https://images.unsplash.com/photo-1544367563-12123d8965cd?auto=format&fit=crop&w=600&q=80",
+                    rules: [
+                        "强调 'No Sweat' (无汗) 属性",
+                        "图片需传达宁静、昏暗的氛围",
+                        "适用场景文案需包含 'Bedtime'"
+                    ]
+                },
+                stiff: {
+                    id: 'stiff', label: 'Stiff', icon: '🤕',
+                    dialogueTitle: "Office shoulders? Let's fix that.",
+                    dialogueBody: "This quick session targets your neck and back specifically. You can even do this right beside your bed.",
+                    courseTitle: "Neck & Shoulder Release",
+                    courseTag: "Mobility • 💆 Relief",
+                    image: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&w=600&q=80",
+                    rules: [
+                        "针对久坐/办公人群优化文案",
+                        "推荐课程必须专注于肩颈或背部",
+                        "强调 'Relief' (缓解) 效果"
+                    ]
+                },
+                energetic: {
+                    id: 'energetic', label: 'Energetic', icon: '🔥',
+                    dialogueTitle: "Love the energy! Let’s put it to good use.",
+                    dialogueBody: "Here is a quick bodyweight burner. High efficiency, zero equipment. Let's see what you've got.",
+                    courseTitle: "10-Min Full Body Tone",
+                    courseTag: "HIIT • ⚡ High Intensity",
+                    image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=600&q=80",
+                    rules: [
+                        "文案风格需积极、挑战性 (Challenge)",
+                        "推荐课程应为 HIIT 或力量训练",
+                        "图片需展示动态张力"
+                    ]
+                }
+            }
+        };
+        // --SPECS_END--
+
+        // --- LAYER A: VIEW COMPONENTS ---
+        const Icons = {
+            ChevronLeft: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"/></svg>,
+        };
+
+        const SunnyLogo = () => (
+            <div className="w-[88px] h-[88px] flex items-center justify-center animate-breathe">
+                <svg viewBox="0 0 32 32" fill="none" className="w-full h-full drop-shadow-glow">
+                    <path d="M16.013 32C13.271 31.9018 10.5412 31.8755 7.87463 31.1231C3.57228 29.9252 1.23878 26.956 0.52873 22.6889C-0.165498 18.3226 -0.176144 13.8749 0.497173 9.50531C1.23001 4.58405 4.38577 1.32017 9.29472 0.537958C13.609 -0.165525 18.0077 -0.17914 22.3262 0.497619C27.7401 1.35875 30.6837 4.27187 31.513 9.76137C32.1817 14.0582 32.1521 18.4348 31.4253 22.7222C30.5207 27.9048 27.3527 30.867 22.079 31.558C20.0716 31.8176 18.0362 31.8597 16.013 32Z" fill="#EE4343" />
+                    <path d="M15.3836 6.16027C15.9406 6.15315 16.4468 6.48357 16.6646 6.99654C16.8824 7.50952 16.7687 8.10332 16.3767 8.49943C15.9848 8.89555 15.3925 9.01542 14.8774 8.80283C14.3624 8.59024 14.027 8.08735 14.0283 7.53001C14.0358 6.78206 14.636 6.1754 15.3836 6.16027Z" fill="#FFFFFF" />
+                    <path d="M19.6492 11.387C18.5149 11.7676 17.3455 12.0377 16.2287 12.4744C15.8322 12.6166 15.4556 12.8094 15.1084 13.0479C13.9776 13.8722 13.939 14.9315 14.9611 15.9768C15.7606 16.7959 16.7231 17.4115 17.5769 18.1586C18.9041 19.3214 18.9637 20.5245 17.7312 21.8118C16.4829 23.1255 14.905 23.9726 13.2676 24.6811C12.5908 24.974 11.8983 25.2283 11.2128 25.5002C11.0314 25.3255 10.9531 25.0694 11.0059 24.8232C12.0619 24.4117 13.0326 23.8082 13.8689 23.043C14.3759 22.5899 14.8315 22.0823 15.2276 21.5295C16.092 20.3018 16.0446 19.5722 15.0523 18.4445C14.3405 17.6412 13.5095 16.945 12.9134 16.0365C11.7317 14.2335 12.2928 12.0623 14.1722 10.9977C15.6747 10.1471 17.2876 9.58586 18.9234 9.06848C19.6106 8.85451 20.1226 9.11759 20.3259 9.7402C20.5766 10.5312 20.34 11.159 19.6492 11.387Z" fill="#FFFFFF" />
+                </svg>
+            </div>
+        );
+
+        const Simulator = ({ specs }) => {
+            const [step, setStep] = useState(1); 
+            const [selectedScene, setSelectedScene] = useState(null);
+            const SCENES = specs.scenes;
+
+            const handleMoodSelect = (key) => {
+                setSelectedScene(SCENES[key]);
+                setStep(2);
+            };
+
+            const handleBack = () => {
+                if(step === 2) {
+                    setStep(1);
+                    setSelectedScene(null);
+                } else {
+                    alert("Back to Home (Mock)");
+                }
+            };
+
+            return (
+                <div className="mobile-viewport bg-bg-page flex flex-col font-sans text-text-primary">
+                    <div className="px-6 pt-10 pb-4 flex items-center shrink-0">
+                        <button onClick={handleBack} className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-brand-blue">
+                            <Icons.ChevronLeft />
+                        </button>
+                    </div>
+
+                    <div className="flex-1 flex flex-col overflow-y-auto no-scrollbar relative">
+                        {/* STEP 1 */}
+                        {step === 1 && (
+                            <div className="animate-fade-up">
+                                <div className="flex flex-col items-center pt-2 px-8 text-center">
+                                    <div className="mb-6"><SunnyLogo /></div>
+                                    <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2 mb-3">No pressure. Just flow.</h3>
+                                    <p className="text-[14px] text-text-secondary leading-relaxed">
+                                        Whether you want to sweat or just breathe, let's start with how your body feels right now.
+                                    </p>
+                                </div>
+                                <div className="mt-8 px-6 pb-6">
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {Object.values(SCENES).map((mood) => (
+                                            <div key={mood.id} onClick={() => handleMoodSelect(mood.id)} className="p-5 rounded-[24px] border-2 border-transparent bg-white shadow-card hover:shadow-md active:scale-95 transition-all flex flex-col items-center gap-3 cursor-pointer h-36 justify-center">
+                                                <span className="text-4xl animate-pop" style={{animationDelay: '0.1s'}}>{mood.icon}</span>
+                                                <h4 className="font-bold text-[15px] text-text-primary">{mood.label}</h4>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* STEP 2 */}
+                        {step === 2 && selectedScene && (
+                            <div className="animate-slide-in">
+                                <div className="flex flex-col items-center pt-2 px-8 text-center">
+                                    <div className="mb-6"><SunnyLogo /></div>
+                                    <h3 className="text-[22px] font-bold text-brand-blue leading-tight mt-2 mb-4">"{selectedScene.dialogueTitle}"</h3>
+                                    <p className="text-[14px] text-text-secondary leading-relaxed px-2">{selectedScene.dialogueBody}</p>
+                                </div>
+                                <div className="mt-8 px-6">
+                                    <div className="flex items-center gap-3 mb-4 opacity-50">
+                                        <div className="h-[1px] flex-1 bg-brand-red"></div>
+                                        <span className="text-[10px] font-bold text-brand-red uppercase tracking-widest">Recommended For You</span>
+                                        <div className="h-[1px] flex-1 bg-brand-red"></div>
+                                    </div>
+                                    <div className="bg-white rounded-[28px] shadow-float-btn overflow-hidden border border-gray-100 animate-pop">
+                                        <div className="h-[160px] bg-cover bg-center relative" style={{backgroundImage: `url('${selectedScene.image}')`}}>
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                                            <div className="absolute bottom-4 left-4 text-white">
+                                                <h3 className="font-bold text-[20px] leading-tight text-white">{selectedScene.courseTitle}</h3>
+                                            </div>
+                                        </div>
+                                        <div className="p-5">
+                                            <div className="flex items-center justify-between">
+                                                <div><p className="text-[12px] text-text-secondary font-bold uppercase tracking-wide">{selectedScene.courseTag}</p></div>
+                                                <div className="w-10 h-10 rounded-full bg-brand-red text-white flex items-center justify-center shadow-md">
+                                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="h-24"></div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Bottom CTA */}
+                    {step === 2 && selectedScene && (
+                        <div className="px-6 pb-12 pt-4 bg-gradient-to-t from-bg-page via-bg-page to-transparent shrink-0 z-50 animate-slide-in">
+                            <button onClick={() => window.location.href = './First Ride.html'} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn active:scale-95 transition-transform">
+                                Start Session
+                            </button>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // --- LAYER C: EDITOR ---
+        const App = () => {
+            const [specs, setSpecs] = useState(BUSINESS_SPECS);
+            const [isEditing, setIsEditing] = useState(false);
+
+            // 核心修复：不使用 DOM 快照，而是重构纯净的 HTML
+            const handleSaveFile = () => {
+                // 1. 获取当前脚本的源代码（包含 JSX 的源码）
+                const originalScript = document.getElementById('app-logic').innerHTML;
+                
+                // 2. 准备最新的配置数据
+                const newSpecsString = `const BUSINESS_SPECS = ${JSON.stringify(specs, null, 4)};`;
+                const regex = /\/\/ --SPECS_START--[\s\S]*?\/\/ --SPECS_END--/;
+
+                if (!regex.test(originalScript)) {
+                    alert("错误：源码模板损坏，无法保存。");
+                    return;
+                }
+
+                // 3. 将新配置注入源码
+                const updatedScript = originalScript.replace(regex, `// --SPECS_START--\n${newSpecsString}\n// --SPECS_END--`);
+
+                // 4. 重构完整的 HTML 文件
+                // 注意：这里手动拼接 HTML，确保不包含任何运行时的脏数据（如编译后的代码、注入的 style 等）
+                const htmlContent = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>${specs.metadata.title}</title>
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"><\/script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"><\/script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"><\/script>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { red: '#EE4343', blue: '#31426D', beige: '#F6E2CF', green: '#2BA471', darkRed: '#8B0000', sky: '#BDD0EB' },
+                        bg: { page: '#FFFBF7', card: '#FFFFFF', neutral: '#F5F7FA' },
+                        text: { primary: '#31426D', secondary: '#666666' }
+                    },
+                    fontFamily: { sans: ['Montserrat', 'sans-serif'] },
+                    boxShadow: {
+                        'glow': '0px 10px 30px rgba(222, 37, 41, 0.4)',
+                        'float-btn': '0px 10px 20px rgba(238, 67, 67, 0.3)',
+                        'card': '0px 4px 20px rgba(0,0,0,0.05)',
+                    },
+                    animation: {
+                        'fade-up': 'fadeUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
+                        'breathe': 'breathe 4s ease-in-out infinite',
+                        'pop': 'pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+                        'slide-in': 'slideIn 0.4s ease-out forwards',
+                    },
+                    keyframes: {
+                        fadeUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+                        breathe: { 
+                            '0%, 100%': { transform: 'scale(1)', filter: 'drop-shadow(0px 10px 20px rgba(222, 37, 41, 0.3))' }, 
+                            '50%': { transform: 'scale(1.05)', filter: 'drop-shadow(0px 15px 30px rgba(222, 37, 41, 0.5))' } 
+                        },
+                        pop: { '0%': { transform: 'scale(0.95)' }, '50%': { transform: 'scale(1.02)' }, '100%': { transform: 'scale(1)' } },
+                        slideIn: { '0%': { opacity: '0', transform: 'translateX(20px)' }, '100%': { opacity: '1', transform: 'translateX(0)' } }
+                    }
+                }
+            }
+        }
+    <\/script>
+    <style>
+        * { -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; background-color: #1a1a1a; height: 100vh; overflow: hidden; font-family: 'Montserrat', sans-serif; }
+        .mobile-viewport { width: 390px; height: 844px; background-color: #FFFBF7; position: relative; overflow: hidden; border-radius: 40px; border: 8px solid #333; box-shadow: 0px 30px 60px rgba(0,0,0,0.5); transform: scale(0.95); transition: transform 0.3s; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .editor-scroll::-webkit-scrollbar { width: 6px; }
+        .editor-scroll::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+        .editor-scroll::-webkit-scrollbar-track { background: #1a1a1a; }
+        .edit-input { background: transparent; border-bottom: 1px solid #ddd; width: 100%; outline: none; padding: 2px 0; transition: border-color 0.2s; }
+        .edit-input:focus { border-color: #31426D; }
+        .edit-textarea { background: #fafafa; border: 1px solid #eee; width: 100%; padding: 8px; border-radius: 4px; font-size: 12px; resize: vertical; min-height: 60px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel" id="app-logic">
+${updatedScript}
+    <\/script>
+</body>
+</html>`;
+
+                // 5. 下载
+                const blob = new Blob([htmlContent], {type: "text/html"});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Guest_PRD_v${specs.metadata.version}_${new Date().toISOString().slice(0,10)}.html`;
+                a.click();
+            };
+
+            // --- Editor Updates Logic (Same as before) ---
+            const updateMeta = (k, v) => setSpecs({...specs, metadata: {...specs.metadata, [k]: v}});
+            const updateOverview = (c) => setSpecs({...specs, metadata: {...specs.metadata, overview: {...specs.metadata.overview, content: c}}});
+            const updateScene = (key, field, value) => {
+                setSpecs({
+                    ...specs,
+                    scenes: {
+                        ...specs.scenes,
+                        [key]: { ...specs.scenes[key], [field]: value }
+                    }
+                });
+            };
+            const addRule = (sceneKey) => {
+                const newRules = [...(specs.scenes[sceneKey].rules || []), "请输入新规则..."];
+                updateScene(sceneKey, 'rules', newRules);
+            };
+            const updateRule = (sceneKey, idx, val) => {
+                const newRules = [...specs.scenes[sceneKey].rules];
+                newRules[idx] = val;
+                updateScene(sceneKey, 'rules', newRules);
+            };
+            const removeRule = (sceneKey, idx) => {
+                const newRules = specs.scenes[sceneKey].rules.filter((_, i) => i !== idx);
+                updateScene(sceneKey, 'rules', newRules);
+            };
+
+            return (
+                <div className="flex h-screen w-screen overflow-hidden bg-[#222]">
+                    <div className="flex-1 flex items-center justify-center border-r border-white/10 p-4 relative">
+                        <div className="absolute top-4 left-4 text-white/30 font-mono text-xs">
+                            SIMULATOR PREVIEW <br/>
+                            <span className="text-[10px] opacity-50">Interactive Mode</span>
+                        </div>
+                        <Simulator specs={specs} />
+                    </div>
+                    <div className="w-[550px] flex flex-col bg-[#F5F7FA] shadow-2xl relative">
+                        <div className="p-6 bg-white border-b border-gray-200 flex justify-between items-start shrink-0">
+                            <div className="flex-1 mr-4">
+                                {isEditing ? (
+                                    <input className="edit-input text-xl font-bold text-brand-blue" value={specs.metadata.title} onChange={(e) => updateMeta('title', e.target.value)} />
+                                ) : (
+                                    <h1 className="text-xl font-bold text-brand-blue">{specs.metadata.title}</h1>
+                                )}
+                                <div className="flex items-center gap-3 mt-2 text-xs text-text-secondary">
+                                    <span className="bg-gray-100 px-2 py-0.5 rounded">v{specs.metadata.version}</span>
+                                    <span>Updated: {specs.metadata.lastUpdated}</span>
+                                </div>
+                            </div>
+                            <div className="flex gap-2">
+                                <button onClick={() => setIsEditing(!isEditing)} className={`px-3 py-1.5 rounded text-xs font-bold ${isEditing?'bg-brand-blue text-white':'bg-gray-200 text-gray-600'}`}>
+                                    {isEditing ? '完成' : '编辑'}
+                                </button>
+                                <button onClick={handleSaveFile} className="px-3 py-1.5 bg-brand-green text-white rounded text-xs font-bold flex items-center gap-1">
+                                    <span>💾</span> 保存
+                                </button>
+                            </div>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-6 space-y-8 editor-scroll pb-20">
+                            <section>
+                                <div className="flex items-center gap-2 mb-3"><div className="w-1 h-5 bg-brand-red rounded-full"></div><h2 className="font-bold text-brand-blue">1. 功能概述</h2></div>
+                                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                                    {isEditing ? <textarea className="edit-textarea" value={specs.metadata.overview.content} onChange={e => updateOverview(e.target.value)} /> : <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{specs.metadata.overview.content}</p>}
+                                </div>
+                            </section>
+                            <section>
+                                <div className="flex items-center gap-2 mb-3"><div className="w-1 h-5 bg-brand-red rounded-full"></div><h2 className="font-bold text-brand-blue">2. 心情/场景逻辑配置 (Scenes)</h2></div>
+                                <div className="space-y-4">
+                                    {Object.entries(specs.scenes).map(([key, scene], idx) => (
+                                        <div key={key} className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 relative group">
+                                            <div className="absolute top-5 right-5 text-[24px] opacity-20">{scene.icon}</div>
+                                            <div className="mb-4 pb-2 border-b border-gray-100">
+                                                <h3 className="font-bold text-brand-blue text-sm uppercase tracking-wider mb-1">Scene: {scene.label}</h3>
+                                                <span className="text-[10px] text-gray-400 font-mono">ID: {key}</span>
+                                            </div>
+                                            <div className="grid gap-3 mb-4">
+                                                <div>
+                                                    <label className="text-[10px] font-bold text-gray-400 uppercase">Dialogue Title</label>
+                                                    {isEditing ? <input className="edit-input text-xs" value={scene.dialogueTitle} onChange={e => updateScene(key, 'dialogueTitle', e.target.value)} /> : <div className="text-xs font-bold text-gray-700">{scene.dialogueTitle}</div>}
+                                                </div>
+                                                <div>
+                                                    <label className="text-[10px] font-bold text-gray-400 uppercase">Dialogue Body</label>
+                                                    {isEditing ? <textarea className="edit-textarea" value={scene.dialogueBody} onChange={e => updateScene(key, 'dialogueBody', e.target.value)} /> : <div className="text-xs text-gray-600">{scene.dialogueBody}</div>}
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <div><label className="text-[10px] font-bold text-gray-400 uppercase">Recommended Course</label>{isEditing ? <input className="edit-input text-xs" value={scene.courseTitle} onChange={e => updateScene(key, 'courseTitle', e.target.value)} /> : <div className="text-xs font-bold text-brand-red">{scene.courseTitle}</div>}</div>
+                                                    <div><label className="text-[10px] font-bold text-gray-400 uppercase">Tags</label>{isEditing ? <input className="edit-input text-xs" value={scene.courseTag} onChange={e => updateScene(key, 'courseTag', e.target.value)} /> : <div className="text-xs text-gray-500">{scene.courseTag}</div>}</div>
+                                                </div>
+                                                <div><label className="text-[10px] font-bold text-gray-400 uppercase">Image URL</label>{isEditing ? <input className="edit-input text-[10px] text-gray-400 truncate" value={scene.image} onChange={e => updateScene(key, 'image', e.target.value)} /> : <div className="text-[10px] text-gray-400 truncate cursor-pointer hover:text-brand-blue" onClick={() => window.open(scene.image)}>{scene.image}</div>}</div>
+                                            </div>
+                                            <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                                <h4 className="text-[11px] font-bold text-gray-400 uppercase mb-2">业务规则 (Rules)</h4>
+                                                <ul className="space-y-2">
+                                                    {(scene.rules || []).map((rule, ri) => (
+                                                        <li key={ri} className="flex items-start gap-2 text-xs text-gray-600">
+                                                            <span className="mt-1.5 w-1 h-1 bg-brand-red rounded-full shrink-0"></span>
+                                                            {isEditing ? <div className="flex-1 flex gap-2"><input className="edit-input" value={rule} onChange={e => updateRule(key, ri, e.target.value)} /><button onClick={() => removeRule(key, ri)} className="text-red-400 text-[10px]">×</button></div> : <span>{rule}</span>}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                                {isEditing && <button onClick={() => addRule(key)} className="mt-2 text-[10px] text-brand-blue font-bold border border-dashed border-brand-blue/30 px-2 py-1 rounded hover:bg-brand-blue/5">+ 添加规则</button>}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

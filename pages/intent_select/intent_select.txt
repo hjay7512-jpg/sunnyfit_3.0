@@ -1,0 +1,53 @@
+【模块名称】
+AI 形象打招呼与意图选择页 (Intent Select Page)
+
+【业务目标 (User Story)】
+作为新用户注册流程的第一站，摒弃传统的枯燥问卷。使用 AI 教练的口吻进行破冰问候，并提供三个直观的意图选项（连设备、找课程、随便看看）。根据用户的选择，将其精准分流到对应的个性化 Onboarding 体验链路中。
+
+【触发条件与前置状态】
+
+前置页面：用户在「登录/注册选择页」点击【Get Started】后触发进入此页面。
+
+状态清理：进入此页面时，需初始化或清空本地关于意图选择的缓存数据。
+
+【UI 与交互逻辑 (UI/UX Rules)】
+
+全局布局：全屏居中沉浸式布局，背景色为 bg-bg-page。
+
+顶部导航：左上角需补充一个【返回】按钮（<Icons.ChevronLeft />），悬浮在最上层。
+
+AI 视觉与文案：
+
+页面中上部展示 AI 动态 Logo（调用 SunnyLogo 组件），需带有缓慢呼吸动画（animate-breathe）。
+
+下方文案为："Hi, I'm your AI Coach." (主标题) 和 "What's our focus for today?" (副标题)。文案需带有从下往上渐现的动画效果（animate-fade-up）。
+
+意图选项卡片 (Option Cards)：
+
+渲染三个垂直排列的卡片组件，需带有依次延迟入场的动画效果（利用索引 animationDelay: ${idx * 0.1}s）。
+
+卡片交互：提供清晰的按下态反馈（active:scale-[0.98] active:bg-bg-neutral），引导点击。
+
+【核心业务流转 (Business Logic)】
+
+返回动作：点击左上角返回按钮，执行退出当前流程，退回到“登录/注册选择页”。
+
+意图选择分发（卡片数据与路由定义）：
+
+卡片 1：Icon: "🚲", 标题: "Start with Equipment", 副标题: "Connect your Sunny gear".
+
+点击路由流转 -> 进入 device_connect (设备连接流程)。
+
+卡片 2：Icon: "🔎", 标题: "Find a Course", 副标题: "Looking for guided workouts".
+
+点击路由流转 -> 进入 plan_create (计划流)。
+
+卡片 3：Icon: "👀", 标题: "Just Browsing", 副标题: "I have no specific goal yet".
+
+点击路由流转 -> 进入 just_explore (无目标状态选择流)。
+
+【异常处理与兜底 (Edge Cases & Fallback)】
+
+防止误触：卡片在进场动画（入场延迟）期间，应设置 pointer-events: none 防止用户在动画未完成时盲点导致路由错乱。
+
+降级处理：如果设备性能极差导致 CSS 动画卡顿，动画库需提供无动画的兜底显示，确保三个选项立即可见可点。
