@@ -134,9 +134,12 @@
             { id: 'thu', label: 'T' }, { id: 'fri', label: 'F' }, { id: 'sat', label: 'S' }, { id: 'sun', label: 'S' }
         ];
         const BODY_QUIRKS = [
-            { id: 'knee_friendly', label: 'Knee Friendly'},
-            { id: 'back_care', label: 'Back Care'},
-            { id: 'quiet_no_jump', label: 'Quiet / No Jump'}
+            { id: 'knee_friendly', label: '🦵 Knee-Friendly'},
+            { id: 'back_care', label: '🦴 Back Care'},
+            { id: 'wrist_shoulder', label: '💪 Wrist & Shoulder'},
+            { id: 'no_jump', label: '🔇 No Jump'},
+            { id: 'stand', label: '🧍‍♀️ Standing Only'},
+            { id: 'pregnant', label: '🤰 Pre/Postnatal Care'},
         ];
 
         const App = () => {
@@ -289,13 +292,13 @@
                             <div className="animate-fade-up" data-zone-id="plan_create_step_body_quirks">
                                 <div className="flex flex-col items-center pt-2 px-8 text-center">
                                     <div className="mb-6"><SunnyLogo /></div>
-                                    <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2 mb-2" data-i18n-key="plan_create_title_body_quirks">Any areas to protect?</h3>
+                                    <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2 mb-2" data-i18n-key="plan_create_title_body_quirks">Anything I should keep in mind?</h3>
                                     <p className="text-[14px] text-text-secondary" data-i18n-key="plan_create_subtitle_body_quirks"></p>
                                 </div>
                                 <div className="mt-8 px-6 flex flex-wrap gap-3 justify-center">
                                     {BODY_QUIRKS.map(q => (
                                         <button key={q.id} onClick={() => toggleBodyQuirk(q.id)} data-zone-id={`plan_create_quirk_${q.id}`} className={`px-5 py-3 rounded-full border-2 transition-all font-semibold text-[13px] cursor-pointer ${selections.bodyQuirks.includes(q.id) ? 'border-brand-red bg-brand-red/5 text-brand-red' : 'border-transparent bg-white text-text-primary shadow-sm'}`}>
-                                            {q.label} <span className="text-[10px] opacity-70">({q.sub})</span>
+                                            {q.label} <span className="text-[10px] opacity-70"></span>
                                         </button>
                                     ))}
                                 </div>
