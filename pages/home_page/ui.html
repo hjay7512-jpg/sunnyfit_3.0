@@ -1,16 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SunnyFit: Intent Select (SOP 2.0)</title>
-    
+    <title>SunnyFit - Home</title>
+
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
 
     <script>
         function navigateTo(targetPageId) {
@@ -20,9 +21,10 @@
                 window.parent.location.search = parentParams.toString();
             } catch (e) {
                 console.warn("未检测到 Viewer 外壳，执行降级跳转");
-                alert("SOP 路由触发：即将前往 -> " + targetPageId);
+                alert("路由触发：即将前往 -> " + targetPageId);
             }
         }
+        if (typeof window !== 'undefined') window.navigateTo = navigateTo;
     </script>
 
     <script>
@@ -30,24 +32,21 @@
             theme: {
                 extend: {
                     colors: {
-                        brand: { red: '#EE4343', blue: '#31426D', beige: '#F6E2CF', green: '#2BA471', darkRed: '#8B0000', sky: '#BDD0EB' },
-                        bg: { page: '#FFFBF7', card: '#FFFFFF', neutral: '#F5F7FA', dark: '#1A1A1A' },
-                        text: { primary: '#31426D', secondary: '#666666', inverse: '#FFFFFF' }
+                        brand: { red: '#E81D1D', redLight: '#FFEFEA', redMid: '#F57C71', blue: '#31426D', beige: '#F6E2CF', green: '#2BA471', darkRed: '#8B0000', sky: '#BDD0EB' },
+                        bg: { page: '#F5F8FE', card: '#FFFFFF', neutral: '#F5F7FA', dark: '#1A1A1A' },
+                        text: { primary: 'rgba(0,0,0,0.9)', secondary: 'rgba(0,0,0,0.6)', inverse: '#FFFFFF', muted: '#DCDFE5' }
                     },
                     fontFamily: { sans: ['Montserrat', 'sans-serif'] },
                     boxShadow: {
                         'glow': '0px 10px 30px rgba(222, 37, 41, 0.4)',
-                        'card': '0px 4px 12px rgba(0, 0, 0, 0.05)'
+                        'card': '0px 4px 12px rgba(0, 0, 0, 0.05)',
+                        'glass': '0 8px 32px rgba(0, 0, 0, 0.08)'
                     },
+                    backdropBlur: { xs: '12px', tab: '20px' },
                     animation: {
-                        'breathe': 'breathe 4s ease-in-out infinite',
                         'fade-up': 'fadeUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards'
                     },
                     keyframes: {
-                        breathe: {
-                            '0%, 100%': { transform: 'scale(1)', filter: 'drop-shadow(0px 10px 20px rgba(222, 37, 41, 0.4))' },
-                            '50%': { transform: 'scale(1.05)', filter: 'drop-shadow(0px 15px 30px rgba(222, 37, 41, 0.6))' },
-                        },
                         fadeUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }
                     }
                 }
@@ -56,17 +55,155 @@
     </script>
     <style>
         * { -webkit-tap-highlight-color: transparent; }
-        body { 
-            margin: 0; background-color: #f0f0f0; display: flex; 
-            justify-content: center; align-items: center; height: 100vh; overflow: hidden;
-            font-family: 'Montserrat', sans-serif;
-        }
-        .mobile-viewport {
-            width: 390px; height: 844px; background-color: #FFFBF7; position: relative;
-            overflow: hidden; border-radius: 40px; border: 8px solid #333;
-            box-shadow: 0px 30px 60px rgba(0,0,0,0.3);
-        }
+        body { margin: 0; background-color: #f0f0f0; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: 'Montserrat', sans-serif; }
+        .mobile-viewport { width: 390px; min-height: 844px; max-height: 100vh; background-color: #F5F8FE; position: relative; overflow: hidden; border-radius: 40px; border: 8px solid #333; box-shadow: 0px 30px 60px rgba(0,0,0,0.3); display: flex; flex-direction: column; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        .scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        .scroll-x::-webkit-scrollbar { display: none; }
+
+        /* iOS 26 玻璃风格底栏 */
+        .tab-bar-glass {
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        }
+        .tab-bar-ai {
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        }
+
+        /* ========== 建议卡片 / AI 建议 完整 UI 还原 ========== */
+        .card-enter { opacity: 0; transform: translateY(20px); animation: slideUpFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+        @keyframes slideUpFade { to { opacity: 1; transform: translateY(0); } }
+
+        /* 无计划：今日概览 + 行动引导 */
+        .daily-card {
+            background: #FFFFFF;
+            border-radius: 24px;
+            padding: 16px 20px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .daily-header { font-size: 16px; font-weight: 800; color: #2F3542; }
+        .daily-stats-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 0 4px; }
+        .daily-stat-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+        .daily-val { font-size: 24px; font-weight: 700; color: #CED6E0; line-height: 1; transition: color 0.5s; }
+        .daily-val.active { color: #2F3542; }
+        .daily-unit { font-size: 12px; font-weight: 600; margin-left: 1px; color: #A4B0BE; }
+        .daily-label { display: flex; align-items: center; gap: 4px; font-size: 11px; color: #2F3542; font-weight: 600; }
+        .upsell-banner {
+            background: #4A4A4A;
+            border-radius: 12px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        .upsell-banner .banner-content { display: flex; align-items: center; gap: 8px; flex: 1; z-index: 1; }
+        .upsell-banner .sparkle-icon { font-size: 16px; color: #FFD700; flex-shrink: 0; }
+        .upsell-banner .banner-text { font-size: 11px; font-weight: 600; line-height: 1.3; }
+        .try-btn {
+            background: #EE4343;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0;
+            margin-left: 8px;
+            z-index: 1;
+        }
+
+        /* AI 建议卡片 */
+        .ai-recommendation-container {
+            background: #FFFFFF;
+            border-radius: 24px;
+            padding: 16px 20px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+        .ai-recommendation-container.visible { opacity: 1; transform: translateY(0); }
+        .ai-recommendation-container.refreshing { opacity: 0.6; transform: scale(0.98); filter: blur(2px); pointer-events: none; }
+        .ai-header-group { display: flex; gap: 10px; align-items: flex-start; }
+        .ai-avatar { width: 32px; height: 32px; border-radius: 50%; background: #F0F2F5; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+        .ai-text-content { font-size: 12px; line-height: 1.5; color: #2F3542; padding-top: 2px; }
+        .word-fade { display: inline-block; opacity: 0; transform: translateY(4px); animation: wordIn 0.4s forwards; }
+        @keyframes wordIn { to { opacity: 1; transform: translateY(0); } }
+        .embedded-task-card {
+            border: 1px solid #F1F2F6;
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: #FAFAFA;
+            position: relative;
+        }
+        .task-cover { height: 115px; width: 100%; background-size: cover; background-position: center; transition: background-image 0.5s ease; }
+        .task-info { padding: 10px 14px 14px; position: relative; }
+        .mini-go-btn {
+            position: absolute;
+            right: 14px;
+            top: -22px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #EE4343;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 12px;
+            box-shadow: 0 4px 10px rgba(238, 67, 67, 0.4);
+            cursor: pointer;
+            z-index: 10;
+            transition: background 0.3s;
+            border: none;
+        }
+        .mini-go-btn:active { transform: scale(0.96); }
+        .task-title { font-weight: 800; font-size: 14px; color: #2F3542; margin-bottom: 2px; }
+        .task-meta { font-size: 10px; color: #A4B0BE; font-weight: 500; }
+        .ai-feedback-footer {
+            border-top: 1px solid #F5F7FA;
+            padding-top: 8px;
+            margin-top: 2px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 16px;
+        }
+        .feedback-btn {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 14px;
+            color: #CED6E0;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: none;
+            border: none;
+            padding: 4px;
+        }
+        .feedback-btn:hover { color: #31426D; transform: scale(1.1); }
+        .feedback-btn.active { color: #EE4343; animation: feedbackPulse 0.3s ease; }
+        @keyframes feedbackPulse { 50% { transform: scale(1.15); } }
     </style>
 </head>
 <body>
@@ -75,96 +212,300 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // 仅保留此页面需要的唯一 Icon
-        const Icons = {
-            ChevronRight: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m9 18 6-6-6-6"/></svg>
-        };
-
-        const SunnyLogo = ({ variant = 'standard', className = "" }) => {
-            const colors = variant === 'splash' ? { path1: '#FFFFFF', path23: '#EE4343' } : { path1: '#EE4343', path23: '#FFFFFF' };
-            return (
-                <div className="w-full h-full animate-breathe">
-                    <svg viewBox="0 0 32 32" fill="none" className={`w-full h-full drop-shadow-glow ${className}`}>
-                        <path d="M16.013 32C13.271 31.9018 10.5412 31.8755 7.87463 31.1231C3.57228 29.9252 1.23878 26.956 0.52873 22.6889C-0.165498 18.3226 -0.176144 13.8749 0.497173 9.50531C1.23001 4.58405 4.38577 1.32017 9.29472 0.537958C13.609 -0.165525 18.0077 -0.17914 22.3262 0.497619C27.7401 1.35875 30.6837 4.27187 31.513 9.76137C32.1817 14.0582 32.1521 18.4348 31.4253 22.7222C30.5207 27.9048 27.3527 30.867 22.079 31.558C20.0716 31.8176 18.0362 31.8597 16.013 32Z" fill={colors.path1} />
-                        <path d="M15.3836 6.16027C15.9406 6.15315 16.4468 6.48357 16.6646 6.99654C16.8824 7.50952 16.7687 8.10332 16.3767 8.49943C15.9848 8.89555 15.3925 9.01542 14.8774 8.80283C14.3624 8.59024 14.027 8.08735 14.0283 7.53001C14.0358 6.78206 14.636 6.1754 15.3836 6.16027Z" fill={colors.path23} />
-                        <path d="M19.6492 11.387C18.5149 11.7676 17.3455 12.0377 16.2287 12.4744C15.8322 12.6166 15.4556 12.8094 15.1084 13.0479C13.9776 13.8722 13.939 14.9315 14.9611 15.9768C15.7606 16.7959 16.7231 17.4115 17.5769 18.1586C18.9041 19.3214 18.9637 20.5245 17.7312 21.8118C16.4829 23.1255 14.905 23.9726 13.2676 24.6811C12.5908 24.974 11.8983 25.2283 11.2128 25.5002C11.0314 25.3255 10.9531 25.0694 11.0059 24.8232C12.0619 24.4117 13.0326 23.8082 13.8689 23.043C14.3759 22.5899 14.8315 22.0823 15.2276 21.5295C16.092 20.3018 16.0446 19.5722 15.0523 18.4445C14.3405 17.6412 13.5095 16.945 12.9134 16.0365C11.7317 14.2335 12.2928 12.0623 14.1722 10.9977C15.6747 10.1471 17.2876 9.58586 18.9234 9.06848C19.6106 8.85451 20.1226 9.11759 20.3259 9.7402C20.5766 10.5312 20.34 11.159 19.6492 11.387Z" fill={colors.path23} />
-                    </svg>
+        // --- 顶栏 ---
+        const TopBar = ({ streakDays, onProfile, onPoints, onMessage, onCalendar, onEquipment }) => (
+            <header data-prd-zone="home_top_bar" className="sticky top-0 z-20 flex-shrink-0 flex items-center justify-between px-4 pt-11 pb-4 bg-bg-page min-h-[44px]">
+                <button onClick={onProfile} className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0 border-0 ring-0">
+                    <span className="text-xl">👤</span>
+                </button>
+                <div className="flex items-center gap-3 flex-shrink-0">
+                    <button onClick={onPoints} className="flex items-center gap-1 px-3.5 py-2 rounded-full bg-[#242424] text-white text-base font-semibold leading-tight">
+                        <span>🔥</span>
+                        <span>{streakDays}</span>
+                    </button>
+                    <button onClick={onMessage} className="w-9 h-9 rounded-full bg-[#242424]/90 flex items-center justify-center text-white text-lg">🔔</button>
+                    <button onClick={onCalendar} className="w-9 h-9 rounded-full bg-[#242424]/90 flex items-center justify-center text-white text-lg">📅</button>
+                    <button onClick={onEquipment} className="w-9 h-9 rounded-full bg-[#242424]/90 flex items-center justify-center text-white text-lg">🏋️</button>
                 </div>
-            );
-        };
+            </header>
+        );
 
-        const SplashLayer = ({ onComplete }) => {
-            const [scale, setScale] = useState(0); 
-            const [logoOpacity, setLogoOpacity] = useState(0);
-            
-            useEffect(() => { 
-                setTimeout(() => setScale(40), 100); 
-                setTimeout(() => setLogoOpacity(1), 600); 
-                setTimeout(onComplete, 2500); 
-            }, []);
-
+        // --- Banner（与内容区同宽，px-4 对齐，无偏移）---
+        const Banner = ({ show, imageUrl, onClose }) => {
+            if (!show) return null;
             return (
-                <div className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden" data-prd-zone="intent_select_splash">
-                    <div className="absolute w-12 h-12 bg-brand-red rounded-full transition-transform duration-[800ms]" style={{ transform: `scale(${scale})` }} />
-                    <div className="relative z-10 w-24 h-24 transition-opacity duration-1000" style={{ opacity: logoOpacity }}>
-                        <SunnyLogo variant="splash" />
+                <div className="flex-shrink-0 px-4 mb-2">
+                    <div data-prd-zone="home_banner" className="relative rounded-xl overflow-hidden h-20 w-full shadow-[0px_2px_10px_rgba(0,0,0,0.2)]">
+                        {imageUrl ? <img src={imageUrl} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gradient-to-r from-[#2F3542] to-[#4A4A4A] flex items-center justify-center text-white text-xs font-semibold">YOUR 🔥 SUNNYFIT</div>}
+                        <button type="button" onClick={onClose} className="absolute top-2 right-2 w-5 h-5 rounded-full bg-black/20 flex items-center justify-center text-white text-sm leading-none" aria-label="关闭">×</button>
                     </div>
                 </div>
             );
         };
 
-        const HomeScreen = ({ isVisible, onNavigate }) => {
-            const [show, setShow] = useState(false);
-            useEffect(() => { if(isVisible) setTimeout(() => setShow(true), 800); }, [isVisible]);
-            
-            const options = [
-                { id: 'device_connect', icon: '🚲', title: 'Connect Equipment', subtitle: 'Connect your Sunny / JLL gear and track' },
-                { id: 'plan_create', icon: '🔎', title: 'Find a Course', subtitle: 'Looking for workouts suit for me' },
-                { id: 'guest_explore', icon: '👀', title: 'Just Browsing', subtitle: 'I have no idea' }
-            ];
-
-            return (
-                <div className={`absolute inset-0 flex flex-col items-center pt-[10vh] px-6 transition-opacity duration-1000 ${isVisible?'opacity-100':'opacity-0'}`}>
-                    <div className="w-20 h-20 mb-6 flex-shrink-0"><SunnyLogo /></div>
-                    <div className="text-center mb-10 shrink-0">
-                        <h1 className="text-[28px] font-bold mb-2 text-text-primary leading-tight" data-i18n="intent_select_greeting">Good Morning.</h1>
-                        <p className="text-text-secondary text-[14px]" data-i18n="intent_select_subtitle">What do you want to start?</p>
+        // --- 建议卡片：无计划（今日概览 + 行动引导 Banner）---
+        const SuggestionCardNoPlan = ({ onTryPlan }) => (
+            <div data-prd-zone="home_suggestion_no_plan" className="daily-card card-enter mx-4 mb-4">
+                <div className="daily-header">Today</div>
+                <div className="daily-stats-row">
+                    <div className="daily-stat-item">
+                        <div className="daily-val">0<span className="daily-unit">min</span></div>
+                        <div className="daily-label"><span className="material-icons-round stat-icon" style={{ fontSize: 14, color: '#A4B0BE' }}>timer</span> Time</div>
                     </div>
-                    <div className="w-full flex-1 overflow-y-auto no-scrollbar pb-10">
-                        {show && options.map((opt, i) => (
-                            <div key={opt.id} onClick={() => onNavigate(opt.id)} data-prd-zone={`intent_select_opt_${opt.id}`} className="w-full bg-white p-4 rounded-[20px] shadow-card flex items-center animate-fade-up mb-4 cursor-pointer active:scale-[0.97] transition-all" style={{animationDelay: `${i*0.1}s`}}>
-                                <div className="w-12 h-12 bg-bg-neutral rounded-[16px] flex items-center justify-center text-2xl flex-shrink-0">{opt.icon}</div>
-                                <div className="ml-4 flex-grow text-left pr-2">
-                                    <h3 className="font-bold text-text-primary text-[15px] leading-tight">{opt.title}</h3>
-                                    <p className="text-[11px] text-text-secondary mt-1 leading-snug">{opt.subtitle}</p>
-                                </div>
-                                <div className="w-5 h-5 flex-shrink-0 text-text-secondary opacity-30"><Icons.ChevronRight className="w-full h-full" /></div>
-                            </div>
+                    <div className="daily-stat-item">
+                        <div className="daily-val">0<span className="daily-unit">kcal</span></div>
+                        <div className="daily-label"><span className="material-icons-round stat-icon" style={{ fontSize: 14, color: '#29B6F6' }}>local_fire_department</span> Burn</div>
+                    </div>
+                    <div className="daily-stat-item">
+                        <div className="daily-val">0<span className="daily-unit">mi</span></div>
+                        <div className="daily-label"><span className="material-icons-round stat-icon" style={{ fontSize: 14, color: '#FF4757' }}>directions_run</span> Running</div>
+                    </div>
+                </div>
+                <div className="upsell-banner">
+                    <div className="banner-content">
+                        <span className="material-icons-round sparkle-icon">auto_awesome</span>
+                        <span className="banner-text">根据你的目标，定制一份计划更能坚持 · 试试 Quick Start 或 Active Recovery</span>
+                    </div>
+                    <button type="button" className="try-btn" onClick={(e) => { e.stopPropagation(); onTryPlan(); }}>Try Now</button>
+                </div>
+            </div>
+        );
+
+        // --- Day 31 + Recovery 标题行（Figma 2086:3666）---
+        const DayRecoveryRow = ({ day, recoveryLabel }) => (
+            <div className="flex items-center justify-between w-full px-4 mb-3">
+                <span className="text-[20px] font-semibold text-text-primary" style={{ letterSpacing: 0, lineHeight: '28px' }}>Day {day}</span>
+                <span className="text-base text-text-secondary" style={{ lineHeight: '24px' }}>{recoveryLabel}</span>
+            </div>
+        );
+
+        // --- AI 建议卡片（Figma 2086:3674：提示语 + 大图 + Start Now + 三个 chips）---
+        const AISuggestionCard = ({ visible, tooltipText, task, onStart, chips, onChipClick }) => {
+            if (!visible) return null;
+            return (
+                <div data-prd-zone="home_ai_suggestion" className="mx-4 mb-4 bg-white/50 rounded-xl px-3 py-2 shadow-[0px_2px_10px_rgba(0,0,0,0.05)] flex flex-col gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-brand-redLight to-brand-redMid flex items-center justify-center text-lg">✨</div>
+                        <p className="text-base text-text-primary flex-1" style={{ lineHeight: '24px' }}>{tooltipText}</p>
+                    </div>
+                    <div className="rounded-[11px] overflow-hidden h-[245px] w-full relative">
+                        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: task?.coverUrl ? `url(${task.coverUrl})` : 'linear-gradient(135deg, #E8ECF1 0%, #D1D9E6 100%)' }} />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                        <div className="absolute bottom-0 left-0 right-0 px-4 py-3 text-white">
+                            <p className="font-semibold text-[17px] leading-tight truncate" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>{task?.title || 'Top 5 Gifts for Weight Loss Goals'}</p>
+                            <p className="text-[13px] opacity-95 mt-0.5">{task?.meta || '15 min｜Advanced'}</p>
+                        </div>
+                    </div>
+                    <button type="button" onClick={onStart} className="w-full h-11 rounded-full bg-brand-red text-white font-medium text-[17px] shadow-[0px_1px_8px_rgba(232,29,29,0.35)] active:scale-[0.98]">
+                        Start Now
+                    </button>
+                    <div className="flex flex-wrap gap-2">
+                        {(chips || []).map((chip, i) => (
+                            <button key={i} type="button" onClick={() => onChipClick?.(chip)} className="h-10 px-3 rounded-xl bg-white/50 shadow-[0px_0px_2px_rgba(0,0,0,0.1)] flex items-center gap-1 text-sm font-semibold text-text-secondary">
+                                <span>{chip.icon}</span>
+                                <span>{chip.label}</span>
+                            </button>
                         ))}
                     </div>
                 </div>
             );
         };
 
-        // --- 极其纯粹的 App 顶层控制器 ---
-        const App = () => {
-            const [appState, setAppState] = useState('launching'); 
-            
-            const handleNav = (targetModule) => { 
-                // SOP 2.0: 直接进行跨页面路由分发，抛弃单页内部堆叠
-                window.navigateTo(targetModule);
-            };
+        // --- 我的进度（Figma: 两卡片 Plan + Workout，玻璃风格）---
+        const MyProgress = ({ planTitle, workoutMinutes, onPlanClick, onWorkoutClick }) => {
+            const stages = [{ label: 'Stage I', h: 20, active: true }, { label: 'Stage II', h: 30, active: true }, { label: 'Stage III', h: 40, active: true, current: true }, { label: 'Stage IV', h: 50, active: false }];
+            const weekBars = [{ d: 'M', h: 30 }, { d: 'T', h: 50 }, { d: 'W', h: 10 }, { d: 'T', h: 4 }, { d: 'F', h: 32 }, { d: 'S', h: 4 }, { d: 'S', h: 20 }];
+            const glassCard = 'rounded-[34px] overflow-hidden shadow-[0px_2px_10px_rgba(0,0,0,0.05)] bg-white/60 backdrop-blur-xl border border-white/50 flex flex-col gap-2 p-2';
+            return (
+                <section data-prd-zone="home_my_progress" className="flex-shrink-0 mb-5">
+                    <h2 className="text-[20px] font-semibold text-text-primary px-4 mb-4" style={{ lineHeight: '28px' }}>My Progress</h2>
+                    <div className="scroll-x flex gap-3 px-4 pb-2">
+                        <div onClick={onPlanClick} className={`flex-shrink-0 w-[200px] min-h-[140px] ${glassCard} cursor-pointer active:scale-[0.98]`}>
+                            <div className="flex items-center justify-between px-2">
+                                <span className="text-lg font-semibold text-text-primary">Plan</span>
+                                <span className="text-text-secondary">›</span>
+                            </div>
+                            <p className="text-sm text-text-primary px-2 truncate">{planTitle || 'Body Awake'}</p>
+                            <div className="flex gap-1 items-end flex-1 px-2 pb-1">
+                                {stages.map((s, i) => (
+                                    <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
+                                        <div className={`w-full rounded-t ${s.current ? 'bg-brand-red' : s.active ? 'bg-brand-red/80' : 'bg-[#DCDFE5]'}`} style={{ height: s.h }} />
+                                        <span className={`text-[10px] ${s.current ? 'text-brand-red font-semibold' : 'text-text-secondary'}`}>{s.label}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div onClick={onWorkoutClick} className={`flex-shrink-0 w-[200px] min-h-[140px] ${glassCard} cursor-pointer active:scale-[0.98]`}>
+                            <div className="px-2">
+                                <span className="text-lg font-semibold text-text-primary">Workout</span>
+                            </div>
+                            <p className="text-sm text-text-primary px-2">{workoutMinutes || '140 min in this week'}</p>
+                            <div className="flex gap-1 items-end flex-1 px-2 pb-1 mt-auto">
+                                {weekBars.map((b, i) => (
+                                    <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
+                                        <div className="w-full rounded-t bg-brand-red/90" style={{ height: b.h }} />
+                                        <span className="text-[10px] text-text-secondary">{b.d}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            );
+        };
+
+        // --- 我的课程（Figma: My Courses, History/Favorites/Redeemed, View All）---
+        const COURSE_SUBTABS = ['History', 'Favorites', 'Redeemed'];
+        const MOCK_COURSES = [
+            { id: 1, title: '6 Best Exercise Equipment for Small Spaces and Apartments', meta: '15 min｜Advanced', coverUrl: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600&q=80' },
+            { id: 2, title: '6 Best Exercise Equipment for...', meta: '15 min｜Advanced', coverUrl: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=600&q=80' }
+        ];
+
+        const MyCourse = ({ onViewAll }) => {
+            const [subTab, setSubTab] = useState('History');
+            return (
+                <section data-prd-zone="home_my_course" className="flex-shrink-0 mb-6">
+                    <h2 className="text-[20px] font-semibold text-text-primary px-4 mb-3" style={{ lineHeight: '28px' }}>My Courses</h2>
+                    <div className="flex gap-2 px-4 mb-3">
+                        {COURSE_SUBTABS.map((t) => (
+                            <button
+                                key={t}
+                                onClick={() => setSubTab(t)}
+                                className={`px-3 py-1.5 rounded-full text-sm font-semibold ${subTab === t ? 'bg-brand-red text-white' : 'bg-white/50 text-text-secondary shadow-[0px_0px_2px_rgba(0,0,0,0.1)]'}`}
+                            >
+                                {t}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="scroll-x flex gap-3 px-4 pb-3">
+                        {MOCK_COURSES.map((c) => (
+                            <div key={c.id} className="flex-shrink-0 w-[290px] rounded-[11px] overflow-hidden shadow-[0px_2px_10px_rgba(0,0,0,0.05)]">
+                                <div className="h-[163px] bg-cover bg-center relative" style={{ backgroundImage: c.coverUrl ? `url(${c.coverUrl})` : 'linear-gradient(135deg,#E8ECF1,#D1D9E6)' }}>
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                                    <div className="absolute bottom-0 left-0 right-0 px-3 py-2.5 text-white">
+                                        <p className="font-semibold text-base leading-tight truncate">{c.title}</p>
+                                        <p className="text-xs mt-0.5 opacity-95">{c.meta}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="flex justify-center px-4">
+                        <button type="button" onClick={onViewAll} className="px-6 py-2.5 rounded-xl bg-[#DCDFE5] text-white text-sm font-semibold">View All</button>
+                    </div>
+                </section>
+            );
+        };
+
+        // --- 底部 Tab 栏（Figma: 玻璃风格，Home 选中为红色圆底，右侧 AI 球）---
+        const TAB_ITEMS = [
+            { id: 'home', label: 'Home', icon: '🏠' },
+            { id: 'workout', label: 'Workout', icon: '💪' },
+            { id: 'challenge', label: 'Challenge', icon: '🏅' },
+            { id: 'social', label: 'Social', icon: '👥' }
+        ];
+
+        const BottomTabBar = ({ activeTab, onTabChange, onAIClick }) => (
+            <footer data-prd-zone="home_bottom_tab" className="flex-shrink-0 flex items-end gap-2 px-3 pb-8 pt-2 bg-bg-page">
+                <div className="tab-bar-glass flex-1 rounded-full flex items-center justify-around py-2 px-1">
+                    {TAB_ITEMS.map((t) => (
+                        <button
+                            key={t.id}
+                            onClick={() => onTabChange(t.id)}
+                            className={`flex flex-col items-center gap-0.5 py-1.5 px-3 rounded-full transition-colors ${activeTab === t.id ? 'bg-brand-red text-white' : 'text-text-secondary'}`}
+                        >
+                            <span className="text-2xl leading-none">{t.icon}</span>
+                            <span className="text-[10px] font-normal tracking-tight">{t.label}</span>
+                        </button>
+                    ))}
+                </div>
+                <button
+                    onClick={onAIClick}
+                    className="tab-bar-ai w-[52px] h-[52px] rounded-2xl flex items-center justify-center text-2xl shadow-card active:scale-95 bg-gradient-to-br from-brand-redLight to-brand-redMid"
+                    title="AI 对话"
+                >
+                    ✨
+                </button>
+            </footer>
+        );
+
+        // --- 主页面（对齐 Figma 2086:3439）---
+        const AI_CHIPS = [
+            { icon: '🔄', label: 'Change' },
+            { icon: '💪', label: '20-min Running' },
+            { icon: '💪', label: '10-min Running' }
+        ];
+        const DEFAULT_TASK = {
+            title: 'Top 5 Gifts for Weight Loss Goals',
+            meta: '15 min｜Advanced',
+            coverUrl: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=700&q=80'
+        };
+
+        const HomePage = () => {
+            const [hasPlan, setHasPlan] = useState(true);
+            const [showBanner, setShowBanner] = useState(true);
+            const [activeTab, setActiveTab] = useState('home');
+            const [showAISheet, setShowAISheet] = useState(false);
+            const [aiTask, setAiTask] = useState(DEFAULT_TASK);
 
             return (
-                <div className="mobile-viewport font-sans">
-                    {appState === 'launching' && <SplashLayer onComplete={() => setAppState('home')} />}
-                    <HomeScreen isVisible={appState === 'home'} onNavigate={handleNav} />
+                <div className="mobile-viewport font-sans flex flex-col">
+                    <TopBar
+                        streakDays={3}
+                        onProfile={() => navigateTo('profile')}
+                        onPoints={() => navigateTo('points')}
+                        onMessage={() => navigateTo('message')}
+                        onCalendar={() => navigateTo('calendar')}
+                        onEquipment={() => navigateTo('device_connect')}
+                    />
+                    <div className="flex-1 overflow-y-auto no-scrollbar pt-3 pb-2">
+                        <Banner show={showBanner} onClose={() => setShowBanner(false)} />
+                        {!hasPlan && <SuggestionCardNoPlan onTryPlan={() => navigateTo('plan_create')} />}
+                        <DayRecoveryRow day={31} recoveryLabel="Recovery • 100/200 kcal" />
+                        <AISuggestionCard
+                            visible={true}
+                            tooltipText="80% users start their fat-burn journey here. give it a try!"
+                            task={aiTask}
+                            onStart={() => navigateTo('workout')}
+                            chips={AI_CHIPS}
+                            onChipClick={(c) => {}}
+                        />
+                        <MyProgress
+                            planTitle="Body Awake"
+                            workoutMinutes="140 min in this week"
+                            onPlanClick={() => navigateTo('plan_create')}
+                            onWorkoutClick={() => navigateTo('workout')}
+                        />
+                        <MyCourse onViewAll={() => navigateTo('workout')} />
+                    </div>
+                    <BottomTabBar
+                        activeTab={activeTab}
+                        onTabChange={setActiveTab}
+                        onAIClick={() => setShowAISheet(true)}
+                    />
+                    {/* 演示用：切换有计划/无计划状态，便于查看两种建议卡片 */}
+                    <button
+                        onClick={() => setHasPlan(p => !p)}
+                        className="fixed top-20 right-4 z-40 px-2 py-1 rounded-lg bg-black/50 text-white text-[10px] font-medium backdrop-blur-sm"
+                    >
+                        {hasPlan ? '无计划' : '有计划'}
+                    </button>
+                    {showAISheet && (
+                        <div className="absolute inset-0 bg-black/40 z-50 flex items-end" onClick={() => setShowAISheet(false)}>
+                            <div className="w-full bg-white rounded-t-3xl p-6 pb-10 max-h-[70vh]" onClick={e => e.stopPropagation()}>
+                                <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4" />
+                                <p className="text-text-primary font-semibold mb-2">AI 对话</p>
+                                <p className="text-sm text-text-secondary">在此输入或使用语音与 AI 教练交流...</p>
+                                <button onClick={() => setShowAISheet(false)} className="mt-4 w-full py-2 rounded-xl bg-bg-neutral text-text-primary text-sm font-semibold">关闭</button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
         };
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        root.render(<HomePage />);
     </script>
 </body>
 </html>
