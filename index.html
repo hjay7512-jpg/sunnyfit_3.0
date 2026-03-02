@@ -138,22 +138,35 @@
         const breadcrumbs = document.getElementById('breadcrumbs');
 
         // 核心路由控制器
-        async function init() {
-            if (!projectUrl) {
-                globalView.classList.add('active');
-                document.getElementById('global-content').innerHTML = `<h2>欢迎使用 PRD Viewer</h2><p>请在 URL 中提供 ?project= 你的仓库地址参数。</p>`;
-                breadcrumbs.innerText = "Home";
-                return;
-            }
+		async function init() {
+		    const urlParams = new URLSearchParams(window.location.search);
+		    
+		    // --- 核心修复：自动获取当前站点的根目录 ---
+		    const currentOrigin = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '');
+		    const projectUrl = urlParams.get('project') || currentOrigin;
+		    
+		    console.log("正在加载项目路径:", projectUrl);
+		
+		    try {
+		        // 加载全局状态机 (Markdown)
+		        const gsmRes = await fetch(`${projectUrl}/global_state_machine.md`);
+		        if (gsmRes.ok) {
+		            const gsmText = await gsmRes.text();
+		            document.getElementById('markdown-content').innerHTML = marked.parse(gsmText);
+		        } else {
+		            console.error("无法加载 global_state_machine.md");
+		        }
+		
+		        // 加载页面列表 (假设你在 pages 目录下有 ui.html)
+		        // 这里可以根据你的实际文件结构继续完善加载逻辑
+		        
+		    } catch (err) {
+		        console.error("初始化失败:", err);
+		    }
+		}
 
-            if (!pageId) {
-                // 场景 A：只传了 Project，加载全局描述
-                await renderGlobalView();
-            } else {
-                // 场景 B：传了 Project 和 Page，加载详情双栏视图
-                await renderDetailView();
-            }
-        }
+// 页面加载完成后执行
+window.addEventListener('DOMContentLoaded', init);
 
 	// 渲染全局视图
 			async function renderGlobalView() {
