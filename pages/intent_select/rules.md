@@ -24,7 +24,7 @@
 
 **📝 业务逻辑**：
 * **AI 视觉**：页面中上部展示 AI 动态 Logo（SunnyLogo），带呼吸动画（animate-breathe）。
-* **文案**：主标题 "Hi, I'm your AI Coach."，副标题 "What's our focus for today?"。文案使用从下往上渐现动画（animate-fade-up）。
+* **文案**：主标题 "Good Morning!"，副标题 "What do you want to start?"。文案使用从下往上渐现动画（animate-fade-up）。
 
 ---
 
@@ -35,7 +35,7 @@
 | 点击卡片 | L1 核心 | `👉 device_connect` |
 
 **📝 业务逻辑**：
-* **卡片内容**：Icon 🚲，标题 "Start with Equipment"，副标题 "Connect your Sunny gear"。
+* **卡片内容**：蓝牙/连接图标，标题 "Connect Equipment"，副标题 "Connect your Sunny / JLL gear and track"。
 * **路由**：点击后进入设备连接流程（device_connect）。
 
 ---
@@ -47,7 +47,7 @@
 | 点击卡片 | L1 核心 | `👉 plan_create` |
 
 **📝 业务逻辑**：
-* **卡片内容**：Icon 🔎，标题 "Find a Course"，副标题 "Looking for guided workouts"。
+* **卡片内容**：健身/课程图标（左侧），标题 "Find a Course"，副标题 "Looking for workouts suit for me"。
 * **路由**：点击后进入计划流（plan_create）。
 
 ---
@@ -59,7 +59,7 @@
 | 点击卡片 | L1 核心 | `👉 just_explore` |
 
 **📝 业务逻辑**：
-* **卡片内容**：Icon 👀，标题 "Just Browsing"，副标题 "I have no specific goal yet"。
+* **卡片内容**：探索/浏览图标（右侧），标题 "Just Browsing"，副标题 "I have no idea"。
 * **路由**：点击后进入无目标状态选择流（just_explore）。
 
 ---

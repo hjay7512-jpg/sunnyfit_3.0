@@ -64,11 +64,19 @@
             font-family: 'Montserrat', sans-serif;
         }
         .mobile-viewport {
-            width: 390px; height: 844px; background-color: #FFFBF7; position: relative;
+            width: 390px; height: 844px; background-color: #FFFFFF; position: relative;
             overflow: hidden; border-radius: 40px; border: 8px solid #333;
             box-shadow: 0px 30px 60px rgba(0,0,0,0.3);
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        /* Figma Liquid Glass 卡片样式 */
+        .glass-card {
+            background: rgba(245, 245, 245, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 0 1px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
     </style>
 </head>
 <body>
@@ -77,9 +85,16 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        const Icons = {
-            ChevronLeft: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"/></svg>,
-            ChevronRight: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m9 18 6-6-6-6"/></svg>
+        const Icons = { ChevronRight: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m9 18 6-6-6-6"/></svg> };
+
+        // Figma 设计资源 (MCP asset URLs，有效 7 天)
+        const FIGMA_ASSETS = {
+            sphere: 'https://www.figma.com/api/mcp/asset/e7f4d7a2-4943-455a-8873-82ffb474389e',
+            connectEquip: 'https://www.figma.com/api/mcp/asset/33f37d96-1f60-4cf2-a0ec-c9f67c85cde7',
+            findCourse: 'https://www.figma.com/api/mcp/asset/59ca3ee8-182b-408d-9872-c823746978c',
+            justBrowsing: 'https://www.figma.com/api/mcp/asset/d3725256-a7a2-4ccf-9523-bd099dcc3220',
+            backIcon: 'https://www.figma.com/api/mcp/asset/add55341-f866-4ad2-9a99-6f880f637d9a',
+            bgGradient: 'https://www.figma.com/api/mcp/asset/abf9fb6c-b69f-49ef-b51f-c904b09f8278'
         };
 
         const SunnyLogo = ({ variant = 'standard', className = "" }) => {
@@ -123,47 +138,62 @@
             useEffect(() => { if(show) setTimeout(() => setCardsReady(true), 800); }, [show]);
 
             const options = [
-                { id: 'device_connect', icon: '🚲', title: 'Start with Equipment', subtitle: 'Connect your Sunny gear' },
-                { id: 'plan_create', icon: '🔎', title: 'Find a Course', subtitle: 'Looking for guided workouts' },
-                { id: 'just_explore', icon: '👀', title: 'Just Browsing', subtitle: 'I have no specific goal yet' }
+                { id: 'device_connect', img: FIGMA_ASSETS.connectEquip, title: 'Connect Equipment', subtitle: 'Connect your Sunny / JLL gear and track', imgPos: 'right' },
+                { id: 'plan_create', img: FIGMA_ASSETS.findCourse, title: 'Find a Course', subtitle: 'Looking for workouts suit for me', imgPos: 'left' },
+                { id: 'just_explore', img: FIGMA_ASSETS.justBrowsing, title: 'Just Browsing', subtitle: 'I have no idea', imgPos: 'right' }
             ];
 
             return (
-                <div className={`absolute inset-0 flex flex-col items-center bg-bg-page transition-opacity duration-1000 ${isVisible?'opacity-100':'opacity-0'}`}>
-                    {/* 顶部返回按钮 */}
-                    <div className="absolute top-10 left-6 z-50 shrink-0" data-zone-id="intent_select_header" data-prd-zone="intent_select_header">
-                        <button onClick={() => window.navigateTo('auth_select')} className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-brand-blue active:scale-95">
-                            <Icons.ChevronLeft />
+                <div className={`absolute inset-0 flex flex-col bg-white overflow-hidden transition-opacity duration-1000 ${isVisible?'opacity-100':'opacity-0'}`}>
+                    {/* Figma 底部渐变背景 */}
+                    <img alt="" className="absolute bottom-0 left-0 w-full h-[408px] object-cover object-bottom pointer-events-none" src={FIGMA_ASSETS.bgGradient} />
+                    {/* 顶部返回按钮 - Figma 深色导航栏样式 */}
+                    <div className="absolute top-11 left-4 z-50 shrink-0" data-zone-id="intent_select_header" data-prd-zone="intent_select_header">
+                        <button onClick={() => window.navigateTo('auth_select')} className="w-10 h-10 rounded-full bg-[#232323] flex items-center justify-center active:scale-95 overflow-hidden">
+                            <img alt="" className="w-5 h-5 object-contain" src={FIGMA_ASSETS.backIcon} />
                         </button>
                     </div>
-
-                    <div className="flex flex-col items-center pt-[12vh] px-6 flex-1 w-full">
-                        <div className="w-[88px] h-[88px] mb-6 flex-shrink-0" data-zone-id="intent_select_greeting" data-prd-zone="intent_select_greeting">
-                            <SunnyLogo />
+                    <div className="relative flex flex-col items-center pt-[80px] px-4 flex-1">
+                        {/* Figma 3D 球体 */}
+                        <div className="w-20 h-20 mb-4 flex-shrink-0" data-zone-id="intent_select_greeting" data-prd-zone="intent_select_greeting">
+                            <img alt="" className="w-full h-full object-contain" src={FIGMA_ASSETS.sphere} />
                         </div>
-                        <div className="text-center mb-10 shrink-0 animate-fade-up">
-                            <h1 className="text-[28px] font-bold mb-2 text-text-primary leading-tight" data-i18n="intent_select_greeting">Hi, I'm your AI Coach.</h1>
-                            <p className="text-text-secondary text-[14px]" data-i18n="intent_select_subtitle">What's our focus for today?</p>
+                        <div className="text-center mb-6 shrink-0 animate-fade-up">
+                            <h1 className="text-[24px] font-semibold leading-8 text-[rgba(0,0,0,0.9)] mb-1" data-i18n="intent_select_greeting">Good Morning!</h1>
+                            <p className="text-[16px] leading-6 text-[rgba(0,0,0,0.6)]" data-i18n="intent_select_subtitle">What do you want to start?</p>
                         </div>
-                        <div className="w-full flex-1 overflow-y-auto no-scrollbar pb-10" data-zone-id="intent_select_edge" data-prd-zone="intent_select_edge">
+                        <div className="w-full flex-1 overflow-y-auto no-scrollbar pb-12" data-zone-id="intent_select_edge" data-prd-zone="intent_select_edge">
                             {show && options.map((opt, i) => (
                                 <div
                                     key={opt.id}
                                     onClick={() => cardsReady && onNavigate(opt.id)}
                                     data-zone-id={`intent_select_opt_${opt.id}`}
                                     data-prd-zone={`intent_select_opt_${opt.id}`}
-                                    className={`w-full bg-white p-4 rounded-[20px] shadow-card flex items-center animate-fade-up mb-4 transition-all ${cardsReady ? 'cursor-pointer active:scale-[0.98] active:bg-bg-neutral' : 'pointer-events-none'}`}
-                                    style={{animationDelay: `${i*0.1}s`}}
+                                    className={`w-full rounded-[34px] flex items-center overflow-visible animate-fade-up mb-4 transition-all glass-card ${cardsReady ? 'cursor-pointer active:scale-[0.98]' : 'pointer-events-none'}`}
+                                    style={{animationDelay: `${i*0.1}s`, minHeight: '120px'}}
                                 >
-                                    <div className="w-12 h-12 bg-bg-neutral rounded-[16px] flex items-center justify-center text-2xl flex-shrink-0">{opt.icon}</div>
-                                    <div className="ml-4 flex-grow text-left pr-2">
-                                        <h3 className="font-bold text-text-primary text-[15px] leading-tight">{opt.title}</h3>
-                                        <p className="text-[11px] text-text-secondary mt-1 leading-snug">{opt.subtitle}</p>
+                                    {opt.imgPos === 'left' && (
+                                        <div className="w-[120px] h-[120px] flex-shrink-0 -ml-2 overflow-visible">
+                                            <img alt="" className="w-[140px] h-[140px] object-contain object-center -translate-x-2 -translate-y-2" src={opt.img} />
+                                        </div>
+                                    )}
+                                    <div className="flex-1 min-w-0 py-4 px-4 flex flex-col justify-center">
+                                        <h3 className="font-semibold text-[20px] leading-7 text-[rgba(0,0,0,0.9)]">{opt.title}</h3>
+                                        <p className="text-[14px] leading-[22px] text-[rgba(0,0,0,0.6)] mt-0.5">{opt.subtitle}</p>
                                     </div>
-                                    <div className="w-5 h-5 flex-shrink-0 text-text-secondary opacity-30"><Icons.ChevronRight className="w-full h-full" /></div>
+                                    {opt.imgPos === 'right' && (
+                                        <div className="w-[120px] h-[120px] flex-shrink-0 -mr-2 overflow-visible flex justify-end">
+                                            <img alt="" className="w-[140px] h-[140px] object-contain object-center translate-x-2 -translate-y-2" src={opt.img} />
+                                        </div>
+                                    )}
+                                    <div className="w-5 h-5 flex-shrink-0 mx-2 text-[rgba(0,0,0,0.4)]"><Icons.ChevronRight className="w-full h-full" /></div>
                                 </div>
                             ))}
                         </div>
+                    </div>
+                    {/* iOS Home Indicator */}
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[134px] h-[34px] flex items-end justify-center">
+                        <div className="w-[134px] h-[5px] bg-black rounded-full" />
                     </div>
                 </div>
             );
