@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SunnyFit PRD Viewer</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #f15a24; /* 假设的 SunnyFit 品牌色 */
+            --bg-color: #f5f7fa;
+            --text-color: #333;
+            --border-color: #e4e7ed;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); height: 100vh; display: flex; flex-direction: column; }
+        
+        /* 顶部导航栏 */
+        header { background: #fff; padding: 16px 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; align-items: center; z-index: 10; }
+        .logo { font-size: 18px; font-weight: bold; color: var(--primary-color); margin-right: 20px; }
+        .breadcrumbs { font-size: 14px; color: #666; }
+        .breadcrumbs a { color: #666; text-decoration: none; }
+        .breadcrumbs a:hover { color: var(--primary-color); }
+
+        /* 主体内容区 */
+        main { flex: 1; display: flex; overflow: hidden; position: relative; }
+
+        /* 状态 1：全局视图 (Markdown 解析区) */
+        #global-view { width: 100%; max-width: 800px; margin: 0 auto; padding: 40px 20px; overflow-y: auto; display: none; }
+        #global-view.active { display: block; }
+        .markdown-body { background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); line-height: 1.6; }
+        .markdown-body a { color: var(--primary-color); }
+
+        /* 状态 2：详情拆分视图 (左 UI，右规则) */
+        #detail-view { width: 100%; display: none; }
+        #detail-view.active { display: flex; }
+        
+        /* 左侧预览区 */
+        .preview-pane { flex: 1; display: flex; justify-content: center; align-items: center; background: #ebedf0; padding: 20px; }
+        .device-mockup { width: 375px; height: 812px; background: #fff; border-radius: 36px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border: 8px solid #333; overflow: hidden; position: relative; }
+        .device-mockup iframe { width: 100%; height: 100%; border: none; }
+
+        /* 右侧规则区 */
+        .rules-pane { width: 450px; background: #fff; border-left: 1px solid var(--border-color); display: flex; flex-direction: column; }
+        .rules-header { padding: 20px; border-bottom: 1px solid var(--border-color); }
+        .rules-header h2 { font-size: 18px; margin-bottom: 4px; }
+        .rules-header p { font-size: 12px; color: #999; }
+        .rules-content { flex: 1; overflow-y: auto; padding: 20px; }
+        
+        /* 规则卡片样式 */
+        .rule-card { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; margin-bottom: 16px; transition: all 0.2s; }
+        .rule-card:hover { border-color: var(--primary-color); box-shadow: 0 4px 12px rgba(241, 90, 36, 0.1); }
+        .rule-badge { display: inline-block; background: #333; color: #fff; font-size: 12px; padding: 2px 8px; border-radius: 4px; margin-bottom: 8px; }
+        .rule-title { font-weight: bold; margin-bottom: 12px; font-size: 15px; }
+        .rule-steps li { font-size: 13px; color: #555; margin-bottom: 6px; margin-left: 16px; }
+        
+        /* 错误提示 */
+        .error-msg { color: #f5222d; padding: 20px; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">SunnyFit PRD</div>
+        <div class="breadcrumbs" id="breadcrumbs">等待加载...</div>
+    </header>
+
+    <main>
+        <div id="global-view">
+            <div class="markdown-body" id="global-content">加载中...</div>
+        </div>
+
+        <div id="detail-view">
+            <div class="preview-pane">
+                <div class="device-mockup">
+                    <iframe id="ui-iframe" src=""></iframe>
+                </div>
+            </div>
+            <div class="rules-pane">
+                <div class="rules-header">
+                    <h2 id="page-title">页面名称加载中...</h2>
+                    <p id="page-id-display">ID: ...</p>
+                </div>
+                <div class="rules-content" id="rules-container">
+                    </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // 解析 URL 参数
+        const urlParams = new URLSearchParams(window.location.search);
+        const projectUrl = urlParams.get('project');
+        const pageId = urlParams.get('page');
+
+        // DOM 元素引用
+        const globalView = document.getElementById('global-view');
+        const detailView = document.getElementById('detail-view');
+        const breadcrumbs = document.getElementById('breadcrumbs');
+
+        // 核心路由控制器
+        async function init() {
+            if (!projectUrl) {
+                globalView.classList.add('active');
+                document.getElementById('global-content').innerHTML = `<h2>欢迎使用 PRD Viewer</h2><p>请在 URL 中提供 ?project= 你的仓库地址参数。</p>`;
+                breadcrumbs.innerText = "Home";
+                return;
+            }
+
+            if (!pageId) {
+                // 场景 A：只传了 Project，加载全局描述
+                await renderGlobalView();
+            } else {
+                // 场景 B：传了 Project 和 Page，加载详情双栏视图
+                await renderDetailView();
+            }
+        }
+
+	// 渲染全局视图
+			async function renderGlobalView() {
+				globalView.classList.add('active');
+				breadcrumbs.innerHTML = `<span>项目主页</span>`;
+				
+				try {
+					const res = await fetch(`${projectUrl}/global_state_machine.md`);
+					if (!res.ok) throw new Error('未找到全局描述文件');
+					const markdownText = await res.text();
+					
+					// 将 Markdown 转换为 HTML
+					let htmlContent = marked.parse(markdownText);
+					
+					// 【修复点】：拦截所有 a 标签，自动补全 project 参数
+					globalView.innerHTML = `<div class="markdown-body">${htmlContent}</div>`;
+					const links = globalView.querySelectorAll('a');
+					links.forEach(link => {
+						const href = link.getAttribute('href');
+						if (href && href.startsWith('?page=')) {
+							// 将 ?page=xxx 替换为 ?project=当前项目&page=xxx
+							link.setAttribute('href', `?project=${projectUrl}&${href.substring(1)}`);
+						}
+					});
+
+				} catch (error) {
+					globalView.innerHTML = `<div class="markdown-body"><p class="error-msg">加载全局配置失败: ${error.message}</p></div>`;
+				}
+			}
+
+        // 渲染页面详情视图
+        async function renderDetailView() {
+            detailView.classList.add('active');
+            breadcrumbs.innerHTML = `<a href="?project=${projectUrl}">项目主页</a> / <span>${pageId}</span>`;
+            
+            // 1. 设置左侧 Iframe 路径
+            const iframe = document.getElementById('ui-iframe');
+            iframe.src = `${projectUrl}/pages/${pageId}/ui.html`;
+
+            // 2. 拉取并渲染右侧 JSON 规则
+            const rulesContainer = document.getElementById('rules-container');
+            try {
+                const res = await fetch(`${projectUrl}/pages/${pageId}/rules.json`);
+                if (!res.ok) throw new Error('未找到业务规则文件 (rules.json)');
+                
+                const rulesData = await res.json();
+                
+                // 更新右侧标题
+                document.getElementById('page-title').innerText = rulesData.page_name || '未命名页面';
+                document.getElementById('page-id-display').innerText = `ID: ${pageId}`;
+
+                // 渲染卡片
+                let cardsHtml = '';
+                if (rulesData.zones && rulesData.zones.length > 0) {
+                    rulesData.zones.forEach(zone => {
+                        cardsHtml += `
+                            <div class="rule-card" data-zone="${zone.zone_id}">
+                                <div class="rule-badge">${zone.module_level || 'Rule'}</div>
+                                <div class="rule-title">${zone.module_name || '未命名逻辑区块'}</div>
+                                <ul class="rule-steps">
+                                    ${zone.logic_steps.map(step => `<li>${step}</li>`).join('')}
+                                </ul>
+                            </div>
+                        `;
+                    });
+                } else {
+                    cardsHtml = '<p style="color:#999; font-size:14px;">暂无逻辑配置</p>';
+                }
+                rulesContainer.innerHTML = cardsHtml;
+
+            } catch (error) {
+                rulesContainer.innerHTML = `<p class="error-msg">解析规则失败: ${error.message}</p>`;
+            }
+        }
+
+        // 启动应用
+        init();
+    </script>
+</body>
+</html>
