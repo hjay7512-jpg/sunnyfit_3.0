@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SunnyFit: Just Explore (情绪驱动 · 隐蔽收集)</title>
-    
+    <title>SunnyFit: Just Explore (SOP 2.0)</title>
+
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -12,14 +12,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <script>
+        // SOP 2.0 MapsTo 跨级路由：供本页及子组件调用，统一通过父级 Viewer 切换 page 参数
         function navigateTo(targetPageId) {
+            var cleanId = (targetPageId || '').replace(/\.html$/, '');
+            var targetFile = cleanId + '.html';
             try {
-                const parentParams = new URLSearchParams(window.parent.location.search);
-                parentParams.set('page', targetPageId);
-                window.parent.location.search = parentParams.toString();
-            } catch (e) {
-                console.warn("未检测到 Viewer 外壳，执行降级跳转");
-                alert("路由触发：即将开启首次课程 -> " + targetPageId);
+                if (window.parent !== window && window.parent.location.search.indexOf('page=') !== -1) {
+                    var parentParams = new URLSearchParams(window.parent.location.search);
+                    parentParams.set('page', cleanId);
+                    window.parent.location.search = parentParams.toString();
+                    return;
+                }
+            } catch (e) {}
+            if (!window.location.pathname.endsWith(targetFile)) {
+                window.location.href = targetFile;
             }
         }
         if (typeof window !== 'undefined') window.navigateTo = navigateTo;
@@ -155,15 +161,15 @@
 
             return (
                 <div className="mobile-viewport bg-bg-page flex flex-col font-sans text-text-primary">
-                    <div className="px-6 pt-10 pb-4 flex items-center shrink-0" data-prd-zone="just_explore_header">
-                        <button onClick={handleBack} className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-brand-blue active:scale-95" aria-label="返回">
+                    <div className="px-6 pt-10 pb-4 flex items-center shrink-0" data-zone-id="just_explore_header" data-prd-zone="just_explore_header">
+                        <button onClick={handleBack} className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-brand-blue active:scale-95" aria-label="Back">
                             <Icons.ChevronLeft />
                         </button>
                     </div>
 
                     <div className="flex-1 flex flex-col overflow-y-auto no-scrollbar relative min-h-0">
                         {step === 1 && (
-                            <div className="animate-fade-up px-6 pb-8" data-prd-zone="just_explore_step1_mood">
+                            <div className="animate-fade-up px-6 pb-8" data-zone-id="just_explore_step1_mood" data-prd-zone="just_explore_step1_mood">
                                 <div className="flex flex-col items-center pt-2 px-4 text-center">
                                     <div className="mb-6"><SunnyLogo /></div>
                                     <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2 mb-3">No pressure. Just flow.</h3>
@@ -174,7 +180,7 @@
                                 <div className="mt-8">
                                     <div className="grid grid-cols-2 gap-3">
                                         {Object.values(SCENES).map((mood) => (
-                                            <div key={mood.id} onClick={() => handleMoodSelect(mood.id)} className="p-5 rounded-[24px] border-2 border-transparent bg-white shadow-card hover:shadow-md active:scale-95 transition-all flex flex-col items-center gap-3 cursor-pointer h-36 justify-center">
+                                            <div key={mood.id} onClick={() => handleMoodSelect(mood.id)} className="p-5 rounded-[24px] border-2 border-transparent bg-white shadow-card hover:shadow-md active:scale-95 transition-all flex flex-col items-center gap-3 cursor-pointer h-36 justify-center" data-zone-id={`just_explore_mood_${mood.id}`} data-prd-zone={`just_explore_mood_${mood.id}`}>
                                                 <span className="text-4xl animate-pop" style={{ animationDelay: '0.1s' }}>{mood.icon}</span>
                                                 <h4 className="font-bold text-[15px] text-text-primary">{mood.label}</h4>
                                             </div>
@@ -186,7 +192,7 @@
 
                         {step === 2 && selectedScene && (
                             <>
-                                <div className="animate-slide-in px-6 pb-6 flex-1" data-prd-zone="just_explore_step2_recommend">
+                                <div className="animate-slide-in px-6 pb-6 flex-1" data-zone-id="just_explore_step2_recommend" data-prd-zone="just_explore_step2_recommend">
                                     <div className="flex flex-col items-center pt-2 px-4 text-center">
                                         <div className="mb-6"><SunnyLogo /></div>
                                         <h3 className="text-[22px] font-bold text-brand-blue leading-tight mt-2 mb-4">"{selectedScene.dialogueTitle}"</h3>
@@ -215,33 +221,34 @@
                                     </div>
                                 </div>
 
-                                <div className="px-6 pb-8 pt-4 bg-gradient-to-t from-bg-page via-bg-page to-transparent shrink-0 z-50 animate-slide-in" data-prd-zone="just_explore_cta_with_stealth_collection">
+                                <div className="px-6 pb-8 pt-4 bg-gradient-to-t from-bg-page via-bg-page to-transparent shrink-0 z-50 animate-slide-in" data-zone-id="just_explore_cta" data-prd-zone="just_explore_cta">
                                     <div className="mb-4 text-center">
                                         <p className="text-[12px] text-text-secondary font-medium px-4 leading-relaxed">
                                             To ensure the intensity is perfectly safe for your current state, please sync your basic stats.
                                         </p>
                                     </div>
-                                    
-                                    <button 
-                                        onClick={handleSyncAndStart} 
+                                    <button
+                                        onClick={handleSyncAndStart}
                                         disabled={isSyncing}
                                         className={`w-full py-4 bg-[#111111] text-white rounded-[16px] font-bold shadow-float-btn transition-all flex items-center justify-center gap-2 mb-4 ${isSyncing ? 'opacity-80' : 'active:scale-95'}`}
+                                        data-zone-id="just_explore_cta_sync_start"
+                                        data-prd-zone="just_explore_cta_sync_start"
                                     >
                                         {isSyncing ? (
                                             <span className="animate-pulse-fast tracking-wide">Syncing Data...</span>
                                         ) : (
                                             <>
-                                                <span className="text-[#ff2d55] text-lg">❤️</span> 
+                                                <span className="text-[#ff2d55] text-lg">❤️</span>
                                                 <span>Quick Sync & Start</span>
                                             </>
                                         )}
                                     </button>
-
-                                    {/* 你的业务调整：改为 Enter Manually */}
-                                    <button 
-                                        onClick={handleSkip} 
+                                    <button
+                                        onClick={handleSkip}
                                         disabled={isSyncing}
                                         className="w-full py-2 text-[13px] text-text-secondary font-semibold active:scale-95 transition-transform underline decoration-gray-300 underline-offset-4"
+                                        data-zone-id="just_explore_cta_manual"
+                                        data-prd-zone="just_explore_cta_manual"
                                     >
                                         Enter Manually
                                     </button>

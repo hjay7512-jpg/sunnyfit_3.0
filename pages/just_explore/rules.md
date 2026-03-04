@@ -20,7 +20,7 @@
 
 **📝 业务逻辑**：
 * **主文案**：标题 "No pressure. Just flow."；副标题 "Whether you want to sweat or just breathe, let's start with how your body feels right now."
-* **交互规则**：四选一情绪卡片，且仅能选一项：**Stressed** / **Tired** / **Stiff** / **Energetic**。点击后立即进入 Step 2，无「确认」步骤。
+* **交互规则**：四选一情绪卡片，且仅能选一项：**Stressed** / **Tired** / **Stiff** / **Energetic**。点击后立即进入 Step 2，无「确认」步骤。每张卡片 zone：`just_explore_mood_stressed` / `just_explore_mood_tired` / `just_explore_mood_stiff` / `just_explore_mood_energetic`。
 * **状态控制**：选中即跳转，不保留「未选」态。
 * **动作/路由**：选择后进入 Step 2，并带入当前场景配置（对话文案、推荐课程、图片等）。
 
@@ -34,17 +34,17 @@
 
 | 触发方式 | 🧩 模块层级 | 🔗 页面出口 |
 | :--- | :--- | :--- |
-| 自动展示 | L1 核心 | 底部 CTA「Start Session」→ first_ride |
+| Step 1 选情绪后进入 | L1 核心 | 底部 CTA「Quick Sync & Start」→ first_ride /「Enter Manually」→ 手动填写 |
 
 **📝 业务逻辑**：
-* **结构**：上方共情对话（标题 + 正文）→ 分割线 "Recommended For You" → 推荐课程卡片（封面图 + 课程名 + 标签 + 播放按钮）→ 底部固定 CTA「Start Session」。
-* **对话语气**：需具备共情能力 (Empathy first)，针对当前情绪给出简短、安抚或鼓励的句子，再自然引出「为你选了这节课」。
-* **推荐课程**：单节、轻量，根据场景 ID 从配置中读取（课程标题、标签、封面图 URL）。
-* **动作/路由**：点击「Start Session」跳转 `👉 first_ride`；点击左上角返回回到 Step 1。
+* **结构**：上方共情对话（dialogueTitle）→ 分割线 "Recommended For You" → 推荐课程卡片（封面图 + 课程名 + 标签 + 播放图标）→ 底部固定 CTA 区。
+* **对话语气**：共情优先 (Empathy first)，针对当前情绪给出简短、安抚或鼓励的句子。
+* **推荐课程**：单节、轻量，根据场景 ID 从配置读取 courseTitle、courseTag、image。
+* **动作/路由**：点击左上角返回回到 Step 1。
 
 **📐 UI 规范**：
-* 课程卡片圆角 28px，封面区域约 160px 高，底部渐变遮罩；下方展示 courseTag（如 "Yoga • 🧘 Low Impact"）与播放图标。
-* 底部 CTA 全宽、品牌红、圆角 16px，固定于底部安全区上方。
+* 课程卡片圆角 28px，封面约 160px 高，底部渐变遮罩；下方展示 courseTag 与播放图标。
+* 底部 CTA 区见 `[just_explore_cta]`。
 
 ---
 
@@ -102,11 +102,28 @@
 
 ---
 
+### 🔙 顶部返回 `[just_explore_header]`
+
+| 触发方式 | 🧩 模块层级 | 🔗 页面出口 |
+| :--- | :--- | :--- |
+| 点击左上角返回 | Global | Step 1 → `👉 intent_select`；Step 2 → Step 1 |
+
+**📝 业务逻辑**：
+* **动作/路由**：Step 1 点击返回进入 `👉 intent_select`；Step 2 点击返回回到 Step 1（情绪选择）。
+
+---
+
 ### 🔘 底部 CTA 区 `[just_explore_cta]`
 
 | 触发方式 | 🧩 模块层级 | 🔗 说明 |
 | :--- | :--- | :--- |
-| 仅 Step 2 显示 | Global | 「Start Session」→ first_ride；返回按钮仅 Step 2 可见，回到 Step 1。 |
+| 仅 Step 2 显示 | Global | 主按钮「Quick Sync & Start」、次级「Enter Manually」 |
+
+**📝 业务逻辑**：
+* **说明文案**："To ensure the intensity is perfectly safe for your current state, please sync your basic stats."
+* **主 CTA** `[just_explore_cta_sync_start]`："Quick Sync & Start" — 同步生理数据后跳转 `👉 first_ride`；同步中按钮展示 "Syncing Data..." 且禁用。
+* **次级 CTA** `[just_explore_cta_manual]`："Enter Manually" — 跳转至手动填写页（如 manual_entry 或 plan_create 等，以实际路由为准）。
+* **状态控制**：同步进行时两按钮均禁用。
 
 ---
 
@@ -114,7 +131,7 @@
 
 | 入口 | 出口 |
 | :--- | :--- |
-| intent_select 选择「Just Browsing」进入本页 | Step 1 返回 → intent_select；Step 2「Start Session」→ first_ride |
+| intent_select 选择「Just Browsing」进入本页 | Step 1 返回 → `👉 intent_select`；Step 2「Quick Sync & Start」→ `👉 first_ride`；「Enter Manually」→ 手动填写页 |
 
 ---
 
