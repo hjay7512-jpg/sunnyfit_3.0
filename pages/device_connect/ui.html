@@ -13,34 +13,24 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <script>
-        // SOP 2.0 MapsTo 跨级路由
-        // 在 device_connect.html 的 <head> 中替换
-            function navigateTo(targetPageId) {
-            console.log("🔗 准备跳转至:", targetPageId);
-            // 统一处理文件名
-            const targetFile = targetPageId.replace(/\.html$/, '') + '.html';
-
+        // SOP 2.0 MapsTo 跨级路由：供本页及子组件调用，统一通过父级 Viewer 切换 page 参数
+        function navigateTo(targetPageId) {
+            const cleanId = (targetPageId || '').replace(/\.html$/, '');
+            const targetFile = cleanId + '.html';
             try {
-                // 逻辑 A：如果在 SOP 预览器 shell 内部 (iframe)
                 if (window.parent !== window && window.parent.location.search.includes('page=')) {
                     const parentParams = new URLSearchParams(window.parent.location.search);
-                    parentParams.set('page', targetPageId);
+                    parentParams.set('page', cleanId);
                     window.parent.location.search = parentParams.toString();
                     return;
                 }
             } catch (e) {
                 console.warn("非 Shell 环境，准备执行物理跳转");
             }
-
-            // 逻辑 B：直接跳转物理文件
-            // 增加判断：如果目标页面就是当前页，则不执行，防止无限刷新
             if (!window.location.pathname.endsWith(targetFile)) {
                 window.location.href = targetFile;
-            } else {
-                console.log("⚠️ 已在目标页面，忽略跳转");
             }
         }
-        if (typeof window !== 'undefined') window.navigateTo = navigateTo;
         if (typeof window !== 'undefined') window.navigateTo = navigateTo;
     </script>
 
@@ -441,6 +431,8 @@
                                 {/* Apple Health Sync Option */}
                                 <div 
                                     onClick={!isSyncing ? handleAppleHealthSync : undefined}
+                                    data-zone-id="device_connect_body_stats_sync"
+                                    data-prd-zone="device_connect_body_stats_sync"
                                     className={`w-full bg-white rounded-[16px] p-4 shadow-card flex items-center justify-between mb-6 cursor-pointer hover:bg-gray-50 transition-colors ${isSyncing ? 'opacity-70' : ''}`}
                                 >
                                     <div className="flex items-center gap-3">
@@ -524,34 +516,23 @@
 
                     <div className="px-6 pb-12 pt-4 bg-gradient-to-t from-bg-page via-bg-page to-transparent shrink-0" data-zone-id="device_connect_cta" data-prd-zone="device_connect_cta">
                         {flowStep === 'manual_entry' && (
-                            <button onClick={checkModel} className="w-full py-4 bg-brand-blue text-white rounded-[16px] font-bold mt-6 shadow-lg">Verify Device</button>
+                            <button onClick={checkModel} className="w-full py-4 bg-brand-blue text-white rounded-[16px] font-bold mt-6 shadow-lg" data-zone-id="device_connect_cta_verify" data-prd-zone="device_connect_cta_verify">Verify Device</button>
                         )}
                         {flowStep === 'check_bt' && (
-                            <button onClick={() => { setFlowStep('scanning'); setIsFound(false); setTimeout(() => setIsFound(true), 2000); }} className="w-full py-4 bg-brand-blue text-white rounded-[16px] font-bold">Retry Connection</button>
+                            <button onClick={() => { setFlowStep('scanning'); setIsFound(false); setTimeout(() => setIsFound(true), 2000); }} className="w-full py-4 bg-brand-blue text-white rounded-[16px] font-bold" data-zone-id="device_connect_cta_retry" data-prd-zone="device_connect_cta_retry">Retry Connection</button>
                         )}
                         {flowStep === 'incompatible' && (
-                            <button onClick={() => window.navigateTo('plan_create')} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold">Create My Plan</button>
+                            <button onClick={() => window.navigateTo('plan_create')} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold" data-zone-id="device_connect_cta_create_plan" data-prd-zone="device_connect_cta_create_plan">Create My Plan</button>
                         )}
-                        
                         {flowStep === 'branch_scale' && scaleMeasured && (
-                            <button onClick={() => setFlowStep('body_stats')} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn">Continue</button>
+                            <button onClick={() => setFlowStep('body_stats')} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn" data-zone-id="device_connect_cta_continue" data-prd-zone="device_connect_cta_continue">Continue</button>
                         )}
-
                         {flowStep === 'body_stats' && (
                             <button 
-                                onClick={() => {
-                                    try {
-                                        window.navigateTo('free_mode');
-                                        setTimeout(() => {
-                                            if (window.location.href.indexOf('free_mode') === -1) {
-                                                window.location.href = 'free_mode.html';
-                                            }
-                                        }, 500);
-                                    } catch (e) {
-                                        window.location.href = 'free_mode.html';
-                                    }
-                                }} 
+                                onClick={() => window.navigateTo('free_mode')}
                                 className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn active:scale-95 transition-all"
+                                data-zone-id="device_connect_cta_start_workout"
+                                data-prd-zone="device_connect_cta_start_workout"
                             >
                                 Start First Workout
                             </button>
@@ -586,8 +567,8 @@
                                     })}
                                 </div>
                                 <div className="px-6 py-4 border-t space-y-3">
-                                    <button onClick={() => { setShowScanResultsModal(false); setIsFound(false); setTimeout(() => setIsFound(true), 2000); }} className="w-full py-3.5 bg-brand-red text-white rounded-[16px] font-bold">Retry Search</button>
-                                    <button onClick={() => { setShowScanResultsModal(false); setFlowStep('manual_entry'); }} className="w-full text-[13px] font-bold text-brand-blue underline">Can't find my device?</button>
+                                    <button onClick={() => { setShowScanResultsModal(false); setIsFound(false); setTimeout(() => setIsFound(true), 2000); }} className="w-full py-3.5 bg-brand-red text-white rounded-[16px] font-bold" data-zone-id="device_connect_scan_retry" data-prd-zone="device_connect_scan_retry">Retry Search</button>
+                                    <button onClick={() => { setShowScanResultsModal(false); setFlowStep('manual_entry'); }} className="w-full text-[13px] font-bold text-brand-blue underline" data-zone-id="device_connect_scan_manual" data-prd-zone="device_connect_scan_manual">Can't find my device?</button>
                                 </div>
                             </div>
                         </div>
@@ -598,8 +579,8 @@
                             <div className="bg-white w-[320px] rounded-[20px] p-6 text-center">
                                 <h3 className="font-bold text-[18px] mb-2">Scan Failed</h3>
                                 <p className="text-[14px] text-text-secondary mb-6">No device found within 10 seconds. Check that your equipment is powered on and within 5m.</p>
-                                <button onClick={() => { setShowScanFailedModal(false); setFlowStep('manual_entry'); }} className="w-full py-3 bg-brand-blue text-white rounded-[12px] font-bold mb-3">Verify Model</button>
-                                <button onClick={() => { setShowScanFailedModal(false); setIsFound(false); setTimeout(() => setIsFound(true), 2000); }} className="w-full py-3 text-text-secondary font-medium">Retry Scan</button>
+                                <button onClick={() => { setShowScanFailedModal(false); setFlowStep('manual_entry'); }} className="w-full py-3 bg-brand-blue text-white rounded-[12px] font-bold mb-3" data-zone-id="device_connect_failed_verify" data-prd-zone="device_connect_failed_verify">Verify Model</button>
+                                <button onClick={() => { setShowScanFailedModal(false); setIsFound(false); setTimeout(() => setIsFound(true), 2000); }} className="w-full py-3 text-text-secondary font-medium" data-zone-id="device_connect_failed_retry" data-prd-zone="device_connect_failed_retry">Retry Scan</button>
                             </div>
                         </div>
                     )}
