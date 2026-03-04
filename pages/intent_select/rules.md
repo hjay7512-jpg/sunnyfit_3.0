@@ -104,7 +104,7 @@
 
 **📝 业务逻辑**：
 * **文案**：主标题 "Great! What do you want to start?"；副标题 "Let's do it first."。
-* **数据**：点击任一选项前将 nickname + coach 写入 session（sunnyfit_user），供 plan_create、device_connect 等下游读取。
+* **数据/状态**：进入下游页前，当前用户信息（昵称、所选教练）需可供下游页面（plan_create、device_connect、just_explore）使用。
 * **选项 1** `[intent_select_opt_device_connect]`：标题 "Connect Equipment"，副标题 "Connect your Sunny or JLL equipment" → `👉 device_connect`。
 * **选项 2** `[intent_select_opt_plan_create]`：标题 "Find Workout Guide"，副标题 "Looking for workouts suit for me" → `👉 plan_create`。
 * **选项 3** `[intent_select_opt_just_explore]`：标题 "Just Browsing"，副标题 "Looking for something fun" → `👉 just_explore`。
@@ -117,6 +117,9 @@
 | :--- | :--- |
 | `intent_select_cta_continue_email` | Step 1「Continue with Email」 |
 | `intent_select_cta_start_journey` | Step 6「Start My Journey」→ 显示意图选择 |
+| `intent_select_coach_alex` | Step 6 教练卡片 Alex |
+| `intent_select_coach_sarah` | Step 6 教练卡片 Sarah |
+| `intent_select_coach_max` | Step 6 教练卡片 Max |
 | `intent_select_opt_device_connect` | 意图「Connect Equipment」→ device_connect |
 | `intent_select_opt_plan_create` | 意图「Find Workout Guide」→ plan_create |
 | `intent_select_opt_just_explore` | 意图「Just Browsing」→ just_explore |
