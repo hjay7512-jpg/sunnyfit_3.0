@@ -1,223 +1,897 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SunnyFit: Intent Select (SOP 2.0)</title>
-    
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SunnyFit: Signup Flow (Intent Select)</title>
 
-    <script>
-        // SOP 2.0 MapsTo 跨级路由
-        function navigateTo(targetPageId) {
-            try {
-                const parentParams = new URLSearchParams(window.parent.location.search);
-                parentParams.set('page', targetPageId);
-                window.parent.location.search = parentParams.toString();
-            } catch (e) {
-                console.warn("未检测到 Viewer 外壳，执行降级跳转");
-                alert("SOP 路由触发：即将前往 -> " + targetPageId);
-            }
-        }
-        if (typeof window !== 'undefined') window.navigateTo = navigateTo;
-    </script>
+  <script>
+    (function() {
+      try { window.localStorage.getItem('test_probe'); } catch (e) {
+        var store = {};
+        Object.defineProperty(window, 'localStorage', {
+          value: {
+            getItem: function(k) { return store[k] || null; },
+            setItem: function(k, v) { store[k] = String(v); },
+            removeItem: function(k) { delete store[k]; },
+            clear: function() { store = {}; },
+            key: function(i) { return Object.keys(store)[i] || null; },
+            get length() { return Object.keys(store).length; }
+          }, writable: true, configurable: true
+        });
+      }
+    })();
+  </script>
+  <script>
+    document.addEventListener('click', function(e) {
+      if (e.ctrlKey && e.altKey) {
+        e.preventDefault(); e.stopPropagation();
+        var t = e.target, sel = t.tagName.toLowerCase();
+        if (t.id) sel += '#' + t.id;
+        else if (t.className && typeof t.className === 'string' && t.className.trim()) sel += '.' + t.className.trim().split(' ')[0];
+        window.parent.postMessage({ type: 'REQ_ANNOTATE', x: e.clientX, y: e.clientY, selector: sel }, '*');
+      }
+    }, true);
+  </script>
 
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: { red: '#EE4343', blue: '#31426D', beige: '#F6E2CF', green: '#2BA471', darkRed: '#8B0000', sky: '#BDD0EB' },
-                        bg: { page: '#FFFBF7', card: '#FFFFFF', neutral: '#F5F7FA', dark: '#1A1A1A' },
-                        text: { primary: '#31426D', secondary: '#666666', inverse: '#FFFFFF' }
-                    },
-                    fontFamily: { sans: ['Montserrat', 'sans-serif'] },
-                    boxShadow: {
-                        'glow': '0px 10px 30px rgba(222, 37, 41, 0.4)',
-                        'card': '0px 4px 12px rgba(0, 0, 0, 0.05)'
-                    },
-                    animation: {
-                        'breathe': 'breathe 4s ease-in-out infinite',
-                        'fade-up': 'fadeUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards'
-                    },
-                    keyframes: {
-                        breathe: {
-                            '0%, 100%': { transform: 'scale(1)', filter: 'drop-shadow(0px 10px 20px rgba(222, 37, 41, 0.4))' },
-                            '50%': { transform: 'scale(1.05)', filter: 'drop-shadow(0px 15px 30px rgba(222, 37, 41, 0.6))' },
-                        },
-                        fadeUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        * { -webkit-tap-highlight-color: transparent; }
-        body { 
-            margin: 0; background-color: #f0f0f0; display: flex; 
-            justify-content: center; align-items: center; height: 100vh; overflow: hidden;
-            font-family: 'Montserrat', sans-serif;
-        }
-        .mobile-viewport {
-            width: 390px; height: 844px; background-color: #FFFFFF; position: relative;
-            overflow: hidden; border-radius: 40px; border: 8px solid #333;
-            box-shadow: 0px 30px 60px rgba(0,0,0,0.3);
-        }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        /* Figma Liquid Glass 卡片样式 */
-        .glass-card {
-            background: rgba(245, 245, 245, 0.6);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 0 1px rgba(0, 0, 0, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-        }
-    </style>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+      // SOP 2.0 MapsTo 跨级路由：供本页及子组件调用，统一通过父级 Viewer 切换 page 参数
+      function navigateTo(targetPageId) {
+          var cleanId = (targetPageId || '').replace(/\.html$/, '');
+          var targetFile = cleanId + '.html';
+          try {
+              if (window.parent !== window && window.parent.location.search.indexOf('page=') !== -1) {
+                  var parentParams = new URLSearchParams(window.parent.location.search);
+                  parentParams.set('page', cleanId);
+                  window.parent.location.search = parentParams.toString();
+                  return;
+              }
+          } catch (e) {}
+          if (!window.location.pathname.endsWith(targetFile)) {
+              window.location.href = targetFile;
+          }
+      }
+      if (typeof window !== 'undefined') window.navigateTo = navigateTo;
+  </script>
+
+  <script>
+      tailwind.config = {
+          theme: {
+              extend: {
+                  colors: {
+                      brand: { red: '#EE4343', blue: '#31426D', beige: '#F6E2CF', green: '#2BA471', darkRed: '#8B0000', sky: '#BDD0EB', yellow: '#E6A23C' },
+                      bg: { page: '#FFFBF7', card: '#FFFFFF', neutral: '#F5F7FA', dark: '#1A1A1A' },
+                      text: { primary: '#31426D', secondary: '#666666', inverse: '#FFFFFF' }
+                  },
+                  fontFamily: { sans: ['Montserrat', 'sans-serif'] },
+                  boxShadow: {
+                      'glow': '0px 10px 30px rgba(222, 37, 41, 0.4)',
+                      'card': '0px 4px 12px rgba(0, 0, 0, 0.05)',
+                      'float-btn': '0px 10px 40px rgba(238, 67, 67, 0.4)',
+                      'input': '0px 2px 8px rgba(0, 0, 0, 0.08)',
+                      'sheet': '0px -4px 24px rgba(0, 0, 0, 0.1)'
+                  },
+                  animation: {
+                      'breathe': 'breathe 4s ease-in-out infinite',
+                      'fade-up': 'fadeUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
+                      'slide-in': 'slideIn 0.4s ease-out forwards',
+                      'slide-up': 'slideUp 0.4s ease-out forwards',
+                      'scale-in': 'scaleIn 0.3s ease-out forwards'
+                  },
+                  keyframes: {
+                      breathe: {
+                          '0%, 100%': { transform: 'scale(1)', filter: 'drop-shadow(0px 10px 20px rgba(222, 37, 41, 0.4))' },
+                          '50%': { transform: 'scale(1.05)', filter: 'drop-shadow(0px 15px 30px rgba(222, 37, 41, 0.6))' },
+                      },
+                      fadeUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+                      slideIn: { '0%': { opacity: '0', transform: 'translateX(20px)' }, '100%': { opacity: '1', transform: 'translateX(0)' } },
+                      slideUp: { '0%': { transform: 'translateY(100%)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
+                      scaleIn: { '0%': { opacity: '0', transform: 'scale(0.9)' }, '100%': { opacity: '1', transform: 'scale(1)' } }
+                  }
+              }
+          }
+      }
+  </script>
+  <style>
+      * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+      body { 
+          margin: 0; background-color: #f0f0f0; display: flex; 
+          justify-content: center; align-items: center; height: 100vh; overflow: hidden;
+          font-family: 'Montserrat', sans-serif;
+      }
+      .mobile-viewport {
+          width: 390px; height: 844px; background-color: #FFFBF7; position: relative;
+          overflow: hidden; border-radius: 40px; border: 8px solid #333;
+          box-shadow: 0px 30px 60px rgba(0,0,0,0.3);
+      }
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      
+      /* Custom input styles */
+      .custom-input {
+          width: 100%; height: 56px; background: white; border: 2px solid transparent;
+          border-radius: 16px; padding: 0 20px; font-size: 15px; font-weight: 500;
+          color: #31426D; outline: none; transition: all 0.3s ease;
+          box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.08);
+      }
+      .custom-input:focus { border-color: #EE4343; box-shadow: 0px 4px 16px rgba(238, 67, 67, 0.15); }
+      .custom-input::placeholder { color: #999; }
+      
+      /* Social login button */
+      .social-btn {
+          width: 100%; height: 52px; background: white; border-radius: 16px;
+          display: flex; align-items: center; justify-content: center; gap: 12px;
+          font-size: 15px; font-weight: 600; color: #31426D;
+          box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.08);
+          cursor: pointer; transition: all 0.2s ease; border: none;
+      }
+      .social-btn:hover { transform: translateY(-2px); box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.12); }
+      .social-btn:active { transform: scale(0.98); }
+      
+      /* Country card */
+      .country-card {
+          display: flex; align-items: center; gap: 12px; padding: 16px;
+          background: white; border-radius: 16px; border: 2px solid transparent;
+          cursor: pointer; transition: all 0.2s ease;
+          box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.06);
+      }
+      .country-card:hover { border-color: #EE4343; transform: translateY(-2px); }
+      .country-card.selected { border-color: #EE4343; background: rgba(238, 67, 67, 0.05); }
+      
+      /* Coach card */
+      .coach-card {
+          background: white; border-radius: 24px; padding: 20px;
+          border: 2px solid transparent; cursor: pointer; transition: all 0.3s ease;
+          box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.06);
+      }
+      .coach-card:hover { transform: translateY(-4px); box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.1); }
+      .coach-card.selected { border-color: #EE4343; background: rgba(238, 67, 67, 0.05); }
+      
+      /* Divider */
+      .divider {
+          display: flex; align-items: center; gap: 16px;
+          color: #999; font-size: 13px;
+      }
+      .divider::before, .divider::after {
+          content: ''; flex: 1; height: 1px; background: #e0e0e0;
+      }
+      
+      /* Bottom sheet */
+      .bottom-sheet-overlay {
+          position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5);
+          opacity: 0; visibility: hidden; transition: all 0.3s ease; z-index: 50;
+      }
+      .bottom-sheet-overlay.active { opacity: 1; visibility: visible; }
+      
+      .bottom-sheet {
+          position: absolute; bottom: 0; left: 0; right: 0;
+          background: white; border-radius: 24px 24px 0 0;
+          padding: 24px; max-height: 70vh; overflow-y: auto;
+          transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .bottom-sheet.active { transform: translateY(0); }
+      
+      /* Floating emoji */
+      @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+      }
+      .float-emoji { animation: float 3s ease-in-out infinite; }
+  </style>
 </head>
 <body>
-    <div id="root"></div>
+  <div id="root"></div>
 
-    <script type="text/babel">
-        const { useState, useEffect } = React;
+  <script type="text/babel">
+      const { useState, useEffect } = React;
 
-        const Icons = { ChevronRight: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m9 18 6-6-6-6"/></svg> };
+      const Icons = {
+          ChevronLeft: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"/></svg>,
+          ChevronRight: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"/></svg>,
+          Check: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"/></svg>,
+          Lock: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>,
+          Mail: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>,
+          User: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>,
+          Globe: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>,
+          Apple: () => <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.21-1.98 1.07-3.11-1.05.05-2.31.72-3.06 1.64-.68.82-1.26 2.01-1.1 3.17 1.17.09 2.34-.74 3.09-1.7"/></svg>,
+          Google: () => <svg className="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>,
+          Facebook: () => <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>,
+          Close: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      };
 
-        // Figma 设计资源 (MCP asset URLs，有效 7 天)
-        const FIGMA_ASSETS = {
-            sphere: 'https://www.figma.com/api/mcp/asset/e7f4d7a2-4943-455a-8873-82ffb474389e',
-            connectEquip: 'https://www.figma.com/api/mcp/asset/33f37d96-1f60-4cf2-a0ec-c9f67c85cde7',
-            findCourse: 'https://www.figma.com/api/mcp/asset/59ca3ee8-182b-408d-9872-c823746978c',
-            justBrowsing: 'https://www.figma.com/api/mcp/asset/d3725256-a7a2-4ccf-9523-bd099dcc3220',
-            backIcon: 'https://www.figma.com/api/mcp/asset/add55341-f866-4ad2-9a99-6f880f637d9a',
-            bgGradient: 'https://www.figma.com/api/mcp/asset/abf9fb6c-b69f-49ef-b51f-c904b09f8278'
-        };
+      // Sunny Brand Logo
+      const SunnyLogo = ({ variant = 'standard', className = "" }) => {
+          const colors = variant === 'splash' ? { path1: '#FFFFFF', path23: '#EE4343' } : { path1: '#EE4343', path23: '#FFFFFF' };
+          return (
+              <div className={`w-full h-full animate-breathe flex items-center justify-center ${className}`}>
+                  <svg viewBox="0 0 32 32" fill="none" className="w-full h-full drop-shadow-glow">
+                      <path d="M16.013 32C13.271 31.9018 10.5412 31.8755 7.87463 31.1231C3.57228 29.9252 1.23878 26.956 0.52873 22.6889C-0.165498 18.3226 -0.176144 13.8749 0.497173 9.50531C1.23001 4.58405 4.38577 1.32017 9.29472 0.537958C13.609 -0.165525 18.0077 -0.17914 22.3262 0.497619C27.7401 1.35875 30.6837 4.27187 31.513 9.76137C32.1817 14.0582 32.1521 18.4348 31.4253 22.7222C30.5207 27.9048 27.3527 30.867 22.079 31.558C20.0716 31.8176 18.0362 31.8597 16.013 32Z" fill={colors.path1} />
+                      <path d="M15.3836 6.16027C15.9406 6.15315 16.4468 6.48357 16.6646 6.99654C16.8824 7.50952 16.7687 8.10332 16.3767 8.49943C15.9848 8.89555 15.3925 9.01542 14.8774 8.80283C14.3624 8.59024 14.027 8.08735 14.0283 7.53001C14.0358 6.78206 14.636 6.1754 15.3836 6.16027Z" fill={colors.path23} />
+                      <path d="M19.6492 11.387C18.5149 11.7676 17.3455 12.0377 16.2287 12.4744C15.8322 12.6166 15.4556 12.8094 15.1084 13.0479C13.9776 13.8722 13.939 14.9315 14.9611 15.9768C15.7606 16.7959 16.7231 17.4115 17.5769 18.1586C18.9041 19.3214 18.9637 20.5245 17.7312 21.8118C16.4829 23.1255 14.905 23.9726 13.2676 24.6811C12.5908 24.974 11.8983 25.2283 11.2128 25.5002C11.0314 25.3255 10.9531 25.0694 11.0059 24.8232C12.0619 24.4117 13.0326 23.8082 13.8689 23.043C14.3759 22.5899 14.8315 22.0823 15.2276 21.5295C16.092 20.3018 16.0446 19.5722 15.0523 18.4445C14.3405 17.6412 13.5095 16.945 12.9134 16.0365C11.7317 14.2335 12.2928 12.0623 14.1722 10.9977C15.6747 10.1471 17.2876 9.58586 18.9234 9.06848C19.6106 8.85451 20.1226 9.11759 20.3259 9.7402C20.5766 10.5312 20.34 11.159 19.6492 11.387Z" fill={colors.path23} />
+                  </svg>
+              </div>
+          );
+      };
 
-        const SunnyLogo = ({ variant = 'standard', className = "" }) => {
-            const colors = variant === 'splash' ? { path1: '#FFFFFF', path23: '#EE4343' } : { path1: '#EE4343', path23: '#FFFFFF' };
-            return (
-                <div className="w-full h-full animate-breathe">
-                    <svg viewBox="0 0 32 32" fill="none" className={`w-full h-full drop-shadow-glow ${className}`}>
-                        <path d="M16.013 32C13.271 31.9018 10.5412 31.8755 7.87463 31.1231C3.57228 29.9252 1.23878 26.956 0.52873 22.6889C-0.165498 18.3226 -0.176144 13.8749 0.497173 9.50531C1.23001 4.58405 4.38577 1.32017 9.29472 0.537958C13.609 -0.165525 18.0077 -0.17914 22.3262 0.497619C27.7401 1.35875 30.6837 4.27187 31.513 9.76137C32.1817 14.0582 32.1521 18.4348 31.4253 22.7222C30.5207 27.9048 27.3527 30.867 22.079 31.558C20.0716 31.8176 18.0362 31.8597 16.013 32Z" fill={colors.path1} />
-                        <path d="M15.3836 6.16027C15.9406 6.15315 16.4468 6.48357 16.6646 6.99654C16.8824 7.50952 16.7687 8.10332 16.3767 8.49943C15.9848 8.89555 15.3925 9.01542 14.8774 8.80283C14.3624 8.59024 14.027 8.08735 14.0283 7.53001C14.0358 6.78206 14.636 6.1754 15.3836 6.16027Z" fill={colors.path23} />
-                        <path d="M19.6492 11.387C18.5149 11.7676 17.3455 12.0377 16.2287 12.4744C15.8322 12.6166 15.4556 12.8094 15.1084 13.0479C13.9776 13.8722 13.939 14.9315 14.9611 15.9768C15.7606 16.7959 16.7231 17.4115 17.5769 18.1586C18.9041 19.3214 18.9637 20.5245 17.7312 21.8118C16.4829 23.1255 14.905 23.9726 13.2676 24.6811C12.5908 24.974 11.8983 25.2283 11.2128 25.5002C11.0314 25.3255 10.9531 25.0694 11.0059 24.8232C12.0619 24.4117 13.0326 23.8082 13.8689 23.043C14.3759 22.5899 14.8315 22.0823 15.2276 21.5295C16.092 20.3018 16.0446 19.5722 15.0523 18.4445C14.3405 17.6412 13.5095 16.945 12.9134 16.0365C11.7317 14.2335 12.2928 12.0623 14.1722 10.9977C15.6747 10.1471 17.2876 9.58586 18.9234 9.06848C19.6106 8.85451 20.1226 9.11759 20.3259 9.7402C20.5766 10.5312 20.34 11.159 19.6492 11.387Z" fill={colors.path23} />
-                    </svg>
-                </div>
-            );
-        };
+      // Coach Data
+      const COACHES = [
+          { id: 'alex', name: 'Alex', title: 'The Motivator', quote: "I'll keep your energy high. We've got this!", avatar: '🦁', color: 'bg-brand-red', greeting: "Hey! I'm Alex. Ready to crush some goals?" },
+          { id: 'sarah', name: 'Sarah', title: 'The Pro', quote: "I focus on form and precision. Let's do it right.", avatar: '🧢', color: 'bg-brand-blue', greeting: "Hello! I'm Sarah. Let's start with what you're looking to achieve." },
+          { id: 'max', name: 'Max', title: 'Drill Sergeant', quote: "No excuses. I'm here to push your limits.", avatar: '⚡', color: 'bg-gray-800', greeting: "Listen up! I'm Max. No time to waste—what's your mission today?" }
+      ];
 
-        const SplashLayer = ({ onComplete }) => {
-            const [scale, setScale] = useState(0); 
-            const [logoOpacity, setLogoOpacity] = useState(0);
-            
-            useEffect(() => { 
-                setTimeout(() => setScale(40), 100); 
-                setTimeout(() => setLogoOpacity(1), 600); 
-                setTimeout(onComplete, 2500); 
-            }, []);
+      // Country Data
+      const COUNTRIES = [
+          { code: 'US', name: 'United States', flag: '🇺🇸' },
+          { code: 'CA', name: 'Canada', flag: '🇨🇦' },
+          { code: 'GB', name: 'United Kingdom', flag: '🇬🇧' },
+          { code: 'AU', name: 'Australia', flag: '🇦🇺' },
+          { code: 'DE', name: 'Germany', flag: '🇩🇪' },
+          { code: 'FR', name: 'France', flag: '🇫🇷' },
+          { code: 'JP', name: 'Japan', flag: '🇯🇵' },
+          { code: 'CN', name: 'China', flag: '🇨🇳' },
+          { code: 'IN', name: 'India', flag: '🇮🇳' },
+          { code: 'BR', name: 'Brazil', flag: '🇧🇷' }
+      ];
 
-            return (
-                <div className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden" data-prd-zone="intent_select_splash">
-                    <div className="absolute w-12 h-12 bg-brand-red rounded-full transition-transform duration-[800ms]" style={{ transform: `scale(${scale})` }} />
-                    <div className="relative z-10 w-24 h-24 transition-opacity duration-1000" style={{ opacity: logoOpacity }}>
-                        <SunnyLogo variant="splash" />
-                    </div>
-                </div>
-            );
-        };
+      // Simulate getting country from IP/timezone
+      const getDefaultCountry = () => {
+          // Get timezone and map to country
+          const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          const tzCountryMap = {
+              'America/New_York': 'US', 'America/Los_Angeles': 'US', 'America/Chicago': 'US',
+              'Europe/London': 'GB', 'Europe/Paris': 'FR', 'Europe/Berlin': 'DE',
+              'Asia/Tokyo': 'JP', 'Asia/Shanghai': 'CN', 'Asia/Kolkata': 'IN',
+              'Australia/Sydney': 'AU', 'America/Toronto': 'CA', 'America/Sao_Paulo': 'BR'
+          };
+          const countryCode = tzCountryMap[tz] || 'US';
+          return COUNTRIES.find(c => c.code === countryCode) || COUNTRIES[0];
+      };
 
-        const HomeScreen = ({ isVisible, onNavigate }) => {
-            const [show, setShow] = useState(false);
-            const [cardsReady, setCardsReady] = useState(false);
-            useEffect(() => { if(isVisible) setTimeout(() => setShow(true), 100); }, [isVisible]);
-            // 防止误触：入场动画完成后才允许点击（3 卡片 * 0.1s + fade-up 0.5s ≈ 0.8s）
-            useEffect(() => { if(show) setTimeout(() => setCardsReady(true), 800); }, [show]);
+      // Splash Screen
+      const SplashScreen = ({ onComplete }) => {
+          const [scale, setScale] = useState(0);
+          const [logoOpacity, setLogoOpacity] = useState(0);
+          
+          useEffect(() => {
+              const t1 = setTimeout(() => setScale(40), 100);
+              const t2 = setTimeout(() => setLogoOpacity(1), 600);
+              const t3 = setTimeout(onComplete, 2500);
+              return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+          }, []);
 
-            const options = [
-                { id: 'device_connect', img: FIGMA_ASSETS.connectEquip, title: 'Connect Equipment', subtitle: 'Connect your Sunny / JLL gear and track', imgPos: 'right' },
-                { id: 'plan_create', img: FIGMA_ASSETS.findCourse, title: 'Find a Course', subtitle: 'Looking for workouts suit for me', imgPos: 'left' },
-                { id: 'just_explore', img: FIGMA_ASSETS.justBrowsing, title: 'Just Browsing', subtitle: 'I have no idea', imgPos: 'right' }
-            ];
+          return (
+              <div className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden bg-brand-red" data-zone-id="intent_select_splash" data-prd-zone="intent_select_splash">
+                  <div className="absolute w-12 h-12 bg-white/20 rounded-full transition-transform duration-[800ms]" style={{ transform: `scale(${scale})` }} />
+                  <div className="relative z-10 w-24 h-24 transition-opacity duration-1000" style={{ opacity: logoOpacity }}>
+                      <SunnyLogo variant="splash" />
+                  </div>
+              </div>
+          );
+      };
 
-            return (
-                <div className={`absolute inset-0 flex flex-col bg-white overflow-hidden transition-opacity duration-1000 ${isVisible?'opacity-100':'opacity-0'}`}>
-                    {/* Figma 底部渐变背景 */}
-                    <img alt="" className="absolute bottom-0 left-0 w-full h-[408px] object-cover object-bottom pointer-events-none" src={FIGMA_ASSETS.bgGradient} />
-                    {/* 顶部返回按钮 - Figma 深色导航栏样式 */}
-                    <div className="absolute top-11 left-4 z-50 shrink-0" data-zone-id="intent_select_header" data-prd-zone="intent_select_header">
-                        <button onClick={() => window.navigateTo('auth_select')} className="w-10 h-10 rounded-full bg-[#232323] flex items-center justify-center active:scale-95 overflow-hidden">
-                            <img alt="" className="w-5 h-5 object-contain" src={FIGMA_ASSETS.backIcon} />
-                        </button>
-                    </div>
-                    <div className="relative flex flex-col items-center pt-[80px] px-4 flex-1">
-                        {/* Figma 3D 球体 */}
-                        <div className="w-20 h-20 mb-4 flex-shrink-0" data-zone-id="intent_select_greeting" data-prd-zone="intent_select_greeting">
-                            <img alt="" className="w-full h-full object-contain" src={FIGMA_ASSETS.sphere} />
-                        </div>
-                        <div className="text-center mb-6 shrink-0 animate-fade-up">
-                            <h1 className="text-[24px] font-semibold leading-8 text-[rgba(0,0,0,0.9)] mb-1" data-i18n="intent_select_greeting">Good Morning!</h1>
-                            <p className="text-[16px] leading-6 text-[rgba(0,0,0,0.6)]" data-i18n="intent_select_subtitle">What do you want to start?</p>
-                        </div>
-                        <div className="w-full flex-1 overflow-y-auto no-scrollbar pb-12" data-zone-id="intent_select_edge" data-prd-zone="intent_select_edge">
-                            {show && options.map((opt, i) => (
-                                <div
-                                    key={opt.id}
-                                    onClick={() => cardsReady && onNavigate(opt.id)}
-                                    data-zone-id={`intent_select_opt_${opt.id}`}
-                                    data-prd-zone={`intent_select_opt_${opt.id}`}
-                                    className={`w-full rounded-[34px] flex items-center overflow-visible animate-fade-up mb-4 transition-all glass-card ${cardsReady ? 'cursor-pointer active:scale-[0.98]' : 'pointer-events-none'}`}
-                                    style={{animationDelay: `${i*0.1}s`, minHeight: '120px'}}
-                                >
-                                    {opt.imgPos === 'left' && (
-                                        <div className="w-[120px] h-[120px] flex-shrink-0 -ml-2 overflow-visible">
-                                            <img alt="" className="w-[140px] h-[140px] object-contain object-center -translate-x-2 -translate-y-2" src={opt.img} />
-                                        </div>
-                                    )}
-                                    <div className="flex-1 min-w-0 py-4 px-4 flex flex-col justify-center">
-                                        <h3 className="font-semibold text-[20px] leading-7 text-[rgba(0,0,0,0.9)]">{opt.title}</h3>
-                                        <p className="text-[14px] leading-[22px] text-[rgba(0,0,0,0.6)] mt-0.5">{opt.subtitle}</p>
-                                    </div>
-                                    {opt.imgPos === 'right' && (
-                                        <div className="w-[120px] h-[120px] flex-shrink-0 -mr-2 overflow-visible flex justify-end">
-                                            <img alt="" className="w-[140px] h-[140px] object-contain object-center translate-x-2 -translate-y-2" src={opt.img} />
-                                        </div>
-                                    )}
-                                    <div className="w-5 h-5 flex-shrink-0 mx-2 text-[rgba(0,0,0,0.4)]"><Icons.ChevronRight className="w-full h-full" /></div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                    {/* iOS Home Indicator */}
-                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[134px] h-[34px] flex items-end justify-center">
-                        <div className="w-[134px] h-[5px] bg-black rounded-full" />
-                    </div>
-                </div>
-            );
-        };
+      // Social Login Options Step - Now with Email as primary
+      const SocialLoginStep = ({ email, onEmailChange, onNext, onSocialLogin }) => (
+          <div className="animate-fade-up px-6 pt-16 h-full flex flex-col" data-zone-id="intent_select_step_social" data-prd-zone="intent_select_step_social">
+              <div className="flex-1">
+                  <div className="w-20 h-20 mx-auto mb-6">
+                      <SunnyLogo />
+                  </div>
+                  <h2 className="text-[26px] font-bold text-text-primary text-center mb-2">Welcome to SunnyFit</h2>
+                  <p className="text-[14px] text-text-secondary text-center mb-8">Your personal fitness journey starts here</p>
 
-        // --- 极其纯粹的 App 顶层控制器 ---
-        const App = () => {
-            const [appState, setAppState] = useState('launching'); 
-            
-            const handleNav = (targetModule) => { 
-                // SOP 2.0: 直接进行跨页面路由分发，抛弃单页内部堆叠
-                window.navigateTo(targetModule);
-            };
+                  {/* Email Input as Primary */}
+                  <div className="space-y-4 mb-6">
+                      <div className="relative">
+                          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary">
+                              <Icons.Mail />
+                          </div>
+                          <input
+                              type="email"
+                              value={email}
+                              onChange={(e) => onEmailChange(e.target.value)}
+                              placeholder="Enter your email"
+                              className="custom-input pl-12"
+                              autoFocus
+                          />
+                      </div>
 
-            return (
-                <div className="mobile-viewport font-sans">
-                    {appState === 'launching' && <SplashLayer onComplete={() => setAppState('home')} />}
-                    <HomeScreen isVisible={appState === 'home'} onNavigate={handleNav} />
-                </div>
-            );
-        };
+                      <button
+                          onClick={onNext}
+                          disabled={!email || !email.includes('@')}
+                          className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                          data-zone-id="intent_select_cta_continue_email"
+                          data-prd-zone="intent_select_cta_continue_email"
+                      >
+                          Continue with Email
+                      </button>
+                  </div>
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+                  <div className="divider my-6">or continue with</div>
+
+                  {/* Social Login as Secondary Options */}
+                  <div className="space-y-3">
+                      <button className="social-btn" onClick={() => onSocialLogin('apple')}>
+                          <Icons.Apple />
+                          <span>Continue with Apple</span>
+                      </button>
+                      <button className="social-btn" onClick={() => onSocialLogin('google')}>
+                          <Icons.Google />
+                          <span>Continue with Google</span>
+                      </button>
+                      <button className="social-btn" onClick={() => onSocialLogin('facebook')}>
+                          <Icons.Facebook />
+                          <span>Continue with Facebook</span>
+                      </button>
+                  </div>
+              </div>
+
+              <p className="text-center text-[12px] text-text-secondary pb-8">
+                  By continuing, you agree to our <span className="text-brand-red">Terms</span> and <span className="text-brand-red">Privacy Policy</span>
+              </p>
+          </div>
+      );
+
+      // Email Step
+      const EmailStep = ({ email, onChange, onNext, onBack }) => (
+          <div className="animate-fade-up px-6 pt-12" data-zone-id="intent_select_step_email" data-prd-zone="intent_select_step_email">
+              <button onClick={onBack} className="mb-6 w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-brand-blue active:scale-95 transition-all">
+                  <Icons.ChevronLeft />
+              </button>
+              
+              <div className="mb-8">
+                  <h2 className="text-[24px] font-bold text-text-primary">Enter your email</h2>
+                  <p className="text-[14px] text-text-secondary mt-2">We'll use this to create your account</p>
+              </div>
+              
+              <div className="space-y-4">
+                  <div className="relative">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary">
+                          <Icons.Mail />
+                      </div>
+                      <input
+                          type="email"
+                          value={email}
+                          onChange={(e) => onChange(e.target.value)}
+                          placeholder="your@email.com"
+                          className="custom-input pl-12"
+                          autoFocus
+                      />
+                  </div>
+                  
+                  <button
+                      onClick={onNext}
+                      disabled={!email || !email.includes('@')}
+                      className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                      Continue
+                  </button>
+              </div>
+          </div>
+      );
+
+      // Password Step
+      const PasswordStep = ({ password, onChange, onNext, onBack }) => (
+          <div className="animate-fade-up px-6 pt-12" data-zone-id="intent_select_step_password" data-prd-zone="intent_select_step_password">
+              <button onClick={onBack} className="mb-6 w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-brand-blue active:scale-95 transition-all">
+                  <Icons.ChevronLeft />
+              </button>
+              
+              <div className="mb-8">
+                  <h2 className="text-[24px] font-bold text-text-primary">Create a password</h2>
+                  <p className="text-[14px] text-text-secondary mt-2">Keep your account secure</p>
+              </div>
+              
+              <div className="space-y-4">
+                  <div className="relative">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary">
+                          <Icons.Lock />
+                      </div>
+                      <input
+                          type="password"
+                          value={password}
+                          onChange={(e) => onChange(e.target.value)}
+                          placeholder="Min 6 characters"
+                          className="custom-input pl-12"
+                          autoFocus
+                      />
+                  </div>
+                  
+                  <div className="flex items-center gap-2 text-[12px] text-text-secondary">
+                      <div className={`w-2 h-2 rounded-full ${password.length >= 6 ? 'bg-brand-green' : 'bg-gray-300'}`} />
+                      <span>At least 6 characters</span>
+                  </div>
+                  
+                  <button
+                      onClick={onNext}
+                      disabled={password.length < 6}
+                      className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                      Continue
+                  </button>
+              </div>
+          </div>
+      );
+
+      // Privacy & Country Step with Bottom Sheet
+      const PrivacyStep = ({ country, onSelect, unit, onUnitChange, onNext, onBack }) => {
+          const [showSheet, setShowSheet] = useState(false);
+
+          return (
+              <div className="animate-fade-up px-6 pt-12 h-full flex flex-col" data-zone-id="intent_select_step_privacy" data-prd-zone="intent_select_step_privacy">
+                  <button onClick={onBack} className="mb-6 w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-brand-blue active:scale-95 transition-all">
+                      <Icons.ChevronLeft />
+                  </button>
+
+                  <div className="mb-6">
+                      <h2 className="text-[24px] font-bold text-text-primary leading-tight">Privacy & Region</h2>
+                      <p className="text-[14px] text-text-secondary mt-3 leading-relaxed">
+                          We value your privacy and let you control how your data is used. Confirm your country/region to set the right privacy options.
+                      </p>
+                  </div>
+
+                  <div className="space-y-5">
+                      {/* Country Selection */}
+                      <div className="space-y-3">
+                          <p className="text-[12px] font-bold text-text-secondary uppercase tracking-widest">Your region</p>
+
+                          <button
+                              onClick={() => setShowSheet(true)}
+                              className="w-full flex items-center justify-between p-4 bg-white rounded-[16px] shadow-input border-2 border-transparent hover:border-brand-red transition-all"
+                          >
+                              <div className="flex items-center gap-3">
+                                  <span className="text-2xl">{country?.flag}</span>
+                                  <span className="font-semibold text-[15px] text-text-primary">{country?.name}</span>
+                              </div>
+                              <Icons.ChevronRight />
+                          </button>
+
+                          <p className="text-[12px] text-text-secondary">
+                              Auto-detected from your location. Tap to change.
+                          </p>
+                      </div>
+
+                      {/* Unit System Selection */}
+                      <div className="space-y-3">
+                          <p className="text-[12px] font-bold text-text-secondary uppercase tracking-widest">Unit System</p>
+
+                          <div className="flex gap-3">
+                              <button
+                                  onClick={() => onUnitChange('metric')}
+                                  className={`flex-1 p-4 rounded-[16px] border-2 transition-all ${unit === 'metric' ? 'border-brand-red bg-brand-red/5' : 'border-transparent bg-white shadow-input'}`}
+                              >
+                                  <div className="text-center">
+                                      <div className="text-2xl mb-1">📏</div>
+                                      <div className="font-semibold text-[14px] text-text-primary">Metric</div>
+                                      <div className="text-[11px] text-text-secondary">kg / cm / km</div>
+                                  </div>
+                              </button>
+
+                              <button
+                                  onClick={() => onUnitChange('imperial')}
+                                  className={`flex-1 p-4 rounded-[16px] border-2 transition-all ${unit === 'imperial' ? 'border-brand-red bg-brand-red/5' : 'border-transparent bg-white shadow-input'}`}
+                              >
+                                  <div className="text-center">
+                                      <div className="text-2xl mb-1">📐</div>
+                                      <div className="font-semibold text-[14px] text-text-primary">Imperial</div>
+                                      <div className="text-[11px] text-text-secondary">lb / ft / mi</div>
+                                  </div>
+                              </button>
+                          </div>
+                      </div>
+                  </div>
+
+                  <div className="flex-1"></div>
+
+                  <div className="py-6">
+                      <button
+                          onClick={onNext}
+                          className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn active:scale-95 transition-all"
+                      >
+                          Continue
+                      </button>
+                      <p className="text-center text-[11px] text-text-secondary mt-4">
+                          You can change this anytime in your profile settings
+                      </p>
+                  </div>
+
+                  {/* Country Bottom Sheet */}
+                  <div className={`bottom-sheet-overlay ${showSheet ? 'active' : ''}`} onClick={() => setShowSheet(false)}>
+                      <div className={`bottom-sheet ${showSheet ? 'active' : ''}`} onClick={e => e.stopPropagation()}>
+                          <div className="flex items-center justify-between mb-4">
+                              <h3 className="text-[18px] font-bold text-text-primary">Select Country</h3>
+                              <button onClick={() => setShowSheet(false)} className="p-2">
+                                  <Icons.Close />
+                              </button>
+                          </div>
+                          <div className="space-y-2 max-h-[50vh] overflow-y-auto no-scrollbar pb-4">
+                              {COUNTRIES.map((c) => (
+                                  <div
+                                      key={c.code}
+                                      onClick={() => { onSelect(c); setShowSheet(false); }}
+                                      className={`flex items-center gap-3 p-3 rounded-[12px] cursor-pointer transition-all ${country?.code === c.code ? 'bg-brand-red/10' : 'hover:bg-gray-100'}`}
+                                  >
+                                      <span className="text-2xl">{c.flag}</span>
+                                      <span className="font-medium text-[15px] text-text-primary flex-1">{c.name}</span>
+                                      {country?.code === c.code && <div className="text-brand-red"><Icons.Check /></div>}
+                                  </div>
+                              ))}
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          );
+      };
+
+      // Nickname Step
+      const NicknameStep = ({ nickname, onChange, onNext, onBack }) => (
+          <div className="animate-fade-up px-6 pt-12" data-zone-id="intent_select_step_nickname" data-prd-zone="intent_select_step_nickname">
+              <button onClick={onBack} className="mb-6 w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-brand-blue active:scale-95 transition-all">
+                  <Icons.ChevronLeft />
+              </button>
+              
+              <div className="mb-8">
+                  <h2 className="text-[24px] font-bold text-text-primary">What should we call you?</h2>
+                  <p className="text-[14px] text-text-secondary mt-2">This is how your coach will address you</p>
+              </div>
+              
+              <div className="space-y-6">
+                  <div className="relative">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary">
+                          <Icons.User />
+                      </div>
+                      <input
+                          type="text"
+                          value={nickname}
+                          onChange={(e) => onChange(e.target.value)}
+                          placeholder="Enter your nickname"
+                          className="custom-input pl-12"
+                          maxLength={20}
+                          autoFocus
+                      />
+                  </div>
+                  
+                  <div className="text-center py-4">
+
+                  </div>
+                  
+                  <button
+                      onClick={onNext}
+                      disabled={!nickname.trim()}
+                      className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                      Continue
+                  </button>
+              </div>
+          </div>
+      );
+
+      // Coach Selection Step with Breathing Logo Chat Style
+      const CoachSelectStep = ({ selectedCoach, onSelect, onComplete, onBack, nickname }) => {
+          const [showIntentions, setShowIntentions] = React.useState(false);
+
+          return (
+          <div className="animate-fade-up px-6 pt-6 h-full flex flex-col" data-zone-id="intent_select_step_coach" data-prd-zone="intent_select_step_coach">
+              <button onClick={onBack} className="mb-4 w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-brand-blue active:scale-95 transition-all">
+                  <Icons.ChevronLeft />
+              </button>
+
+              {/* Coach avatar centered with breathe animation */}
+              <div className="flex flex-col items-center mb-7 mt-0">
+                  <div className="w-20 h-20 rounded-full flex items-center justify-center bg-brand-blue text-white text-4xl animate-breathe shadow-lg mb-4">
+                      <SunnyLogo />
+                  </div>
+                  <h2 className="text-[22px] text-text-primary text-center font-bold mb-3">
+                      {nickname ? `Hi, ${nickname}` : 'Hi there'}
+                  </h2>
+                  <div className="max-w-[280px] mx-auto">
+                      <div className="chat-bubble mx-auto">
+                          <span className="text-[15px] text-text-primary leading-relaxed">
+                              Consistency is the only challenge. Who do you want by your side?
+                          </span>
+                      </div>
+                  </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto no-scrollbar py-2 space-y-3">
+                  {COACHES.map((coach) => (
+                      <div
+                          key={coach.id}
+                          onClick={() => onSelect(coach)}
+                          className={`coach-card ${selectedCoach?.id === coach.id ? 'selected' : ''}`}
+                          data-zone-id={`intent_select_coach_${coach.id}`}
+                          data-prd-zone={`intent_select_coach_${coach.id}`}
+                      >
+                          <div className="flex items-start gap-4">
+                              <div className={`w-14 h-14 rounded-full flex items-center justify-center text-3xl float-emoji ${coach.color} text-white shadow-md`}>
+                                  {coach.avatar}
+                              </div>
+                              <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                      <h3 className="font-bold text-[16px] text-text-primary">{coach.name}</h3>
+                                      <span className="text-[10px] bg-bg-neutral px-2 py-0.5 rounded text-text-secondary font-bold uppercase tracking-wide">
+                                          {coach.title}
+                                      </span>
+                                  </div>
+                                  <p className="text-[13px] text-text-secondary italic leading-snug">
+                                      "{coach.quote}"
+                                  </p>
+                              </div>
+                              {selectedCoach?.id === coach.id && (
+                                  <div className="text-brand-red mt-1">
+                                      <Icons.Check />
+                                  </div>
+                              )}
+                          </div>
+                      </div>
+                  ))}
+              </div>
+
+              {/* "Intentions" Full Page Step After Coach Selection */}
+              {!showIntentions ? (
+                  <div className="py-4 bg-gradient-to-t from-bg-page to-transparent">
+                      <button
+                          onClick={() => {
+                              if (!selectedCoach) return;
+                              setShowIntentions(true);
+                          }}
+                          disabled={!selectedCoach}
+                          className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed animate-scale-in"
+                          data-zone-id="intent_select_cta_start_journey"
+                          data-prd-zone="intent_select_cta_start_journey"
+                      >
+                          Start My Journey
+                      </button>
+                  </div>
+              ) : (
+                  <div className="fixed inset-0 z-40 bg-bg-page flex flex-col items-center justify-center px-4 py-10 animate-fade-in" data-zone-id="intent_select_intentions" data-prd-zone="intent_select_intentions">
+                      <div className="flex flex-col items-center mb-8">
+                          <div className={`w-20 h-20 rounded-full flex items-center justify-center ${selectedCoach?.color} text-white text-4xl shadow-lg mb-5`}>
+                              {selectedCoach?.avatar}
+                          </div>
+                          <h2 className="text-[22px] text-text-primary text-center font-bold mb-2">
+                              Great! What do you want to start?
+                          </h2>
+                          <p className="text-[15px] text-text-secondary text-center mb-1 font-medium">
+                              Let's do it first.
+                          </p>
+                      </div>
+                      <div className="w-full max-w-[380px] flex flex-col gap-4">
+                          {/* Option 1: Connect Equipment */}
+                          <button
+                              type="button"
+                              data-zone-id="intent_select_opt_device_connect"
+                              data-prd-zone="intent_select_opt_device_connect"
+                              className="flex items-center gap-3 p-4 bg-white rounded-xl shadow-md border border-bg-neutral hover:shadow-lg transition"
+                              onClick={e => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  try {
+                                      sessionStorage.setItem('sunnyfit_user', JSON.stringify({
+                                          nickname,
+                                          coach: selectedCoach
+                                      }));
+                                  } catch (err) {}
+                                  if (typeof window.navigateTo === 'function') {
+                                      window.navigateTo('device_connect');
+                                  } else {
+                                      window.location.href = 'device_connect.html';
+                                  }
+                              }}
+                          >
+                              <span className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-blue text-white flex items-center justify-center text-2xl font-bold shadow">
+                                  <i className="icon-[mdi--connection]"></i>
+                              </span>
+                              <div className="flex-1 text-left">
+                                  <div className="font-bold text-[16px] text-text-primary mb-0.5">Connect Equipment</div>
+                                  <div className="text-[13px] text-text-secondary">Connect your Sunny or JLL equipment</div>
+                              </div>
+                          </button>
+                          {/* Option 2: Find Workout Guide */}
+                          <button
+                              type="button"
+                              data-zone-id="intent_select_opt_plan_create"
+                              data-prd-zone="intent_select_opt_plan_create"
+                              className="flex items-center gap-3 p-4 bg-white rounded-xl shadow-md border border-bg-neutral hover:shadow-lg transition"
+                              onClick={e => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  try {
+                                      sessionStorage.setItem('sunnyfit_user', JSON.stringify({
+                                          nickname,
+                                          coach: selectedCoach
+                                      }));
+                                  } catch (err) {}
+                                  if (typeof window.navigateTo === 'function') {
+                                      window.navigateTo('plan_create');
+                                  } else {
+                                      window.location.href = 'plan_create.html';
+                                  }
+                              }}
+                          >
+                              <span className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-yellow text-white flex items-center justify-center text-2xl font-bold shadow">
+                                  <i className="icon-[mdi--dumbbell]"></i>
+                              </span>
+                              <div className="flex-1 text-left">
+                                  <div className="font-bold text-[16px] text-text-primary mb-0.5">Find Workout Guide</div>
+                                  <div className="text-[13px] text-text-secondary">Looking for workouts suit for me</div>
+                              </div>
+                          </button>
+                          {/* Option 3: Just Browsing */}
+                          <button
+                              type="button"
+                              data-zone-id="intent_select_opt_just_explore"
+                              data-prd-zone="intent_select_opt_just_explore"
+                              className="flex items-center gap-3 p-4 bg-white rounded-xl shadow-md border border-bg-neutral hover:shadow-lg transition"
+                              onClick={e => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  try {
+                                      sessionStorage.setItem('sunnyfit_user', JSON.stringify({
+                                          nickname,
+                                          coach: selectedCoach
+                                      }));
+                                  } catch (err) {}
+                                  if (typeof window.navigateTo === 'function') {
+                                      window.navigateTo('just_explore');
+                                  } else {
+                                      window.location.href = 'just_explore.html';
+                                  }
+                              }}
+                          >
+                              <span className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-red text-white flex items-center justify-center text-2xl font-bold shadow">
+                                  <i className="icon-[mdi--emoticon-happy-outline]"></i>
+                              </span>
+                              <div className="flex-1 text-left">
+                                  <div className="font-bold text-[16px] text-text-primary mb-0.5">Just Browsing</div>
+                                  <div className="text-[13px] text-text-secondary">Looking for something fun</div>
+                              </div>
+                          </button>
+                      </div>
+                  </div>
+              )}
+          </div>
+          );
+      };
+
+      // Main App
+      const App = () => {
+          const [appState, setAppState] = useState('splash');
+          const [step, setStep] = useState(1);
+          const [formData, setFormData] = useState({
+              email: '',
+              password: '',
+              country: null,
+              unit: 'metric', // Default to metric
+              nickname: '',
+              coach: null
+          });
+
+          // Set default country on mount
+          useEffect(() => {
+              setFormData(prev => ({ ...prev, country: getDefaultCountry() }));
+          }, []);
+
+          const handleSplashComplete = () => {
+              setAppState('registration');
+          };
+
+          const updateField = (field, value) => {
+              setFormData(prev => ({ ...prev, [field]: value }));
+          };
+
+          const nextStep = () => setStep(step + 1);
+          const prevStep = () => setStep(step - 1);
+          const goToEmail = () => setStep(2);
+          const backToSocial = () => setStep(1);
+
+          const handleComplete = () => {
+              // Store user data with coach info for next pages
+              sessionStorage.setItem('sunnyfit_user', JSON.stringify({
+                  nickname: formData.nickname,
+                  coach: formData.coach,
+                  email: formData.email,
+                  country: formData.country
+              }));
+              
+              // Navigate to coach guide page
+              window.navigateTo('coach_guide');
+          };
+
+          const renderStep = () => {
+              switch (step) {
+                  case 1:
+                      return (
+                          <SocialLoginStep
+                              email={formData.email}
+                              onEmailChange={(val) => updateField('email', val)}
+                              onNext={nextStep}
+                              onSocialLogin={(provider) => {
+                                  setStep(4);
+                              }}
+                          />
+                      );
+                  case 2:
+                      return (
+                          <EmailStep
+                              email={formData.email}
+                              onChange={(val) => updateField('email', val)}
+                              onNext={nextStep}
+                              onBack={backToSocial}
+                          />
+                      );
+                  case 3:
+                      return (
+                          <PasswordStep
+                              password={formData.password}
+                              onChange={(val) => updateField('password', val)}
+                              onNext={nextStep}
+                              onBack={prevStep}
+                          />
+                      );
+                  case 4:
+                      return (
+                          <PrivacyStep
+                              country={formData.country}
+                              onSelect={(country) => updateField('country', country)}
+                              unit={formData.unit}
+                              onUnitChange={(unit) => updateField('unit', unit)}
+                              onNext={nextStep}
+                              onBack={prevStep}
+                          />
+                      );
+                  case 5:
+                      return (
+                          <NicknameStep
+                              nickname={formData.nickname}
+                              onChange={(val) => updateField('nickname', val)}
+                              onNext={nextStep}
+                              onBack={prevStep}
+                          />
+                      );
+                  case 6:
+                      return (
+                          <CoachSelectStep
+                              selectedCoach={formData.coach}
+                              onSelect={(coach) => updateField('coach', coach)}
+                              onComplete={handleComplete}
+                              onBack={prevStep}
+                              nickname={formData.nickname}
+                          />
+                      );
+                  default:
+                      return null;
+              }
+          };
+
+          return (
+              <div className="mobile-viewport font-sans">
+                  {appState === 'splash' && <SplashScreen onComplete={handleSplashComplete} />}
+                  
+                  {appState === 'registration' && (
+                      <div className="absolute inset-0 flex flex-col bg-bg-page">
+                          <div className="flex-1 overflow-y-auto no-scrollbar">
+                              {renderStep()}
+                          </div>
+                          {/* iOS Home Indicator */}
+                          <div className="h-8 flex items-center justify-center pb-2 shrink-0">
+                              <div className="w-[134px] h-[5px] bg-black rounded-full" />
+                          </div>
+                      </div>
+                  )}
+              </div>
+          );
+      };
+
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(<App />);
+  </script>
 </body>
 </html>
