@@ -484,12 +484,12 @@
                         onAIClick={() => setShowAISheet(true)}
                     />
                     {/* 演示用：切换有计划/无计划状态，便于查看两种建议卡片 */}
-                    <button
+                    {/* <button
                         onClick={() => setHasPlan(p => !p)}
                         className="fixed top-20 right-4 z-40 px-2 py-1 rounded-lg bg-black/50 text-white text-[10px] font-medium backdrop-blur-sm"
                     >
                         {hasPlan ? '无计划' : '有计划'}
-                    </button>
+                    </button> */}
                     {showAISheet && (
                         <div className="absolute inset-0 bg-black/40 z-50 flex items-end" onClick={() => setShowAISheet(false)}>
                             <div className="w-full bg-white rounded-t-3xl p-6 pb-10 max-h-[70vh]" onClick={e => e.stopPropagation()}>
