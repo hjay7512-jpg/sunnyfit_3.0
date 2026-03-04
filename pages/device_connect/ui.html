@@ -14,16 +14,33 @@
 
     <script>
         // SOP 2.0 MapsTo 跨级路由
-        function navigateTo(targetPageId) {
+        // 在 device_connect.html 的 <head> 中替换
+            function navigateTo(targetPageId) {
+            console.log("🔗 准备跳转至:", targetPageId);
+            // 统一处理文件名
+            const targetFile = targetPageId.replace(/\.html$/, '') + '.html';
+
             try {
-                const parentParams = new URLSearchParams(window.parent.location.search);
-                parentParams.set('page', targetPageId);
-                window.parent.location.search = parentParams.toString();
+                // 逻辑 A：如果在 SOP 预览器 shell 内部 (iframe)
+                if (window.parent !== window && window.parent.location.search.includes('page=')) {
+                    const parentParams = new URLSearchParams(window.parent.location.search);
+                    parentParams.set('page', targetPageId);
+                    window.parent.location.search = parentParams.toString();
+                    return;
+                }
             } catch (e) {
-                console.warn("未检测到 Viewer 外壳，执行降级跳转");
-                alert("SOP 路由触发：即将前往 -> " + targetPageId);
+                console.warn("非 Shell 环境，准备执行物理跳转");
+            }
+
+            // 逻辑 B：直接跳转物理文件
+            // 增加判断：如果目标页面就是当前页，则不执行，防止无限刷新
+            if (!window.location.pathname.endsWith(targetFile)) {
+                window.location.href = targetFile;
+            } else {
+                console.log("⚠️ 已在目标页面，忽略跳转");
             }
         }
+        if (typeof window !== 'undefined') window.navigateTo = navigateTo;
         if (typeof window !== 'undefined') window.navigateTo = navigateTo;
     </script>
 
@@ -158,6 +175,14 @@
             const [hrBpm, setHrBpm] = useState(72);
             const [activePostIndex, setActivePostIndex] = useState(0);
             const [activeCourseIndex, setActiveCourseIndex] = useState(0);
+            
+            // Body stats form state
+            const [birthday, setBirthday] = useState('');
+            const [gender, setGender] = useState('');
+            const [height, setHeight] = useState('');
+            const [weight, setWeight] = useState('');
+            const [isSyncing, setIsSyncing] = useState(false);
+            const [showSyncSuccess, setShowSyncSuccess] = useState(false);
 
             useEffect(() => {
                 if (flowStep !== 'scanning' || isFound) return;
@@ -191,8 +216,7 @@
                     setShowScanResultsModal(false);
                     if (device.type === 'scale') setFlowStep('branch_scale');
                     else if (device.type === 'cadence') setFlowStep('branch_cadence');
-                    else if (device.type === 'hr') setFlowStep('branch_hr');
-                    else setFlowStep('branch_equipment');
+                    else setFlowStep('body_stats');
                 }, 1500);
             };
 
@@ -203,7 +227,7 @@
             };
 
             const handleCadenceSelect = (model) => {
-                setFlowStep('branch_equipment');
+                setFlowStep('body_stats');
                 setSelectedDevice((prev) => prev ? { ...prev, boundModel: model } : null);
             };
 
@@ -228,14 +252,17 @@
                 return () => clearInterval(iv);
             }, [flowStep, branchState]);
 
-            const showEquipSuccess = flowStep === 'branch_equipment';
-            const showHrSuccess = branchState === 'hr' && flowStep === 'branch_hr';
-
             const handleBack = () => {
                 if (flowStep === 'permission') window.navigateTo('intent_select');
                 else if (flowStep === 'scanning') setFlowStep('permission');
                 else if (flowStep === 'manual_entry') setFlowStep('scanning');
                 else if (flowStep === 'check_bt' || flowStep === 'incompatible') setFlowStep('manual_entry');
+                else if (flowStep === 'body_stats') {
+                    setFlowStep('scanning');
+                    setConnState('idle');
+                    setBranchState(null);
+                    setSelectedDevice(null);
+                }
                 else if (['branch_equipment', 'branch_cadence', 'branch_hr', 'branch_scale'].includes(flowStep)) {
                     setFlowStep('scanning');
                     setConnState('idle');
@@ -243,6 +270,20 @@
                     setSelectedDevice(null);
                     setScaleMeasured(false);
                 }
+            };
+
+            const handleAppleHealthSync = () => {
+                setIsSyncing(true);
+                // Simulate sync delay
+                setTimeout(() => {
+                    setBirthday('1990-05-15');
+                    setGender('male');
+                    setHeight('175');
+                    setWeight('70');
+                    setIsSyncing(false);
+                    setShowSyncSuccess(true);
+                    setTimeout(() => setShowSyncSuccess(false), 2000);
+                }, 1500);
             };
 
             return (
@@ -314,13 +355,6 @@
                             </div>
                         )}
 
-                        {showEquipSuccess && (
-                            <div className="w-full animate-fade-up" data-zone-id="device_connect_branch_equipment" data-prd-zone="device_connect_branch_equipment">
-                                <div className="text-center mb-6"><div className="text-brand-green text-7xl mb-4 animate-pop">✓</div><h3 className="text-[24px] font-bold mb-2">Connected!</h3><p className="text-[14px] text-text-secondary">Start your journey with SunnyFams</p></div>
-                                <div className="w-full pb-2 flex justify-center"><UserPostCard post={mockCommunityPosts[activePostIndex]} /></div>
-                            </div>
-                        )}
-
                         {flowStep === 'branch_cadence' && (
                             <div className="w-full animate-fade-up" data-zone-id="device_connect_branch_cadence" data-prd-zone="device_connect_branch_cadence">
                                 <div className="flex items-center gap-3 mb-6">
@@ -373,13 +407,6 @@
                             </div>
                         )}
 
-                        {showHrSuccess && (
-                            <div className="w-full animate-fade-up" data-zone-id="device_connect_branch_hr" data-prd-zone="device_connect_branch_hr">
-                                <div className="text-center mb-6"><div className="relative inline-flex items-center justify-center w-[120px] h-[120px] mb-4"><Icons.Heart className="w-16 h-16 text-brand-red animate-heartbeat"/><span className="absolute text-3xl font-bold text-brand-blue">{hrBpm}</span></div><p className="text-[14px] text-text-secondary mb-1"></p><h3 className="text-[20px] font-bold mb-2">Heart rate secured. Let's get that number up.</h3><p className="text-[14px] text-text-secondary"></p></div>
-                                <div className="w-full pb-2 flex justify-center"><CourseCard course={mockCourseCards[activeCourseIndex]} /></div>
-                            </div>
-                        )}
-
                         {flowStep === 'manual_entry' && (
                             <div className="w-full animate-fade-up" data-zone-id="device_connect_manual_entry" data-prd-zone="device_connect_manual_entry">
                                 <h3 className="text-[18px] font-bold mb-4">Verify Model</h3>
@@ -406,6 +433,93 @@
                                 </div>
                             </div>
                         )}
+
+                        {flowStep === 'body_stats' && (
+                            <div className="w-full animate-fade-up" data-zone-id="device_connect_body_stats" data-prd-zone="device_connect_body_stats">
+                                <h3 className="text-[20px] font-bold text-brand-blue mb-2">Equipment is ready! Sync your body stats to track data accurately.</h3>
+                            
+                                {/* Apple Health Sync Option */}
+                                <div 
+                                    onClick={!isSyncing ? handleAppleHealthSync : undefined}
+                                    className={`w-full bg-white rounded-[16px] p-4 shadow-card flex items-center justify-between mb-6 cursor-pointer hover:bg-gray-50 transition-colors ${isSyncing ? 'opacity-70' : ''}`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-bg-neutral flex items-center justify-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-brand-red">
+                                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                            </svg>
+                                        </div>
+                                        <span className="font-semibold text-[15px] text-brand-blue">Quickly sync from Apple Health</span>
+                                    </div>
+                                    {isSyncing ? (
+                                        <Icons.Loader className="w-5 h-5 animate-spin text-brand-red"/>
+                                    ) : (
+                                        <span className="text-brand-red font-bold text-[14px]">&gt;</span>
+                                    )}
+                                </div>
+
+                                {/* Sync Success Toast */}
+                                {showSyncSuccess && (
+                                    <div className="bg-brand-green/10 border border-brand-green rounded-[12px] p-3 mb-4 flex items-center gap-2 animate-fade-up">
+                                        <Icons.Check className="w-5 h-5 text-brand-green"/>
+                                        <span className="text-[13px] font-medium text-brand-green">Data synced successfully!</span>
+                                    </div>
+                                )}
+                                
+                                {/* Form Fields */}
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="text-[13px] font-semibold text-text-secondary mb-1.5 block">Birthday</label>
+                                        <input 
+                                            type="date" 
+                                            value={birthday}
+                                            onChange={(e) => setBirthday(e.target.value)}
+                                            className="w-full h-14 bg-white rounded-[16px] px-4 outline-none font-medium shadow-sm border border-gray-200 text-text-primary"
+                                        />
+                                    </div>
+                                    
+                                    <div>
+                                        <label className="text-[13px] font-semibold text-text-secondary mb-1.5 block">Gender</label>
+                                        <div className="flex gap-3">
+                                            <button 
+                                                onClick={() => setGender('male')}
+                                                className={`flex-1 h-14 rounded-[16px] font-medium transition-all ${gender === 'male' ? 'bg-brand-blue text-white' : 'bg-white text-text-primary border border-gray-200'}`}
+                                            >
+                                                Male
+                                            </button>
+                                            <button 
+                                                onClick={() => setGender('female')}
+                                                className={`flex-1 h-14 rounded-[16px] font-medium transition-all ${gender === 'female' ? 'bg-brand-blue text-white' : 'bg-white text-text-primary border border-gray-200'}`}
+                                            >
+                                                Female
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label className="text-[13px] font-semibold text-text-secondary mb-1.5 block">Height (cm)</label>
+                                        <input 
+                                            type="number" 
+                                            placeholder="e.g. 175"
+                                            value={height}
+                                            onChange={(e) => setHeight(e.target.value)}
+                                            className="w-full h-14 bg-white rounded-[16px] px-4 outline-none font-medium shadow-sm border border-gray-200 text-text-primary"
+                                        />
+                                    </div>
+                                    
+                                    <div>
+                                        <label className="text-[13px] font-semibold text-text-secondary mb-1.5 block">Weight (kg)</label>
+                                        <input 
+                                            type="number" 
+                                            placeholder="e.g. 70"
+                                            value={weight}
+                                            onChange={(e) => setWeight(e.target.value)}
+                                            className="w-full h-14 bg-white rounded-[16px] px-4 outline-none font-medium shadow-sm border border-gray-200 text-text-primary"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="px-6 pb-12 pt-4 bg-gradient-to-t from-bg-page via-bg-page to-transparent shrink-0" data-zone-id="device_connect_cta" data-prd-zone="device_connect_cta">
@@ -418,11 +532,29 @@
                         {flowStep === 'incompatible' && (
                             <button onClick={() => window.navigateTo('plan_create')} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold">Create My Plan</button>
                         )}
-                        {(showEquipSuccess || showHrSuccess) && (
-                            <button onClick={() => window.navigateTo('workout_reminder')} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn">Start First Workout</button>
-                        )}
+                        
                         {flowStep === 'branch_scale' && scaleMeasured && (
-                            <button onClick={() => window.navigateTo('plan_create')} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn">Register to unlock full report</button>
+                            <button onClick={() => setFlowStep('body_stats')} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn">Continue</button>
+                        )}
+
+                        {flowStep === 'body_stats' && (
+                            <button 
+                                onClick={() => {
+                                    try {
+                                        window.navigateTo('free_mode');
+                                        setTimeout(() => {
+                                            if (window.location.href.indexOf('free_mode') === -1) {
+                                                window.location.href = 'free_mode.html';
+                                            }
+                                        }, 500);
+                                    } catch (e) {
+                                        window.location.href = 'free_mode.html';
+                                    }
+                                }} 
+                                className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn active:scale-95 transition-all"
+                            >
+                                Start First Workout
+                            </button>
                         )}
                     </div>
 
