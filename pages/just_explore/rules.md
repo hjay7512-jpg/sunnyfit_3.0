@@ -1,6 +1,6 @@
 # 🤖 Just Explore · 情绪驱动轻量推荐 (Just Browsing)
 
-> **页面定位**：在用户漫无目的时，通过情绪进行驱动，根据用户当前的状态，推荐轻量化的全身性有氧/拉伸训练。降低决策成本，建立即时信任，单节体验课即达即练。
+> **逻辑概述**：当用户未表达明确意图时，通过情绪进行驱动，根据用户当前的状态，推荐轻量化的全身性有氧/拉伸训练。降低决策成本，建立即时信任，单节体验课即达即练。
 
 ---
 
@@ -22,11 +22,8 @@
 * **主文案**：标题 "No pressure. Just flow."；副标题 "Whether you want to sweat or just breathe, let's start with how your body feels right now."
 * **交互规则**：四选一情绪卡片，且仅能选一项：**Stressed** / **Tired** / **Stiff** / **Energetic**。点击后立即进入 Step 2，无「确认」步骤。每张卡片 zone：`just_explore_mood_stressed` / `just_explore_mood_tired` / `just_explore_mood_stiff` / `just_explore_mood_energetic`。
 * **状态控制**：选中即跳转，不保留「未选」态。
-* **动作/路由**：选择后进入 Step 2，并带入当前场景配置（对话文案、推荐课程、图片等）。
-
-**📐 UI 规范**：
-* 2×2 网格，每卡片含：情绪 icon（大号 emoji）、英文 label。
-* 卡片圆角 24px，白底、轻阴影，点击态 scale 0.95。
+* **动作/路由**：选择后进入 Step 2，并带入当前场景的建议（对话文案、推荐课程、图片等）。
+* **数据埋点**： 底部按钮：onboarding_explore_status_click
 
 ---
 
@@ -41,10 +38,7 @@
 * **对话语气**：共情优先 (Empathy first)，针对当前情绪给出简短、安抚或鼓励的句子。
 * **推荐课程**：单节、轻量，根据场景 ID 从配置读取 courseTitle、courseTag、image。
 * **动作/路由**：点击左上角返回回到 Step 1。
-
-**📐 UI 规范**：
-* 课程卡片圆角 28px，封面约 160px 高，底部渐变遮罩；下方展示 courseTag 与播放图标。
-* 底部 CTA 区见 `[just_explore_cta]`。
+* **数据埋点**： 三方同步按钮：onboarding_explore_body_sync_click / onboarding_explore_body_manually_click / onboarding_explore_body_save_click 
 
 ---
 
