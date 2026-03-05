@@ -1,6 +1,8 @@
 # 🔗 设备连接通用模块 (Device Connect)
-
-> **页面定位**：Onboarding 场景下的设备连接流程。入口为权限引导，授权后进入扫描；扫描结果以底部弹窗展示；连接成功后按设备类型分流：踏频器进入型号选择后进入生理信息页，体脂秤进入测量后进入生理信息页，器械/心率带直接进入生理信息页；生理信息页支持 Apple Health 同步与表单填写，完成后跳转自由训练。
+**逻辑概述**：优先让用户完成设备连接，并快速引导完善生理信息，开始完成首次锻炼。相比原设备添加流程，点击添加时保持连接状态。
+> 特殊分支1：踏频器，需要进行主设备绑定。
+> 特殊分支2：体脂称，点击连接后-> 引导完成完善对应的生理信息-> 进入测量流程，展示测量结果，关闭结果页，返回首页。
+> 特殊分支3：心率臂带，连接后，与常规设备一样引导进行首次锻炼。
 
 ---
 
@@ -79,7 +81,7 @@
 
 **📝 业务逻辑**：
 * **主标题**："Verify Model"；输入框 placeholder "Model e.g. SF-0001"。
-* **校验**：支持型号（如 SF-0001）→ check_bt；不支持 → incompatible。
+* **校验**：支持型号（如 SF-0001）→ check_bt；不支持，推荐同类型内容，引导发起锻炼。
 * **CTA** `[device_connect_cta_verify]`："Verify Device" 按钮。
 
 ---
@@ -103,8 +105,8 @@
 | 型号校验不通过 | L1 核心 | `👉 plan_create` |
 
 **📝 业务逻辑**：
-* **主标题**："Your equipment is a manual model"；副标题 "Your effort always counts. Let's build a tailored plan to track every calorie you burn."
-* **CTA** `[device_connect_cta_create_plan]`："Create My Plan" → `👉 plan_create`。
+* **课程推荐**：推荐同类型课程，引导快速进入锻炼，
+* **CTA** `[device_connect_cta_create_plan]`："Start Now" → 对应运动准备页。
 
 ---
 
@@ -128,8 +130,8 @@
 
 **📝 业务逻辑**：
 * **未测量**：主标题 "Connect Device"；副标题 "Please stand on the scale again and keep the scale lit up."；底部 "Scanning for nearby devices..." + loading。
-* **已测量**：主标题 "Measurement Complete"；体重展示；Body Fat %、BMI、Skeletal Muscle 等加锁/模糊。
-* **CTA** `[device_connect_cta_continue]`：已测量后底部 "Continue" → body_stats。
+* **已测量**：展示现有测量结果页
+* **CTA** `[device_connect_cta_continue]`：
 
 ---
 
@@ -141,9 +143,9 @@
 
 **📝 业务逻辑**：
 * **主标题**："Equipment is ready! Sync your body stats to track data accurately."
-* **Apple Health 同步** `[device_connect_body_stats_sync]`：点击 "Quickly sync from Apple Health" 拉取生理数据；同步中展示 loading；成功后可展示 Toast "Data synced successfully!"。
-* **表单**：Birthday、Gender（Male/Female）、Height (cm)、Weight (kg)；可先同步再编辑。
-* **CTA** `[device_connect_cta_start_workout]`："Start First Workout" → `👉 free_mode`。
+* **Apple Health 同步** `[device_connect_body_stats_sync]`：点击 "Quickly sync from Apple Health" 拉取生理数据；同步中展示 loading；成功后可展示 Toast "Data synced successfully!",并默认填入最新对应项数据。
+* **表单**：Birthday、Gender（Male/Female）、Height (cm)、Weight (kg)；可先同步再编辑，保存时判断与最新一条记录数值是否相同，如果不同则记录为一条新记录。
+* **CTA** `[device_connect_cta_start_workout]`："Start First Workout" → 保存数据并跳转当前器械类型的Free Mode运动页`👉 free_mode`。
 
 ---
 
