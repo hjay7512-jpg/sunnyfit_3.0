@@ -79,8 +79,12 @@
             Heart: ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
             Settings: ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
             Play: ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none" className={className}><polygon points="5 3 19 12 5 21 5 3"/></svg>,
-            Loader: ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+            Loader: ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>,
+            X: ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
         };
+
+        const STORAGE_KEY_MAIN = 'workout_prepare_last_main_device';
+        const CONNECT_TIMEOUT_MS = 10000;
 
         const COVER_IMAGE = 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=400&h=400&fit=crop';
         const PROGRAM_MODES = [
@@ -93,27 +97,71 @@
             { id: 'hr-band', name: 'HR Band Pro', model: 'SF-HR001', icon: '💓' }
         ];
 
+        const getLastMainDevice = () => {
+            try {
+                const s = localStorage.getItem(STORAGE_KEY_MAIN);
+                return s ? JSON.parse(s) : null;
+            } catch { return null; }
+        };
+        const saveLastMainDevice = (d) => {
+            try { if (d) localStorage.setItem(STORAGE_KEY_MAIN, JSON.stringify(d)); else localStorage.removeItem(STORAGE_KEY_MAIN); } catch (_) {}
+        };
+
         const WorkoutPreparePage = () => {
-            const [mainDeviceConnected, setMainDeviceConnected] = useState(false);
+            const [mainConnState, setMainConnState] = useState('idle'); // idle|scanning|connecting|connected|failed
+            const [lastMainDevice, setLastMainDevice] = useState(() => getLastMainDevice());
+            const [mainDeviceInfo, setMainDeviceInfo] = useState(null); // current connected device info
             const [hrConnected, setHrConnected] = useState(false);
-            const [isScanning, setIsScanning] = useState(true);
             const [showDeviceModal, setShowDeviceModal] = useState(null); // 'main' | 'hr' | null
+            const [mainModalView, setMainModalView] = useState('status'); // 'status' | 'scan'
             const [showModeModal, setShowModeModal] = useState(false);
-            const [modeTab, setModeTab] = useState('program'); // 'program' | 'custom'
+            const [modeTab, setModeTab] = useState('program');
             const [selectedProgram, setSelectedProgram] = useState('manual');
-            const [customTarget, setCustomTarget] = useState({ type: 'time', value: 30 }); // time | distance | calories
+            const [customTarget, setCustomTarget] = useState({ type: 'time', value: 30 });
             const [customValue, setCustomValue] = useState(30);
+            const [bubbleMessage, setBubbleMessage] = useState(null);
+            const connectTimeoutRef = React.useRef(null);
+
+            const disconnectMain = () => {
+                setMainConnState('idle');
+                setMainDeviceInfo(null);
+            };
+
+            const startAutoConnect = () => {
+                if (!lastMainDevice) return;
+                const dev = MOCK_DEVICES.find(d => d.id === lastMainDevice.id) || { id: lastMainDevice.id, name: lastMainDevice.name || 'Device', model: lastMainDevice.model || '', icon: '🚲' };
+                setMainConnState('connecting');
+                connectTimeoutRef.current = setTimeout(() => {
+                    setMainConnState('failed');
+                }, CONNECT_TIMEOUT_MS);
+                setTimeout(() => {
+                    if (connectTimeoutRef.current) {
+                        clearTimeout(connectTimeoutRef.current);
+                        connectTimeoutRef.current = null;
+                        setMainConnState('connected');
+                        setMainDeviceInfo(dev);
+                    }
+                }, 2500);
+            };
+
+            const startScanOnly = () => {
+                setMainConnState('scanning');
+                setTimeout(() => {
+                    setBubbleMessage('Found Sunny Bike SB-100');
+                    setTimeout(() => setBubbleMessage(null), 3000);
+                }, 3000);
+            };
 
             useEffect(() => {
-                if (!isScanning) return;
-                const t = setTimeout(() => {
-                    setIsScanning(false);
-                    setMainDeviceConnected(true);
-                }, 2500);
-                return () => clearTimeout(t);
-            }, [isScanning]);
+                if (lastMainDevice) {
+                    startAutoConnect();
+                    return () => { if (connectTimeoutRef.current) clearTimeout(connectTimeoutRef.current); };
+                }
+                startScanOnly();
+            }, []);
 
             const handleBack = () => {
+                disconnectMain();
                 if (typeof window.parent?.postMessage === 'function') {
                     window.parent.postMessage({ type: 'ZONE_CLICK', zoneId: 'workout_prepare_header_back' }, '*');
                 }
@@ -121,6 +169,7 @@
             };
 
             const handleStartWorkout = () => {
+                disconnectMain();
                 if (typeof window.parent?.postMessage === 'function') {
                     window.parent.postMessage({ type: 'ZONE_CLICK', zoneId: 'workout_prepare_cta_start' }, '*');
                 }
@@ -131,6 +180,7 @@
                 if (typeof window.parent?.postMessage === 'function') {
                     window.parent.postMessage({ type: 'ZONE_CLICK', zoneId: 'workout_prepare_device_main' }, '*');
                 }
+                setMainModalView('status');
                 setShowDeviceModal('main');
             };
 
@@ -141,8 +191,33 @@
                 setShowDeviceModal('hr');
             };
 
-            const handleDisconnectMain = () => { setMainDeviceConnected(false); setShowDeviceModal(null); };
-            const handleConnectMain = () => { setMainDeviceConnected(true); setShowDeviceModal(null); };
+            const handleSwitchEquipment = () => {
+                if (connectTimeoutRef.current) { clearTimeout(connectTimeoutRef.current); connectTimeoutRef.current = null; }
+                setMainConnState('scanning');
+                setMainModalView('scan');
+            };
+
+            const handleRetryMain = () => {
+                if (lastMainDevice) startAutoConnect();
+                setMainModalView('status');
+            };
+
+            const handleDisconnectMain = () => {
+                if (connectTimeoutRef.current) { clearTimeout(connectTimeoutRef.current); connectTimeoutRef.current = null; }
+                disconnectMain();
+                setMainModalView('scan');
+            };
+
+            const handleConnectMain = (dev) => {
+                const rec = { id: dev.id, name: dev.name, model: dev.model };
+                saveLastMainDevice(rec);
+                setLastMainDevice(rec);
+                setMainDeviceInfo(dev);
+                setMainConnState('connected');
+                setShowDeviceModal(null);
+                setMainModalView('status');
+            };
+
             const handleConnectHr = () => { setHrConnected(true); setShowDeviceModal(null); };
 
             return (
@@ -162,27 +237,41 @@
                         </section>
 
                         {/* 1.3 Device connection buttons: left main, right HR */}
-                        <section className="flex gap-3 mb-4" data-zone-id="workout_prepare_devices">
+                        <section className="flex gap-3 mb-4 relative" data-zone-id="workout_prepare_devices">
+                            {bubbleMessage && (
+                                <div className="absolute -top-2 left-0 right-0 mx-4 px-4 py-2 bg-brand-blue text-white text-[12px] font-medium rounded-btn text-center z-10 animate-fade-up" data-zone-id="workout_prepare_bubble">
+                                    {bubbleMessage}
+                                </div>
+                            )}
                             <button
                                 onClick={openMainDeviceModal}
                                 className="flex-1 flex flex-col items-center justify-center gap-2 p-4 bg-bg-card rounded-card shadow-card min-h-[88px]"
                                 data-zone-id="workout_prepare_device_main"
                             >
                                 <div className="relative">
-                                    {mainDeviceConnected ? (
-                                        <span className="text-3xl">🚲</span>
-                                    ) : isScanning ? (
+                                    {mainConnState === 'connected' ? (
+                                        <span className="text-3xl">{mainDeviceInfo?.icon || '🚲'}</span>
+                                    ) : mainConnState === 'connecting' || mainConnState === 'scanning' ? (
                                         <Icons.Loader className="w-10 h-10 text-brand-blue animate-spin" />
+                                    ) : mainConnState === 'failed' ? (
+                                        <Icons.Bike className="w-10 h-10 text-black/40" />
                                     ) : (
                                         <Icons.Bike className="w-10 h-10 text-black/40" />
                                     )}
-                                    {mainDeviceConnected && (
+                                    {mainConnState === 'connected' && (
                                         <span className="absolute -top-1 -right-1 w-5 h-5 bg-brand-green rounded-full flex items-center justify-center">
                                             <Icons.Check className="w-3 h-3 text-white" strokeWidth={4} />
                                         </span>
                                     )}
+                                    {mainConnState === 'failed' && (
+                                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#FF3B30] rounded-full flex items-center justify-center">
+                                            <Icons.X className="w-3 h-3 text-white" />
+                                        </span>
+                                    )}
                                 </div>
-                                <span className="text-[12px] leading-4 text-black/60">{mainDeviceConnected ? 'Connected' : isScanning ? 'Scanning...' : 'Main Device'}</span>
+                                <span className="text-[12px] leading-4 text-black/60">
+                                    {mainConnState === 'connected' ? 'Connected' : mainConnState === 'connecting' ? 'Connecting...' : mainConnState === 'scanning' ? 'Scanning...' : mainConnState === 'failed' ? 'Connection Failed' : lastMainDevice ? (lastMainDevice.model || 'Main Device') : 'Main Device'}
+                                </span>
                             </button>
                             <button
                                 onClick={openHrModal}
@@ -231,27 +320,46 @@
                     {/* Half-screen device modal - Main */}
                     {showDeviceModal === 'main' && (
                         <div className="absolute inset-0 z-50 flex items-end bg-black/40" onClick={() => setShowDeviceModal(null)} data-zone-id="workout_prepare_modal_main">
-                            <div className="w-full max-h-[50vh] bg-bg-card rounded-t-[20px] p-4 animate-slide-up" onClick={e => e.stopPropagation()} data-zone-id="workout_prepare_modal_main_content">
+                            <div className="w-full max-h-[50vh] bg-bg-card rounded-t-[20px] p-4 animate-slide-up overflow-y-auto no-scrollbar" onClick={e => e.stopPropagation()} data-zone-id="workout_prepare_modal_main_content">
                                 <div className="w-10 h-1 bg-black/20 rounded-full mx-auto mb-4" />
-                                <h3 className="text-[16px] leading-6 font-black text-brand-blue mb-3">Connect Main Device</h3>
-                                <div className="space-y-2 mb-4">
-                                    {MOCK_DEVICES.filter(d => d.id === 'sb-100').map(d => (
-                                        <div key={d.id} className="flex items-center justify-between p-4 bg-bg-neutral rounded-btn">
-                                            <div className="flex items-center gap-3">
-                                                <span className="text-2xl">{d.icon}</span>
-                                                <div>
-                                                    <p className="text-[14px] font-semibold text-black/90">{d.name}</p>
-                                                    <p className="text-[12px] text-black/60">{d.model}</p>
-                                                </div>
-                                            </div>
-                                            {mainDeviceConnected ? (
-                                                <button onClick={handleDisconnectMain} className="px-4 py-2 text-[12px] font-semibold text-brand-red" data-zone-id="workout_prepare_main_disconnect">Disconnect</button>
-                                            ) : (
-                                                <button onClick={handleConnectMain} className="px-4 py-2 bg-brand-blue text-white rounded-lg text-[12px] font-semibold" data-zone-id="workout_prepare_main_connect">Connect</button>
-                                            )}
+                                <h3 className="text-[16px] leading-6 font-black text-brand-blue mb-3">Main Device</h3>
+                                {mainModalView === 'status' ? (
+                                    <>
+                                        <div className="mb-4 p-4 bg-bg-neutral rounded-btn">
+                                            <p className="text-[12px] text-black/60 mb-1">Status</p>
+                                            <p className="text-[14px] font-semibold text-black/90">
+                                                {mainConnState === 'connecting' && 'Connecting...'}
+                                                {mainConnState === 'scanning' && 'Scanning...'}
+                                                {mainConnState === 'connected' && (mainDeviceInfo ? `${mainDeviceInfo.name} (${mainDeviceInfo.model})` : 'Connected')}
+                                                {mainConnState === 'failed' && 'Connection failed (timeout)'}
+                                                {mainConnState === 'idle' && (lastMainDevice ? lastMainDevice.model : 'Scanning...')}
+                                            </p>
                                         </div>
-                                    ))}
-                                </div>
+                                        {(mainConnState === 'failed') ? (
+                                            <button onClick={handleRetryMain} className="w-full py-3.5 bg-brand-blue text-white rounded-btn font-bold mb-2" data-zone-id="workout_prepare_main_retry">Retry</button>
+                                        ) : (
+                                            <button onClick={handleSwitchEquipment} className="w-full py-3.5 bg-bg-neutral text-brand-blue font-bold rounded-btn mb-2" data-zone-id="workout_prepare_main_switch">Switch Equipment</button>
+                                        )}
+                                    </>
+                                ) : (
+                                    <>
+                                        <p className="text-[12px] text-black/60 mb-3">Select a device to connect</p>
+                                        <div className="space-y-2 mb-4">
+                                            {MOCK_DEVICES.filter(d => d.id === 'sb-100').map(d => (
+                                                <button key={d.id} onClick={() => handleConnectMain(d)} className="w-full flex items-center justify-between p-4 bg-bg-neutral rounded-btn text-left" data-zone-id="workout_prepare_main_connect">
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="text-2xl">{d.icon}</span>
+                                                        <div>
+                                                            <p className="text-[14px] font-semibold text-black/90">{d.name}</p>
+                                                            <p className="text-[12px] text-black/60">{d.model}</p>
+                                                        </div>
+                                                    </div>
+                                                    <span className="text-brand-blue font-semibold text-[12px]">Connect</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
                                 <button onClick={() => setShowDeviceModal(null)} className="w-full py-3 text-[14px] font-semibold text-black/60" data-zone-id="workout_prepare_modal_close">Close</button>
                             </div>
                         </div>
@@ -262,10 +370,10 @@
                         <div className="absolute inset-0 z-50 flex items-end bg-black/40" onClick={() => setShowDeviceModal(null)} data-zone-id="workout_prepare_modal_hr">
                             <div className="w-full max-h-[50vh] bg-bg-card rounded-t-[20px] p-4 animate-slide-up overflow-y-auto no-scrollbar" onClick={e => e.stopPropagation()} data-zone-id="workout_prepare_modal_hr_content">
                                 <div className="w-10 h-1 bg-black/20 rounded-full mx-auto mb-4" />
-                                <h3 className="text-[16px] leading-6 font-black text-brand-blue mb-3">Connect Heart Rate</h3>
+                                <h3 className="text-[16px] leading-6 font-black text-brand-blue mb-3">Heart Rate</h3>
                                 <div className="space-y-2 mb-4">
                                     {MOCK_DEVICES.filter(d => d.id === 'hr-band').map(d => (
-                                        <button key={d.id} onClick={handleConnectHr} className="w-full flex items-center justify-between p-4 bg-bg-neutral rounded-btn text-left" data-zone-id="workout_prepare_hr_connect">
+                                        <div key={d.id} className="flex items-center justify-between p-4 bg-bg-neutral rounded-btn">
                                             <div className="flex items-center gap-3">
                                                 <span className="text-2xl">{d.icon}</span>
                                                 <div>
@@ -273,8 +381,12 @@
                                                     <p className="text-[12px] text-black/60">{d.model}</p>
                                                 </div>
                                             </div>
-                                            <span className="text-brand-blue font-semibold text-[12px]">Connect</span>
-                                        </button>
+                                            {hrConnected ? (
+                                                <button onClick={() => { setHrConnected(false); setShowDeviceModal(null); }} className="px-4 py-2 text-[12px] font-semibold text-brand-red" data-zone-id="workout_prepare_hr_disconnect">Disconnect</button>
+                                            ) : (
+                                                <button onClick={handleConnectHr} className="px-4 py-2 bg-brand-blue text-white rounded-lg text-[12px] font-semibold" data-zone-id="workout_prepare_hr_connect">Connect</button>
+                                            )}
+                                        </div>
                                     ))}
                                 </div>
                                 <button onClick={() => setShowDeviceModal(null)} className="w-full py-3 text-[14px] font-semibold text-black/60" data-zone-id="workout_prepare_modal_close">Close</button>
