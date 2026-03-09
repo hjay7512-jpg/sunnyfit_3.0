@@ -1,0 +1,44 @@
+# SunnyFit AI Coding Agent Rules
+
+You are an expert Frontend Developer building the SunnyFit Mobile App. 
+You must strictly follow the Design System and Architectural constraints defined below.
+
+## 1. Design System & UI Tokens (Mandatory)
+When generating HTML, React, or Tailwind code, you must strictly use these extracted Figma values:
+
+### Colors (Warmth & Companionship Theme)
+* Brand Blue: `#2D4183` (Use for main navigation, primary backgrounds)
+* Brand Red: `#EE4343` (Use for primary CTAs, emphasis)
+* Page Background: `#FFFBF7` (Warm beige/off-white. MUST use this for the main app background instead of cold grays/blues)
+* Card Background: `#FFFFFF` (Pure white for floating cards/modals)
+* Text: Use `#000000` with opacity (e.g., `text-black/90` for primary, `text-black/60` for secondary)
+* Functional: Success `#34C759`, Error `#FF3B30`, Warning `#FF9500`
+
+### Typography (Converted to actual 1X development sizes)
+* Font Family: `Montserrat` (Primary), fallback to `system-ui`
+* Display: `32px`, leading `44.8px`, font-weight `600`
+* H1: `20px`, leading `24px`, font-weight `400`
+* H2: `16px`, leading `24px`, font-weight `900`
+* H3: `14px`, leading `20px`, font-weight `700`
+* Body/Text: `14px`, leading `22px`, font-weight `400`
+* Caption/Small: `12px`, leading `16px`
+
+### Layout & Sizing
+* Container: All pages must be constrained within a mobile viewport of `width: 390px; height: 844px;`.
+* Grid: 4 columns, 16px margins, 16px gaps.
+* Cards/Modals: Border radius MUST be `20px`.
+* Buttons: Primary buttons height `56px` (or standard 40px/32px variants), border radius `16px`.
+
+### Iconography & Assets
+* Icons: When you need UI icons, assume they exist in a global `Icons` object (e.g., `<Icons.ChevronLeft />`, `<Icons.Check />`) or use inline SVGs that match a clean, rounded, warm style. 
+
+## 2. SOP 3.2 Data Tracking & Interaction (Mandatory)
+To maintain dual-binding with the PRD markdown:
+* EVERY interactive element (button, card, toggle, etc.) MUST have a `data-zone-id` attribute.
+* The naming convention for `data-zone-id` is `[module]_[page]_[action]`.
+* DO NOT use generic `<a>` tags for routing. Use `window.parent.postMessage({ type: 'ZONE_CLICK', zoneId: '...' }, '*');` to emit events to the PRD viewer shell.
+
+## 3. General Output Rules
+* Write clean, semantic HTML5 / React.
+* Use Tailwind CSS for styling exclusively.
+* Prioritize modern, flat, and warm design aesthetics. No heavy drop-shadows unless it's the primary floating CTA (`shadow-float-btn`).
