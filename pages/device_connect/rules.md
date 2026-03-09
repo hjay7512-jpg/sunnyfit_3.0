@@ -53,7 +53,7 @@
 
 **📝 业务逻辑**：
 * **标题**："Add Equipment"；副标题 "Nearby devices have been searched"。
-* **设备列表**：每项展示名称、型号与 "Add >"。点击 Add 后该行展示 loading；连接成功后关闭弹窗并进入对应分支。
+* **设备列表**：每项展示名称、型号与 "Add >"。点击 Add 后该行展示 loading；添加成功后关闭弹窗并进入对应分支。
 * **分流**：连接 Cadence → branch_cadence；连接 Scale → branch_scale；连接 Elliptical 或 HR 臂带 → body_stats。
 * **Retry Search** `[device_connect_scan_retry]`：关闭弹窗，重新发起蓝牙扫描。
 * **Can't find my device?** `[device_connect_scan_manual]`：关闭弹窗，进入 manual_entry。
@@ -118,7 +118,7 @@
 
 **📝 业务逻辑**：
 * **主标题**："Cadence Connected"；副标题 "Select your bike/elliptical"；文案 "Great! Which classic Sunny bike/elliptical are you attaching it to?"
-* **交互**：单选，4 个型号（Sunny Bike SB-100/200、Sunny Elliptical SE-100/200）。选定后进入 body_stats。
+* **交互**：单选，选择对应型号后，执行添加操作。选定后进入 body_stats。
 
 ---
 
