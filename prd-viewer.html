@@ -63,9 +63,17 @@
         .rules-content .markdown-body table { table-layout: auto; max-width: 100%; }
         .rules-content .markdown-body th, .rules-content .markdown-body td { min-width: 60px; max-width: 100%; }
 
-        /* 状态 2：详情拆分视图 (左 UI，右规则) 1:1 布局 */
+        /* 状态 2：详情拆分视图 (左 UI，右规则) 1:1 布局；整体缩放层默认 90% 避免裁切 */
         #detail-view { width: 100%; display: none; }
-        #detail-view.active { display: flex; }
+        #detail-view.active { display: flex; justify-content: center; align-items: center; }
+        #detail-view-zoom-wrap {
+            flex: 1;
+            min-width: 0;
+            min-height: 0;
+            display: flex;
+            transform-origin: center center;
+            transform: scale(0.9);
+        }
         
         /* 左侧预览区：仅内容区，缩放为左下方悬浮 */
         .preview-pane { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: #ebedf0; overflow: hidden; position: relative; }
@@ -73,9 +81,22 @@
             position: relative;
             flex: 1;
             min-height: 0;
-            background: #fff;
+            background: #ebedf0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
         }
-        .preview-iframe-wrap iframe { width: 100%; height: 100%; border: none; display: block; }
+        .preview-scale-wrap {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-width: 100%;
+            min-height: 100%;
+            transform-origin: center center;
+            flex-shrink: 0;
+        }
+        .preview-scale-wrap iframe { width: 100%; height: 100%; border: none; display: block; }
         /* 左下方悬浮缩放按钮 */
         .preview-zoom-float {
             position: absolute;
@@ -150,10 +171,13 @@
         </div>
 
         <div id="detail-view">
+            <div id="detail-view-zoom-wrap">
             <div class="preview-pane">
                 <div class="preview-iframe-wrap">
-                    <iframe id="ui-iframe" src=""></iframe>
-                    <div id="ui-highlight-overlay" class="ui-highlight-overlay" style="display:none;"></div>
+                    <div class="preview-scale-wrap" id="preview-scale-wrap">
+                        <iframe id="ui-iframe" src=""></iframe>
+                        <div id="ui-highlight-overlay" class="ui-highlight-overlay" style="display:none;"></div>
+                    </div>
                 </div>
                 <div class="preview-zoom-float">
                     <button type="button" class="zoom-btn" id="zoom-out" title="缩小">−</button>
@@ -168,6 +192,7 @@
                 </div>
                 <div class="rules-content" id="rules-container">
                     </div>
+            </div>
             </div>
         </div>
     </main>
@@ -190,20 +215,11 @@
 
         function getPreviewZoom() { return PREVIEW_ZOOM_LEVELS[previewZoomIndex]; }
         function applyPreviewZoom() {
-            const iframe = document.getElementById('ui-iframe');
-            if (!iframe || !iframe.contentDocument) return;
-            try {
-                const doc = iframe.contentDocument;
-                const zoom = getPreviewZoom();
-                doc.documentElement.style.overflow = 'auto';
-                doc.documentElement.style.height = '100%';
-                doc.body.style.margin = '0';
-                doc.body.style.width = '100%';
-                doc.body.style.minHeight = '100%';
-                doc.body.style.overflow = 'auto';
-                doc.body.style.transformOrigin = '50% 50%';
-                doc.body.style.transform = zoom === 1 ? 'none' : 'scale(' + zoom + ')';
-            } catch (_) { }
+            const viewWrap = document.getElementById('detail-view-zoom-wrap');
+            if (!viewWrap) return;
+            const zoom = getPreviewZoom();
+            viewWrap.style.transformOrigin = 'center center';
+            viewWrap.style.transform = zoom === 1 ? 'none' : 'scale(' + zoom + ')';
         }
         function updateZoomLabel() {
             const el = document.getElementById('zoom-value');
@@ -320,8 +336,9 @@
             // 3. 双向高亮联动（规则 ↔ Demo）
             setupBidirectionalHighlight(iframe, rulesContainer);
 
-            // 4. 左侧预览区缩放控件：默认 90%，用户可调节
+            // 4. 左侧预览区缩放控件：默认 90%，在父级对整块 iframe 缩放，不注入 iframe 避免裁切
             updateZoomLabel();
+            applyPreviewZoom();
             const zoomOutBtn = document.getElementById('zoom-out');
             const zoomInBtn = document.getElementById('zoom-in');
             if (zoomOutBtn) {
