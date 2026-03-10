@@ -3,52 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SunnyFit: Intent Select (SOP 2.0)</title>
+    <title>SunnyFit: Ultimate Workout Summary</title>
     
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-    <script>
-        function navigateTo(targetPageId) {
-            try {
-                const parentParams = new URLSearchParams(window.parent.location.search);
-                parentParams.set('page', targetPageId);
-                window.parent.location.search = parentParams.toString();
-            } catch (e) {
-                console.warn("未检测到 Viewer 外壳，执行降级跳转");
-                alert("SOP 路由触发：即将前往 -> " + targetPageId);
-            }
-        }
-    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        brand: { red: '#EE4343', blue: '#31426D', beige: '#F6E2CF', green: '#2BA471', darkRed: '#8B0000', sky: '#BDD0EB' },
-                        bg: { page: '#FFFBF7', card: '#FFFFFF', neutral: '#F5F7FA', dark: '#1A1A1A' },
-                        text: { primary: '#31426D', secondary: '#666666', inverse: '#FFFFFF' }
+                        brand: { red: '#EE4343', blue: '#31426D', green: '#2BA471', yellow: '#FFB800', lightRed: '#FFEBEB' },
+                        bg: { page: '#F7F9FC', card: '#FFFFFF' },
+                        text: { primary: '#111827', secondary: '#4B5563', muted: '#9CA3AF' }
                     },
                     fontFamily: { sans: ['Montserrat', 'sans-serif'] },
                     boxShadow: {
-                        'glow': '0px 10px 30px rgba(222, 37, 41, 0.4)',
-                        'card': '0px 4px 12px rgba(0, 0, 0, 0.05)'
+                        'card': '0px 4px 20px rgba(0, 0, 0, 0.04)',
+                        'glow': '0px 8px 25px rgba(238, 67, 67, 0.3)',
+                        'bottom-sheet': '0px -10px 40px rgba(0,0,0,0.12)',
                     },
                     animation: {
-                        'breathe': 'breathe 4s ease-in-out infinite',
-                        'fade-up': 'fadeUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards'
+                        'fade-in': 'fadeIn 0.5s ease-out forwards',
+                        'slide-up-sheet': 'slideUpSheet 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                     },
                     keyframes: {
-                        breathe: {
-                            '0%, 100%': { transform: 'scale(1)', filter: 'drop-shadow(0px 10px 20px rgba(222, 37, 41, 0.4))' },
-                            '50%': { transform: 'scale(1.05)', filter: 'drop-shadow(0px 15px 30px rgba(222, 37, 41, 0.6))' },
-                        },
-                        fadeUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }
+                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+                        slideUpSheet: { '0%': { opacity: '0', transform: 'translateY(100%)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }
                     }
                 }
             }
@@ -56,17 +42,13 @@
     </script>
     <style>
         * { -webkit-tap-highlight-color: transparent; }
-        body { 
-            margin: 0; background-color: #f0f0f0; display: flex; 
-            justify-content: center; align-items: center; height: 100vh; overflow: hidden;
-            font-family: 'Montserrat', sans-serif;
-        }
-        .mobile-viewport {
-            width: 390px; height: 844px; background-color: #FFFBF7; position: relative;
-            overflow: hidden; border-radius: 40px; border: 8px solid #333;
-            box-shadow: 0px 30px 60px rgba(0,0,0,0.3);
-        }
+        body { margin: 0; background-color: #222; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: 'Montserrat', sans-serif; overflow: hidden; }
+        .mobile-viewport { width: 390px; height: 844px; background-color: #F7F9FC; position: relative; overflow: hidden; border-radius: 40px; border: 8px solid #000; box-shadow: 0px 30px 60px rgba(0,0,0,0.5); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        .confetti { position: absolute; width: 8px; height: 16px; opacity: 0; animation: fall 3s ease-out forwards; }
+        @keyframes fall { 0% { transform: translateY(-100px) rotate(0deg); opacity: 1; } 100% { transform: translateY(800px) rotate(720deg); opacity: 0; } }
+        .transition-epic { transition: all 0.8s cubic-bezier(0.25, 1, 0.3, 1); }
     </style>
 </head>
 <body>
@@ -75,90 +57,342 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // 仅保留此页面需要的唯一 Icon
         const Icons = {
-            ChevronRight: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m9 18 6-6-6-6"/></svg>
+            Close: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"/></svg>,
+            Back: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"/></svg>,
+            Share: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>,
+            ChevronDown: ({ open }) => <svg className={`w-5 h-5 transition-transform duration-300 ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"/></svg>,
+            ChevronRight: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7"/></svg>,
+            Lock: () => <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C9.243 2 7 4.243 7 7v3H6a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2h-1V7c0-2.757-2.243-5-5-5zm-3 5c0-1.654 1.346-3 3-3s3 1.346 3 3v3H9V7zm3 11a2 2 0 110-4 2 2 0 010 4z"/></svg>,
+            Camera: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
         };
 
-        const SunnyLogo = ({ variant = 'standard', className = "" }) => {
-            const colors = variant === 'splash' ? { path1: '#FFFFFF', path23: '#EE4343' } : { path1: '#EE4343', path23: '#FFFFFF' };
+        const SimpleChart = ({ color, dataPts }) => (
+            <svg viewBox="0 0 100 30" className="w-full h-[50px] overflow-visible mt-2 mb-2">
+                <path d={dataPts} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="animate-fade-in"/>
+            </svg>
+        );
+
+        // --- 高阶数据组件 ---
+        const MetricRow = ({ icon, title, value, color, dataPts, isPrivate, aiInsight, badge }) => {
+            const [expanded, setExpanded] = useState(false);
             return (
-                <div className="w-full h-full animate-breathe">
-                    <svg viewBox="0 0 32 32" fill="none" className={`w-full h-full drop-shadow-glow ${className}`}>
-                        <path d="M16.013 32C13.271 31.9018 10.5412 31.8755 7.87463 31.1231C3.57228 29.9252 1.23878 26.956 0.52873 22.6889C-0.165498 18.3226 -0.176144 13.8749 0.497173 9.50531C1.23001 4.58405 4.38577 1.32017 9.29472 0.537958C13.609 -0.165525 18.0077 -0.17914 22.3262 0.497619C27.7401 1.35875 30.6837 4.27187 31.513 9.76137C32.1817 14.0582 32.1521 18.4348 31.4253 22.7222C30.5207 27.9048 27.3527 30.867 22.079 31.558C20.0716 31.8176 18.0362 31.8597 16.013 32Z" fill={colors.path1} />
-                        <path d="M15.3836 6.16027C15.9406 6.15315 16.4468 6.48357 16.6646 6.99654C16.8824 7.50952 16.7687 8.10332 16.3767 8.49943C15.9848 8.89555 15.3925 9.01542 14.8774 8.80283C14.3624 8.59024 14.027 8.08735 14.0283 7.53001C14.0358 6.78206 14.636 6.1754 15.3836 6.16027Z" fill={colors.path23} />
-                        <path d="M19.6492 11.387C18.5149 11.7676 17.3455 12.0377 16.2287 12.4744C15.8322 12.6166 15.4556 12.8094 15.1084 13.0479C13.9776 13.8722 13.939 14.9315 14.9611 15.9768C15.7606 16.7959 16.7231 17.4115 17.5769 18.1586C18.9041 19.3214 18.9637 20.5245 17.7312 21.8118C16.4829 23.1255 14.905 23.9726 13.2676 24.6811C12.5908 24.974 11.8983 25.2283 11.2128 25.5002C11.0314 25.3255 10.9531 25.0694 11.0059 24.8232C12.0619 24.4117 13.0326 23.8082 13.8689 23.043C14.3759 22.5899 14.8315 22.0823 15.2276 21.5295C16.092 20.3018 16.0446 19.5722 15.0523 18.4445C14.3405 17.6412 13.5095 16.945 12.9134 16.0365C11.7317 14.2335 12.2928 12.0623 14.1722 10.9977C15.6747 10.1471 17.2876 9.58586 18.9234 9.06848C19.6106 8.85451 20.1226 9.11759 20.3259 9.7402C20.5766 10.5312 20.34 11.159 19.6492 11.387Z" fill={colors.path23} />
-                    </svg>
-                </div>
-            );
-        };
-
-        const SplashLayer = ({ onComplete }) => {
-            const [scale, setScale] = useState(0); 
-            const [logoOpacity, setLogoOpacity] = useState(0);
-            
-            useEffect(() => { 
-                setTimeout(() => setScale(40), 100); 
-                setTimeout(() => setLogoOpacity(1), 600); 
-                setTimeout(onComplete, 2500); 
-            }, []);
-
-            return (
-                <div className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden" data-prd-zone="intent_select_splash">
-                    <div className="absolute w-12 h-12 bg-brand-red rounded-full transition-transform duration-[800ms]" style={{ transform: `scale(${scale})` }} />
-                    <div className="relative z-10 w-24 h-24 transition-opacity duration-1000" style={{ opacity: logoOpacity }}>
-                        <SunnyLogo variant="splash" />
-                    </div>
-                </div>
-            );
-        };
-
-        const HomeScreen = ({ isVisible, onNavigate }) => {
-            const [show, setShow] = useState(false);
-            useEffect(() => { if(isVisible) setTimeout(() => setShow(true), 800); }, [isVisible]);
-            
-            const options = [
-                { id: 'device_connect', icon: '🚲', title: 'Connect Equipment', subtitle: 'Connect your Sunny / JLL gear and track' },
-                { id: 'plan_create', icon: '🔎', title: 'Find a Course', subtitle: 'Looking for workouts suit for me' },
-                { id: 'guest_explore', icon: '👀', title: 'Just Browsing', subtitle: 'I have no idea' }
-            ];
-
-            return (
-                <div className={`absolute inset-0 flex flex-col items-center pt-[10vh] px-6 transition-opacity duration-1000 ${isVisible?'opacity-100':'opacity-0'}`}>
-                    <div className="w-20 h-20 mb-6 flex-shrink-0"><SunnyLogo /></div>
-                    <div className="text-center mb-10 shrink-0">
-                        <h1 className="text-[28px] font-bold mb-2 text-text-primary leading-tight" data-i18n="intent_select_greeting">Good Morning.</h1>
-                        <p className="text-text-secondary text-[14px]" data-i18n="intent_select_subtitle">What do you want to start?</p>
-                    </div>
-                    <div className="w-full flex-1 overflow-y-auto no-scrollbar pb-10">
-                        {show && options.map((opt, i) => (
-                            <div key={opt.id} onClick={() => onNavigate(opt.id)} data-prd-zone={`intent_select_opt_${opt.id}`} className="w-full bg-white p-4 rounded-[20px] shadow-card flex items-center animate-fade-up mb-4 cursor-pointer active:scale-[0.97] transition-all" style={{animationDelay: `${i*0.1}s`}}>
-                                <div className="w-12 h-12 bg-bg-neutral rounded-[16px] flex items-center justify-center text-2xl flex-shrink-0">{opt.icon}</div>
-                                <div className="ml-4 flex-grow text-left pr-2">
-                                    <h3 className="font-bold text-text-primary text-[15px] leading-tight">{opt.title}</h3>
-                                    <p className="text-[11px] text-text-secondary mt-1 leading-snug">{opt.subtitle}</p>
+                <div className="bg-white rounded-[20px] shadow-card mb-3 overflow-hidden border border-gray-100">
+                    <button onClick={() => !isPrivate && setExpanded(!expanded)} className={`w-full p-4 flex items-center justify-between ${isPrivate ? 'cursor-default' : 'active:bg-gray-50'}`}>
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white" style={{backgroundColor: color}}>{icon}</div>
+                            <span className="font-bold text-[15px] text-text-primary">{title}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            {isPrivate ? (
+                                <span className="text-[13px] font-bold text-text-muted flex items-center gap-1"><Icons.Lock /> Hidden</span>
+                            ) : (
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[15px] font-bold text-text-primary"><span className="text-[12px] text-text-secondary font-medium mr-1">Avg</span>{value}</span>
+                                    {badge && <span className="bg-brand-red text-white text-[10px] font-black px-2 py-0.5 rounded flex items-center tracking-wider animate-pulse-fast">{badge}</span>}
                                 </div>
-                                <div className="w-5 h-5 flex-shrink-0 text-text-secondary opacity-30"><Icons.ChevronRight className="w-full h-full" /></div>
+                            )}
+                            {!isPrivate && <Icons.ChevronDown open={expanded} />}
+                        </div>
+                    </button>
+                    <div className={`transition-all duration-500 ease-in-out ${expanded ? 'max-h-[200px] opacity-100 pb-4 px-4' : 'max-h-0 opacity-0 px-4'}`}>
+                        <SimpleChart color={color} dataPts={dataPts} />
+                        {aiInsight && (
+                            <div className="mt-2 p-3 rounded-xl bg-[#F8F9FA] border border-gray-100 flex items-start gap-2 animate-fade-in" style={{animationDelay:'0.2s'}}>
+                                <span className="text-[14px]">✨</span>
+                                <p className="text-[12px] text-text-secondary leading-snug font-medium"><span className="font-bold text-text-primary">AI Insight: </span>{aiInsight}</p>
                             </div>
-                        ))}
+                        )}
                     </div>
                 </div>
             );
         };
 
-        // --- 极其纯粹的 App 顶层控制器 ---
+        // --- 户外跑步地图卡片 ---
+        const MapOverviewCard = ({ isPublic }) => (
+            <div className="bg-white rounded-[20px] shadow-card mb-4 overflow-hidden border border-gray-100">
+                <div className="p-4 pb-3">
+                    <div className="flex justify-between items-start mb-3">
+                        <div>
+                            <h4 className="font-bold text-[16px] text-text-primary leading-tight">Outdoor Running</h4>
+                            <p className="text-[12px] text-text-muted mt-0.5">2026/03/05 22:21 - 22:28</p>
+                        </div>
+                        <Icons.ChevronDown open={false} />
+                    </div>
+                    <div className="relative w-full h-[160px] rounded-[12px] bg-cover bg-center overflow-hidden border border-gray-100" style={{backgroundImage: `url('https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=600&q=80')`}}>
+                        <div className="absolute inset-0 bg-white/40"></div>
+                        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 300 150">
+                            <path d="M 40 40 Q 90 70 120 110 T 260 70" fill="none" stroke="#EE4343" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-md"/>
+                            <circle cx="40" cy="40" r="6" fill="#EE4343" stroke="white" strokeWidth="2" />
+                            <circle cx="260" cy="70" r="6" fill="#EE4343" stroke="white" strokeWidth="2" />
+                        </svg>
+                    </div>
+                </div>
+                <div className="px-5 py-4 border-t border-dashed border-gray-200 grid grid-cols-3 gap-4 bg-[#FAFBFC]">
+                    <div className="flex flex-col items-center text-center">
+                        <div className="text-[22px] font-black text-text-primary">40:23</div>
+                        <div className="text-[11px] font-bold text-brand-red mt-1 flex items-center gap-1"><span className="text-[14px]">⏱️</span> Time</div>
+                    </div>
+                    <div className="flex flex-col items-center text-center border-l border-r border-gray-200 px-2">
+                        {isPublic ? <div className="text-[18px] font-black text-text-muted flex items-center h-[32px]"><Icons.Lock /></div> : <div className="text-[22px] font-black text-text-primary">876<span className="text-[11px] font-bold text-text-muted ml-0.5">kcal</span></div>}
+                        <div className="text-[11px] font-bold text-brand-red mt-1 flex items-center gap-1"><span className="text-[14px]">🔥</span> Calories</div>
+                    </div>
+                    <div className="flex flex-col items-center text-center">
+                        <div className="text-[22px] font-black text-text-primary">51.8<span className="text-[11px] font-bold text-text-muted ml-0.5">mi</span></div>
+                        <div className="text-[11px] font-bold text-brand-red mt-1 flex items-center gap-1"><span className="text-[14px]">📍</span> Distance</div>
+                    </div>
+                </div>
+            </div>
+        );
+
+        // --- 室内歌单训练栈 ---
+        const ClassStack = () => {
+            const [expanded, setExpanded] = useState(false);
+            const classes = [
+                { id: 1, title: "5 Min Warmup Ride", time: "05:00", img: "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=100&q=80" },
+                { id: 2, title: "20 Min HIIT Cycling", time: "20:23", img: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=100&q=80" },
+                { id: 3, title: "15 Min Stretch", time: "15:00", img: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&w=100&q=80" }
+            ];
+            return (
+                <div className="bg-white rounded-[20px] shadow-card mb-4 overflow-hidden border border-gray-100">
+                    <button onClick={() => setExpanded(!expanded)} className="w-full p-4 flex items-center justify-between active:bg-gray-50">
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-[12px] bg-cover bg-center shrink-0 shadow-sm" style={{backgroundImage: `url(${classes[1].img})`}}></div>
+                            <div className="text-left">
+                                <h4 className="font-bold text-[16px] text-text-primary leading-tight">3 Class Stack</h4>
+                                <p className="text-[12px] text-text-muted mt-0.5">2026/03/10 18:30 - 19:10</p>
+                            </div>
+                        </div>
+                        <div className="text-text-muted"><Icons.ChevronDown open={expanded} /></div>
+                    </button>
+                    <div className={`transition-all duration-500 ease-in-out bg-bg-page/40 ${expanded ? 'max-h-[300px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                        <div className="px-4 py-2 space-y-1 border-t border-gray-100">
+                            {classes.map((c) => (
+                                <button key={c.id} className="w-full flex items-center gap-3 py-2 active:opacity-60 transition-opacity text-left">
+                                    <div className="text-[13px] font-bold text-text-muted w-4 text-center">{c.id}</div>
+                                    <div className="w-10 h-10 rounded-[8px] bg-cover bg-center shrink-0 shadow-sm border border-gray-100" style={{backgroundImage: `url('${c.img}')`}}></div>
+                                    <div className="flex-1 overflow-hidden flex flex-col justify-center">
+                                        <div className="font-semibold text-[13px] text-text-primary truncate">{c.title}</div>
+                                        <div className="text-[11px] font-medium text-text-secondary mt-0.5 flex items-center gap-1"><span>⏱</span> {c.time}</div>
+                                    </div>
+                                    <Icons.ChevronRight className="w-4 h-4" />
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
         const App = () => {
-            const [appState, setAppState] = useState('launching'); 
+            const [viewMode, setViewMode] = useState('public'); // 默认展示 public 看效果
+            const [scenario, setScenario] = useState('outdoor'); 
+            const [animStage, setAnimStage] = useState('celebrating');
+            const [showCoachCard, setShowCoachCard] = useState(false);
             
-            const handleNav = (targetModule) => { 
-                // SOP 2.0: 直接进行跨页面路由分发，抛弃单页内部堆叠
-                window.navigateTo(targetModule);
-            };
+            useEffect(() => {
+                setShowCoachCard(false);
+                if (viewMode === 'immediate' || viewMode === 'record') {
+                    setAnimStage('celebrating');
+                    const timer1 = setTimeout(() => setAnimStage('dashboard'), 2500);
+                    const timer2 = setTimeout(() => setShowCoachCard(true), 3000);
+                    return () => { clearTimeout(timer1); clearTimeout(timer2); };
+                } else {
+                    setAnimStage('dashboard');
+                }
+            }, [viewMode, scenario]);
+
+            const hrData = "M 0 28 Q 15 25 25 15 T 45 10 T 65 5 T 85 8 T 100 2";
+            const paceData = "M 0 25 Q 10 20 20 22 T 40 15 T 60 10 T 80 12 T 100 5";
+            const isCelebrating = animStage === 'celebrating';
+
+            const heroContent = {
+                immediate: { icon: '🔥', title: 'Workout Done!', sub: 'You crushed it. Outstanding work!' },
+                record: { icon: '🏆', title: 'New Record!', sub: 'Fastest running of your record! ⚡' },
+                history: { icon: '🏆', title: 'Fastest 5K!', sub: '' },
+                public: { icon: '🏆', title: 'Fastest 5K!', sub: '' }
+            }[viewMode];
 
             return (
-                <div className="mobile-viewport font-sans">
-                    {appState === 'launching' && <SplashLayer onComplete={() => setAppState('home')} />}
-                    <HomeScreen isVisible={appState === 'home'} onNavigate={handleNav} />
+                <div className="flex flex-col items-center w-full h-full relative">
+                    {/* Debug 栏 */}
+                    <div className="absolute top-2 z-50 flex flex-col gap-2 items-center">
+                        <div className="flex gap-2 bg-gray-900/90 backdrop-blur px-3 py-1.5 rounded-full shadow-lg">
+                            <button onClick={() => setScenario('indoor')} className={`px-2 py-1 rounded-full text-[10px] font-bold transition-colors ${scenario==='indoor'?'bg-brand-blue text-white':'text-gray-400'}`}>🚲 室内组合</button>
+                            <button onClick={() => setScenario('outdoor')} className={`px-2 py-1 rounded-full text-[10px] font-bold transition-colors ${scenario==='outdoor'?'bg-brand-green text-white':'text-gray-400'}`}>🏃 户外路线</button>
+                        </div>
+                        <div className="flex flex-wrap justify-center gap-2 bg-gray-900/90 backdrop-blur px-4 py-2 rounded-[16px] shadow-lg max-w-[360px]">
+                            <button onClick={() => setViewMode('immediate')} className={`px-2 py-1 rounded-full text-[10px] font-bold transition-colors ${viewMode==='immediate'?'bg-gray-700 text-white':'text-gray-400'}`}>✨ 首练</button>
+                            <button onClick={() => setViewMode('history')} className={`px-2 py-1 rounded-full text-[10px] font-bold transition-colors ${viewMode==='history'?'bg-gray-700 text-white':'text-gray-400'}`}>📚 历史</button>
+                            <button onClick={() => setViewMode('public')} className={`px-2 py-1 rounded-full text-[10px] font-bold transition-colors ${viewMode==='public'?'bg-brand-red text-white shadow-glow':'text-gray-400'}`}>🔗 分享</button>
+                            <button onClick={() => setViewMode('record')} className={`px-2 py-1 rounded-full text-[10px] font-bold transition-colors ${viewMode==='record'?'bg-gray-700 text-white':'text-gray-400'}`}>🏆 破纪录</button>
+                        </div>
+                    </div>
+
+                    <div className="mobile-viewport flex flex-col font-sans relative overflow-hidden mt-20">
+                        
+                        {/* 顶栏 */}
+                        <div className={`px-6 pt-12 pb-2 flex items-center justify-between shrink-0 z-40 transition-epic ${isCelebrating ? 'opacity-0 translate-y-[-20px]' : 'opacity-100 translate-y-0'}`} data-zone-id="workout_result_header" data-prd-zone="workout_result_header">
+                            <button className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-text-primary active:scale-95"><Icons.Close /></button>
+                            <span className="font-bold text-[16px] text-text-primary">{viewMode === 'public' ? "Workout Shared" : "Workout Summary"}</span>
+                            {viewMode !== 'public' ? <button className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-text-primary active:scale-95"><Icons.Share /></button> : <div className="w-10"></div>}
+                        </div>
+
+                        {/* 🌟 一镜到底主视觉 */}
+                        {isCelebrating && (
+                            <div className="absolute inset-0 overflow-hidden pointer-events-none z-10">
+                                {[...Array(30)].map((_, i) => (
+                                    <div key={i} className="confetti" style={{ left: `${Math.random()*100}%`, backgroundColor: ['#EE4343','#FFB800','#2BA471','#4A90E2'][Math.floor(Math.random()*4)], animationDelay: `${Math.random()*0.2}s`, animationDuration: `${2+Math.random()}s` }}></div>
+                                ))}
+                            </div>
+                        )}
+
+                        <div className={`flex flex-col items-center justify-center text-center transition-epic px-6 z-30 ${isCelebrating ? 'absolute inset-0 scale-110' : 'relative h-auto pt-4 pb-6 scale-100'}`} data-zone-id="workout_result_hero" data-prd-zone="workout_result_hero">
+                            <div className="relative z-10 flex flex-col items-center">
+                                <div className={`transition-epic drop-shadow-2xl flex items-center justify-center ${isCelebrating ? 'text-[90px] mb-6' : 'text-[60px] mb-3'}`}>{heroContent.icon}</div>
+                                <h2 className={`font-black text-text-primary leading-tight transition-epic ${isCelebrating ? 'text-[32px] mb-2' : 'text-[22px] mb-0'}`}>{heroContent.title}</h2>
+                                <p className={`text-text-secondary mt-2 font-medium transition-epic ${isCelebrating ? 'text-[15px] opacity-100' : 'text-[12px] opacity-0 h-0 overflow-hidden'}`}>{heroContent.sub}</p>
+                            </div>
+                        </div>
+
+                        {/* 🌟 数据面板区 */}
+                        <div className={`flex-1 overflow-y-auto no-scrollbar relative z-20 pb-32 transition-epic ${isCelebrating ? 'opacity-0 translate-y-[200px] pointer-events-none absolute w-full' : 'opacity-100 translate-y-0 relative'}`} data-zone-id="workout_result_data_panel" data-prd-zone="workout_result_data_panel">
+                            <div className="px-5">
+                                
+                                {/* 场景分发：室内 vs 户外 */}
+                                {scenario === 'indoor' ? (
+                                    <>
+                                        <div data-zone-id="workout_result_context_class_stack" data-prd-zone="workout_result_context_class_stack"><ClassStack /></div>
+                                        <div className="bg-white rounded-[20px] shadow-card p-5 grid grid-cols-3 gap-4 mb-4 border border-gray-100" data-zone-id="workout_result_overview" data-prd-zone="workout_result_overview">
+                                            <div className="flex flex-col items-center text-center">
+                                                <div className="text-[24px] font-black text-text-primary">40:23</div>
+                                                <div className="text-[11px] font-bold text-brand-red mt-1 flex items-center gap-1"><span className="text-[14px]">⏱️</span> Time</div>
+                                            </div>
+                                            <div className="flex flex-col items-center text-center border-l border-r border-gray-100 px-2">
+                                                {viewMode === 'public' ? <div className="text-[18px] font-black text-text-muted flex items-center h-[36px]"><Icons.Lock /></div> : <div className="text-[24px] font-black text-text-primary">876<span className="text-[12px] font-bold text-text-muted ml-0.5">kcal</span></div>}
+                                                <div className="text-[11px] font-bold text-brand-red mt-1 flex items-center gap-1"><span className="text-[14px]">🔥</span> Calories</div>
+                                            </div>
+                                            <div className="flex flex-col items-center text-center">
+                                                <div className="text-[24px] font-black text-text-primary">51.8<span className="text-[12px] font-bold text-text-muted ml-0.5">mi</span></div>
+                                                <div className="text-[11px] font-bold text-brand-red mt-1 flex items-center gap-1"><span className="text-[14px]">📍</span> Distance</div>
+                                            </div>
+                                        </div>
+                                        <div className="bg-white rounded-[20px] shadow-card p-4 mb-4 border border-gray-100" data-zone-id="workout_result_training_split" data-prd-zone="workout_result_training_split">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className="flex items-center gap-2"><div className="w-5 h-5 rounded-[6px] bg-[#2BA471]"></div><span className="font-bold text-[14px] text-text-primary">Training Split</span></div>
+                                                <Icons.ChevronDown open={false} />
+                                            </div>
+                                            <div className="w-full h-3 rounded-full overflow-hidden flex mb-4">
+                                                <div className="bg-[#31426D]" style={{width: '30%'}}></div><div className="bg-[#EE4343]" style={{width: '70%'}}></div>
+                                            </div>
+                                            <div className="flex justify-between px-2">
+                                                <div className="text-center">
+                                                    <div className="text-[16px] font-bold text-text-primary">13:12</div>
+                                                    <div className="text-[11px] font-medium text-text-secondary mt-1 flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[#31426D]"></div> Off-Equipment</div>
+                                                </div>
+                                                <div className="text-center">
+                                                    <div className="text-[16px] font-bold text-text-primary">27:11</div>
+                                                    <div className="text-[11px] font-medium text-text-secondary mt-1 flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[#EE4343]"></div> On-Equipment</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div data-zone-id="workout_result_context_map" data-prd-zone="workout_result_context_map"><MapOverviewCard isPublic={viewMode === 'public'} /></div>
+                                )}
+
+                                {/* 高阶数据 */}
+                                <div data-zone-id="workout_result_metric_hr" data-prd-zone="workout_result_metric_hr">
+                                    <MetricRow 
+                                        icon="❤️" title="HR" value="138 BPM" color="#EE4343" 
+                                        dataPts={hrData} isPrivate={viewMode === 'public'} 
+                                        aiInsight="You spent 60% of your workout in the Fat Burn zone. Excellent stamina!"
+                                    />
+                                </div>
+                                <div data-zone-id="workout_result_metric_pace" data-prd-zone="workout_result_metric_pace">
+                                    <MetricRow 
+                                        icon="🏃" title="Pace" value="03'10&quot;" color="#2BA471" 
+                                        dataPts={paceData} isPrivate={false} 
+                                        badge={(viewMode === 'record' || viewMode === 'history' || viewMode === 'public') ? 'BEST' : null}
+                                        aiInsight="Your pace was most consistent during the middle segment."
+                                    />
+                                </div>
+                                
+                                {/* 为底部吸底卡片留出更充足的空白 */}
+                                <div className={viewMode === 'public' ? "h-[140px]" : "h-[80px]"}></div>
+                            </div>
+                        </div>
+
+                        {/* ========================================= */}
+                        {/* 🌟 核心：APP 内的常规底部 CTA (首练 / 历史) */}
+                        {/* ========================================= */}
+                        {viewMode !== 'public' && (
+                            <div className={`absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-bg-page via-bg-page/90 to-transparent z-30 transition-epic ${isCelebrating ? 'translate-y-full opacity-0' : 'translate-y-0 opacity-100'}`} data-zone-id="workout_result_cta_post" data-prd-zone="workout_result_cta_post">
+                                {(viewMode === 'immediate' || viewMode === 'record') && (
+                                    <button className="w-full py-4 bg-brand-red text-white rounded-[20px] font-bold text-[16px] shadow-glow active:scale-95 transition-transform flex justify-center items-center gap-2">
+                                        <Icons.Camera /> Post My Result
+                                    </button>
+                                )}
+                                {viewMode === 'history' && (
+                                    <button className="w-full py-4 bg-white border-2 border-brand-red text-brand-red rounded-[20px] font-bold text-[16px] active:bg-brand-red/5 transition-colors shadow-sm">
+                                        <Icons.Camera /> Post My Result
+                                    </button>
+                                )}
+                            </div>
+                        )}
+
+                        {/* ========================================= */}
+                        {/* 🌟 核心：APP 内首练的 AI 教练覆盖卡片 */}
+                        {/* ========================================= */}
+                        {showCoachCard && viewMode !== 'public' && (
+                            <div className="absolute bottom-0 left-0 right-0 z-50 animate-slide-up-sheet" data-zone-id="workout_result_coach_sheet" data-prd-zone="workout_result_coach_sheet">
+                                <div className="bg-white/95 backdrop-blur-xl rounded-t-[32px] p-6 pb-10 flex flex-col gap-4 shadow-bottom-sheet border-t border-gray-100">
+                                    <button onClick={() => setShowCoachCard(false)} className="absolute top-4 right-4 bg-gray-100 text-gray-500 rounded-full p-1.5 active:scale-90 transition-transform"><Icons.Close /></button>
+                                    <div className="flex items-center gap-4 mt-2">
+                                        <div className="w-14 h-14 bg-[#FFB800] rounded-full flex items-center justify-center text-3xl shrink-0 shadow-inner border-2 border-white">👱‍♂️</div>
+                                        <div className="flex-1 pr-6">
+                                            <p className="text-[14px] font-bold text-text-primary leading-snug">
+                                                {viewMode === 'record' ? "Amazing job pushing your limits! Let's do a proper cool down to recover." : "Good start! Over 95% users keep their habits via a training plan."}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button className="w-full mt-3 py-4 bg-brand-blue text-white rounded-[20px] font-bold text-[15px] flex justify-center items-center gap-1 active:opacity-80 transition-opacity shadow-md">
+                                        {viewMode === 'record' ? "Start Cooldown Stretch" : "Get my personalize plan"} <Icons.ChevronRight />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* ========================================= */}
+                        {/* 🌟 核心：分享态 (Public) 的专属吸底转化仓 */}
+                        {/* ========================================= */}
+                        {viewMode === 'public' && (
+                            <div className="absolute bottom-0 left-0 right-0 z-50 animate-slide-up-sheet" data-zone-id="workout_result_public_footer" data-prd-zone="workout_result_public_footer">
+                                <div className="bg-white/95 backdrop-blur-xl rounded-t-[32px] p-6 pb-8 flex flex-col gap-5 shadow-bottom-sheet border-t border-gray-100">
+                                    {/* 社交信息层 */}
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 bg-brand-blue rounded-full flex items-center justify-center text-xl text-white shadow-inner">🧑</div>
+                                        <div className="flex-1">
+                                            <h3 className="font-bold text-[15px] text-text-primary flex items-center gap-1.5">
+                                                Alex Chen 
+                                                <span className="bg-brand-yellow text-white text-[10px] font-black px-1.5 py-0.5 rounded italic">Lv.5</span>
+                                            </h3>
+                                            <p className="text-[11px] text-text-muted mt-0.5">Completed a workout today</p>
+                                        </div>
+                                        {/* 关注按钮：非实心的轻量级按钮 */}
+                                        <button className="px-4 py-1.5 bg-brand-red/10 text-brand-red font-bold text-[12px] rounded-full active:scale-95 transition-transform">
+                                            + Follow
+                                        </button>
+                                    </div>
+                                    {/* 强转化下载层 */}
+                                    <button className="w-full py-4 bg-brand-red text-white rounded-[20px] font-bold text-[15px] shadow-glow active:scale-95 transition-transform flex justify-center items-center gap-1 animate-pulse">
+                                        Download App to Challenge
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                    </div>
                 </div>
             );
         };
