@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SunnyFit: Plan Create (SOP 2.0)</title>
+    <title>SunnyFit: Plan Create (SOP 2.0 - Final UI Consistent)</title>
     
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -13,16 +13,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <script>
-        // SOP 2.0 MapsTo 跨级路由：供本页及子组件调用，统一通过父级 Viewer 切换 page 参数
-        // 找到并替换这部分代码
         function navigateTo(targetPageId) {
             console.log("🔗 准备跳转至:", targetPageId);
-            // 统一处理文件名，确保去掉 .html 方便后面拼接
             const cleanId = targetPageId.replace(/\.html$/, '');
             const targetFile = cleanId + '.html';
 
             try {
-                // 逻辑 A：如果在 SOP 预览器 shell 内部 (iframe)
                 if (window.parent !== window && window.parent.location.search.includes('page=')) {
                     const parentParams = new URLSearchParams(window.parent.location.search);
                     parentParams.set('page', cleanId);
@@ -33,8 +29,6 @@
                 console.warn("非 Shell 环境，准备执行物理跳转");
             }
 
-            // 逻辑 B：直接跳转物理文件
-            // 检查目标文件是否就是当前页，防止无限刷新
             if (!window.location.pathname.endsWith(targetFile)) {
                 window.location.href = targetFile;
             }
@@ -89,7 +83,6 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // --- Data Definitions ---
         const GOALS = [
             { id: 'fat_loss', label: 'Weight Loss', sub: 'Burn fat, high intensity, sweat.', icon: '🔥' },
             { id: 'muscle', label: 'Build Muscle', sub: 'Strength, tone, power.', icon: '💪' },
@@ -97,27 +90,18 @@
             { id: 'rehab', label: 'Rehab & Stretch', sub: 'Flexibility, pain-free, recovery.', icon: '🧘' }
         ];
 
-        const MAJOR_EQUIPMENT = [
-            'Bike', 'Treadmill', 'Rower', 'Elliptical', 
-            'Stepper', 'Row-N-Ride', 'Stair Climber'
-        ];
+        const MAJOR_EQUIPMENT = ['Bike', 'Treadmill', 'Rower', 'Elliptical', 'Stepper', 'Row-N-Ride', 'Stair Climber'];
         const SMALL_EQUIPMENT = ['Dumbbells', 'Bands', 'Yoga Ball'];
 
-
-
-        // --- Icons ---
         const Icons = {
             ChevronLeft: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"/></svg>,
             Check: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"/></svg>
         };
 
-        // --- SunnyLogo Component ---
         const SunnyLogo = ({ avatar = null, className = "", bgColor="bg-white" }) => {
-            // Standard Logo (Brand) - 恢复：无背景容器，直接渲染SVG形状
             if (!avatar) {
                 return (
                     <div className={`w-[88px] h-[88px] flex items-center justify-center animate-breathe ${className}`}>
-                        {/* 移除 rounded-full bg-white，让 SVG 自身的圆角矩形形状展示 */}
                         <svg viewBox="0 0 32 32" fill="none" className="w-full h-full drop-shadow-glow">
                             <path d="M16.013 32C13.271 31.9018 10.5412 31.8755 7.87463 31.1231C3.57228 29.9252 1.23878 26.956 0.52873 22.6889C-0.165498 18.3226 -0.176144 13.8749 0.497173 9.50531C1.23001 4.58405 4.38577 1.32017 9.29472 0.537958C13.609 -0.165525 18.0077 -0.17914 22.3262 0.497619C27.7401 1.35875 30.6837 4.27187 31.513 9.76137C32.1817 14.0582 32.1521 18.4348 31.4253 22.7222C30.5207 27.9048 27.3527 30.867 22.079 31.558C20.0716 31.8176 18.0362 31.8597 16.013 32Z" fill="#EE4343" />
                             <path d="M15.3836 6.16027C15.9406 6.15315 16.4468 6.48357 16.6646 6.99654C16.8824 7.50952 16.7687 8.10332 16.3767 8.49943C15.9848 8.89555 15.3925 9.01542 14.8774 8.80283C14.3624 8.59024 14.027 8.08735 14.0283 7.53001C14.0358 6.78206 14.636 6.1754 15.3836 6.16027Z" fill="#FFFFFF" />
@@ -126,8 +110,6 @@
                     </div>
                 );
             }
-            // Coach Avatar (Persona)
-            // 修正：从 rounded-full 改为 rounded-[30px]，模拟 Logo 的 Squircle 形状
             return (
                 <div className={`w-[88px] h-[88px] flex items-center justify-center rounded-[30px] shadow-lg overflow-hidden transition-all duration-500 ${className} ${bgColor}`}>
                     <span className="text-4xl">{avatar}</span>
@@ -153,7 +135,6 @@
             { id: 'pregnant', label: '🤰 Pregnant'},
         ];
 
-        // Body stats fields (for step 6 - 生理信息)
         const BODY_STAT_ITEMS = [
             { id: 'gender', label: 'Gender', icon: '⚧', key: 'gender' },
             { id: 'birthday', label: 'Birthday', icon: '🎂', key: 'birthday' },
@@ -169,79 +150,49 @@
             const [thinking, setThinking] = useState(false);
             const [selectedCoach, setSelectedCoach] = useState(null);
 
-            // Load coach info from upstream (signup_flow.html)
             useEffect(() => {
                 try {
                     const userData = sessionStorage.getItem('sunnyfit_user');
                     if (userData) {
                         const parsed = JSON.parse(userData);
-                        if (parsed.coach) {
-                            setSelectedCoach(parsed.coach);
-                        }
+                        if (parsed.coach) setSelectedCoach(parsed.coach);
                     }
-                } catch (e) {
-                    console.warn('Failed to load coach from sessionStorage:', e);
-                }
+                } catch (e) {}
             }, []);
 
             const handleNext = () => {
                 if (step === 5) {
-                    setStep(6); // 进入生理信息填写步骤
+                    setStep(6);
                 } else if (step === 6) {
-                    // 保存生理信息到 session（参考 first_workout_result 的提交逻辑）
-                    try {
-                        const userData = sessionStorage.getItem('sunnyfit_user');
-                        const parsed = userData ? JSON.parse(userData) : {};
-                        sessionStorage.setItem('sunnyfit_user', JSON.stringify({ ...parsed, bodyStats }));
-                    } catch (e) { /* ignore */ }
                     setThinking(true);
                     setTimeout(() => { 
                         setThinking(false);
                         setStep(7);
                     }, 2500);
                 } else if (step === 7) {
-                    setStep(8); // Vision -> Today's Tasks
+                    setStep(8);
                 } else { setStep(step + 1); }
             };
 
-            // 模拟 Apple Health 同步生理信息（参考 first_workout_result.html）
             const handleSyncBodyStats = () => {
                 setBodyStatsSyncing(true);
                 setTimeout(() => {
-                    setBodyStats({
-                        gender: 'Female',
-                        birthday: 'Feb. 02, 1981',
-                        weight: '186 lbs',
-                        height: '5 ft 06 in'
-                    });
+                    setBodyStats({ gender: 'Female', birthday: 'Feb. 02, 1981', weight: '186 lbs', height: '5 ft 06 in' });
                     setBodyStatsSyncing(false);
                 }, 500);
             };
 
-            const handleNoEquipment = () => {
-                setSelections(prev => ({ ...prev, equip: [] }));
-                setStep(3);
-            };
+            const handleNoEquipment = () => { setSelections(prev => ({ ...prev, equip: [] })); setStep(3); };
+            const toggleEquipment = (item) => setSelections(prev => ({ ...prev, equip: prev.equip.includes(item) ? prev.equip.filter(i => i !== item) : [...prev.equip, item] }));
+            const toggleFocusDay = (dayId) => setSelections(prev => ({ ...prev, focusDays: prev.focusDays.includes(dayId) ? prev.focusDays.filter(i => i !== dayId) : [...prev.focusDays, dayId] }));
+            const toggleBodyQuirk = (id) => setSelections(prev => ({ ...prev, bodyQuirks: prev.bodyQuirks.includes(id) ? prev.bodyQuirks.filter(i => i !== id) : [...prev.bodyQuirks, id] }));
 
-            const toggleEquipment = (item) => {
-                setSelections(prev => {
-                    let newEquip = prev.equip.includes(item) ? prev.equip.filter(i => i !== item) : [...prev.equip, item];
-                    return { ...prev, equip: newEquip };
-                });
-            };
-
-            const toggleFocusDay = (dayId) => {
-                setSelections(prev => ({
-                    ...prev,
-                    focusDays: prev.focusDays.includes(dayId) ? prev.focusDays.filter(i => i !== dayId) : [...prev.focusDays, dayId]
-                }));
-            };
-
-            const toggleBodyQuirk = (id) => {
-                setSelections(prev => ({
-                    ...prev,
-                    bodyQuirks: prev.bodyQuirks.includes(id) ? prev.bodyQuirks.filter(i => i !== id) : [...prev.bodyQuirks, id]
-                }));
+            // 动态标题逻辑映射
+            const getStrategyTitle = () => {
+                if(selections.goal === 'muscle') return "Your Muscle Building Strategy";
+                if(selections.goal === 'vitality') return "Your Vitality Strategy";
+                if(selections.goal === 'rehab') return "Your Rehab Strategy";
+                return "Your Weight Loss Strategy"; // Default
             };
 
             return (
@@ -251,23 +202,22 @@
                         <button 
                             onClick={() => { if (thinking) return; step === 1 ? window.navigateTo('intent_select') : setStep(step - 1); }} 
                             className={`w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-brand-blue active:scale-95 transition-all ${thinking ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
-                            data-zone-id="plan_create_header_back"
                         ><Icons.ChevronLeft /></button>
                     </div>
 
                     <div className="flex-1 flex flex-col overflow-y-auto no-scrollbar relative">
                         
-                        {/* Step 1: Goal */}
+                        {/* Step 1 - 6 */}
                         {step === 1 && (
                             <div className="animate-fade-up" data-zone-id="plan_create_step_goal">
                                 <div className="flex flex-col items-center pt-2 px-8 text-center">
                                     <div className="mb-6"><SunnyLogo avatar={selectedCoach?.avatar} bgColor={selectedCoach?.color} /></div>
-                                    <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2 mb-2" data-i18n-key="plan_create_title_focus">What is your core focus?</h3>
-                                    <p className="text-[14px] text-text-secondary" data-i18n-key="plan_create_subtitle_focus">I will tailor your journey based on this goal.</p>
+                                    <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2 mb-2">What is your core focus?</h3>
+                                    <p className="text-[14px] text-text-secondary">I will tailor your journey based on this goal.</p>
                                 </div>
                                 <div className="mt-8 px-6 space-y-3">
                                     {GOALS.map(g => (
-                                        <div key={g.id} onClick={() => setSelections({...selections, goal: g.id})} data-zone-id={`plan_create_goal_${g.id}`} data-track-id="click_goal_card" data-track-params={JSON.stringify({ goal: g.id })} className={`p-5 rounded-[24px] border-2 transition-all flex items-center gap-4 cursor-pointer ${selections.goal === g.id ? 'border-brand-red bg-brand-red/5' : 'border-transparent bg-white shadow-sm'}`}>
+                                        <div key={g.id} onClick={() => setSelections({...selections, goal: g.id})} className={`p-5 rounded-[24px] border-2 transition-all flex items-center gap-4 cursor-pointer ${selections.goal === g.id ? 'border-brand-red bg-brand-red/5' : 'border-transparent bg-white shadow-sm'}`}>
                                             <span className="text-2xl">{g.icon}</span>
                                             <div className="text-left"><h4 className={`font-bold text-[15px] ${selections.goal === g.id ? 'text-brand-red' : 'text-text-primary'}`}>{g.label}</h4><p className="text-[11px] text-text-secondary">{g.sub}</p></div>
                                         </div>
@@ -276,49 +226,43 @@
                             </div>
                         )}
 
-                        {/* Step 2: Equipment */}
                         {step === 2 && (
                             <div className="animate-fade-up" data-zone-id="plan_create_step_equipment">
                                 <div className="flex flex-col items-center pt-2 px-8 text-center">
                                     <div className="mb-6"><SunnyLogo avatar={selectedCoach?.avatar} bgColor={selectedCoach?.color} /></div>
-                                    <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2 mb-2" data-i18n-key="plan_create_title_equipment">Your training space?</h3>
-                                    <p className="text-[14px] text-text-secondary" data-i18n-key="plan_create_subtitle_equipment">Select what you have available.</p>
+                                    <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2 mb-2">Your training space?</h3>
+                                    <p className="text-[14px] text-text-secondary">Select what you have available.</p>
                                 </div>
-                                
                                 <div className="mt-8 px-6 pb-20">
-                                    <h4 className="text-[12px] font-bold text-text-secondary uppercase tracking-widest mb-3 ml-1" data-i18n-key="plan_create_label_cardio">Cardio Machines</h4>
+                                    <h4 className="text-[12px] font-bold text-text-secondary uppercase tracking-widest mb-3 ml-1">Cardio Machines</h4>
                                     <div className="grid grid-cols-2 gap-3 mb-6">
                                         {MAJOR_EQUIPMENT.map(e => (
-                                            <div key={e} onClick={() => toggleEquipment(e)} data-zone-id={`plan_create_equip_${e.toLowerCase().replace(/\s+/g, '_')}`} data-prd-zone={`plan_create_equip_${e.toLowerCase().replace(/\s+/g, '_')}`} className={`p-4 rounded-[16px] border-2 transition-all cursor-pointer flex flex-col justify-between h-20 ${selections.equip.includes(e) ? 'border-brand-red bg-brand-red/5' : 'border-transparent bg-white shadow-sm'}`}>
+                                            <div key={e} onClick={() => toggleEquipment(e)} className={`p-4 rounded-[16px] border-2 transition-all cursor-pointer flex flex-col justify-between h-20 ${selections.equip.includes(e) ? 'border-brand-red bg-brand-red/5' : 'border-transparent bg-white shadow-sm'}`}>
                                                 <div className={`text-[13px] font-bold leading-tight ${selections.equip.includes(e) ? 'text-brand-red' : 'text-text-primary'}`}>{e}</div>
                                                 {selections.equip.includes(e) && <div className="self-end text-brand-red"><Icons.Check /></div>}
                                             </div>
                                         ))}
                                     </div>
-
-                                    <h4 className="text-[12px] font-bold text-text-secondary uppercase tracking-widest mb-3 ml-1" data-i18n-key="plan_create_label_accessories">Accessories</h4>
+                                    <h4 className="text-[12px] font-bold text-text-secondary uppercase tracking-widest mb-3 ml-1">Accessories</h4>
                                     <div className="flex flex-wrap gap-3">
                                         {SMALL_EQUIPMENT.map(e => (
-                                            <div key={e} onClick={() => toggleEquipment(e)} data-zone-id={`plan_create_equip_${e.toLowerCase().replace(/\s+/g, '_')}`} data-prd-zone={`plan_create_equip_${e.toLowerCase().replace(/\s+/g, '_')}`} className={`px-4 py-3 rounded-[16px] border-2 transition-all cursor-pointer font-bold text-[12px] ${selections.equip.includes(e) ? 'border-brand-red bg-brand-red/5 text-brand-red' : 'border-transparent bg-white shadow-sm text-text-primary'}`}>
-                                                {e}
-                                            </div>
+                                            <div key={e} onClick={() => toggleEquipment(e)} className={`px-4 py-3 rounded-[16px] border-2 transition-all cursor-pointer font-bold text-[12px] ${selections.equip.includes(e) ? 'border-brand-red bg-brand-red/5 text-brand-red' : 'border-transparent bg-white shadow-sm text-text-primary'}`}>{e}</div>
                                         ))}
                                     </div>
                                 </div>
                             </div>
                         )}
 
-                        {/* Step 3: Current Level - 确立起点 */}
                         {step === 3 && !thinking && (
                             <div className="animate-fade-up" data-zone-id="plan_create_step_level">
                                 <div className="flex flex-col items-center pt-2 px-8 text-center">
                                     <div className="mb-6"><SunnyLogo avatar={selectedCoach?.avatar} bgColor={selectedCoach?.color} /></div>
-                                    <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2 mb-2" data-i18n-key="plan_create_title_level">Current Level</h3>
-                                    <p className="text-[14px] text-text-secondary" data-i18n-key="plan_create_subtitle_level">Establish your starting point.</p>
+                                    <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2 mb-2">Current Level</h3>
+                                    <p className="text-[14px] text-text-secondary">Establish your starting point.</p>
                                 </div>
                                 <div className="mt-8 px-6 space-y-3">
                                     {LEVELS.map(l => (
-                                        <div key={l.id} onClick={() => setSelections({...selections, level: l.id})} data-zone-id={`plan_create_level_${l.id}`} className={`p-5 rounded-[24px] border-2 transition-all flex items-center gap-4 cursor-pointer ${selections.level === l.id ? 'border-brand-red bg-brand-red/5' : 'border-transparent bg-white shadow-sm'}`}>
+                                        <div key={l.id} onClick={() => setSelections({...selections, level: l.id})} className={`p-5 rounded-[24px] border-2 transition-all flex items-center gap-4 cursor-pointer ${selections.level === l.id ? 'border-brand-red bg-brand-red/5' : 'border-transparent bg-white shadow-sm'}`}>
                                             <div className="text-left flex-1">
                                                 <h4 className={`font-bold text-[15px] ${selections.level === l.id ? 'text-brand-red' : 'text-text-primary'}`}>{l.label}</h4>
                                                 <p className="text-[11px] text-text-secondary">{l.sub}</p>
@@ -330,52 +274,42 @@
                             </div>
                         )}
 
-                        {/* Step 4: Weekly Focus Days - 核心心智改造 */}
                         {step === 4 && !thinking && (
                             <div className="animate-fade-up" data-zone-id="plan_create_step_focus_days">
                                 <div className="flex flex-col items-center pt-2 px-8 text-center">
                                     <div className="mb-6"><SunnyLogo avatar={selectedCoach?.avatar} bgColor={selectedCoach?.color} /></div>
-                                    <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2 mb-2" data-i18n-key="plan_create_title_focus_days">Select your Weekly Focus Days</h3>
-                                    <p className="text-[14px] text-text-secondary leading-relaxed" data-i18n-key="plan_create_subtitle_focus_days">3-4 days to push hard. I'll fill the rest with gentle recovery flows so you stay active every day.</p>
+                                    <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2 mb-2">Select your Weekly Focus Days</h3>
+                                    <p className="text-[14px] text-text-secondary leading-relaxed">3-4 days to push hard. I'll fill the rest with gentle recovery flows so you stay active every day.</p>
                                 </div>
                                 <div className="mt-8 px-6">
                                     <div className="flex justify-between gap-2">
                                         {WEEKDAYS.map((d) => (
-                                            <div key={d.id} onClick={() => toggleFocusDay(d.id)} data-zone-id={`plan_create_focus_${d.id}`} className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-[14px] transition-all cursor-pointer flex-1 max-w-[48px] ${selections.focusDays.includes(d.id) ? 'bg-brand-red text-white shadow-glow' : 'bg-white text-text-primary shadow-sm border-2 border-transparent hover:border-brand-red/30'}`}>
-                                                {d.label}
-                                            </div>
+                                            <div key={d.id} onClick={() => toggleFocusDay(d.id)} className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-[14px] transition-all cursor-pointer flex-1 max-w-[48px] ${selections.focusDays.includes(d.id) ? 'bg-brand-red text-white shadow-glow' : 'bg-white text-text-primary shadow-sm border-2 border-transparent hover:border-brand-red/30'}`}>{d.label}</div>
                                         ))}
                                     </div>
-                                    <p className="text-[11px] text-text-secondary mt-4 text-center"></p>
                                 </div>
                             </div>
                         )}
 
-                        {/* Step 5: Body Quirks / Exclude - 部位保护 */}
                         {step === 5 && !thinking && (
                             <div className="animate-fade-up" data-zone-id="plan_create_step_body_quirks">
                                 <div className="flex flex-col items-center pt-2 px-8 text-center">
                                     <div className="mb-6"><SunnyLogo avatar={selectedCoach?.avatar} bgColor={selectedCoach?.color} /></div>
-                                    <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2 mb-2" data-i18n-key="plan_create_title_body_quirks">Anything I should keep in mind?</h3>
-                                    <p className="text-[14px] text-text-secondary" data-i18n-key="plan_create_subtitle_body_quirks"></p>
+                                    <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2 mb-2">Anything I should keep in mind?</h3>
                                 </div>
                                 <div className="mt-8 px-6 flex flex-wrap gap-3 justify-center">
                                     {BODY_QUIRKS.map(q => (
-                                        <button key={q.id} onClick={() => toggleBodyQuirk(q.id)} data-zone-id={`plan_create_quirk_${q.id}`} className={`px-5 py-3 rounded-full border-2 transition-all font-semibold text-[13px] cursor-pointer ${selections.bodyQuirks.includes(q.id) ? 'border-brand-red bg-brand-red/5 text-brand-red' : 'border-transparent bg-white text-text-primary shadow-sm'}`}>
-                                            {q.label} <span className="text-[10px] opacity-70"></span>
-                                        </button>
+                                        <button key={q.id} onClick={() => toggleBodyQuirk(q.id)} className={`px-5 py-3 rounded-full border-2 transition-all font-semibold text-[13px] cursor-pointer ${selections.bodyQuirks.includes(q.id) ? 'border-brand-red bg-brand-red/5 text-brand-red' : 'border-transparent bg-white text-text-primary shadow-sm'}`}>{q.label}</button>
                                     ))}
                                 </div>
                             </div>
                         )}
 
-                        {/* Step 6: Body Stats / 生理信息填写 */}
                         {step === 6 && !thinking && (
                             <div className="animate-fade-up" data-zone-id="plan_create_step_body_stats">
                                 <div className="flex flex-col items-center pt-2 px-8 text-center">
                                     <div className="mb-6"><SunnyLogo avatar={selectedCoach?.avatar} bgColor={selectedCoach?.color} /></div>
-                                    <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2 mb-2" data-i18n-key="plan_create_title_body_stats">Update your body stats to unlock your personalized workout plan</h3>
-                
+                                    <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2 mb-2">Update your body stats</h3>
                                 </div>
                                 <div className="mt-8 px-6">
                                     <div className="space-y-3">
@@ -391,81 +325,82 @@
                                             </div>
                                         ))}
                                     </div>
-                                    <button
-                                        type="button"
-                                        onClick={handleSyncBodyStats}
-                                        disabled={bodyStatsSyncing}
-                                        className="mt-5 w-full py-3 flex items-center justify-center gap-2 text-text-secondary text-[14px] font-medium border border-brand-red/20 rounded-[16px] hover:bg-brand-red/5 transition-colors disabled:opacity-60"
-                                        data-zone-id="plan_create_body_stats_sync"
-                                    >
-                                        {bodyStatsSyncing ? (
-                                            <>Syncing...</>
-                                        ) : (
-                                            <><span className="text-brand-red">❤️</span> Quick Sync From Apple Health →</>
-                                        )}
+                                    <button onClick={handleSyncBodyStats} disabled={bodyStatsSyncing} className="mt-5 w-full py-3 flex items-center justify-center gap-2 text-text-secondary text-[14px] font-medium border border-brand-red/20 rounded-[16px] hover:bg-brand-red/5 transition-colors disabled:opacity-60">
+                                        {bodyStatsSyncing ? <>Syncing...</> : <><span className="text-brand-red">❤️</span> Quick Sync From Apple Health →</>}
                                     </button>
                                 </div>
                             </div>
                         )}
 
-                        {/* AI Thinking Simulation - 修正：保持 Logo 位置不变，仅内容切换 */}
                         {thinking && (
-                            <div className="absolute inset-0 z-50 flex flex-col items-center bg-bg-page animate-fade-up" data-zone-id="plan_create_thinking" data-prd-zone="plan_create_thinking">
-                                {/* 头部区域：使用 flex-col + pt-2，与之前的步骤完全对齐 */}
+                            <div className="absolute inset-0 z-50 flex flex-col items-center bg-bg-page animate-fade-up">
                                 <div className="flex flex-col items-center pt-2 px-8 text-center">
                                     <div className="mb-6 animate-pulse-slow"><SunnyLogo avatar={selectedCoach?.avatar} bgColor={selectedCoach?.color} /></div>
                                     <div className="mt-10 space-y-4">
-                                        <h3 className="text-[18px] font-bold text-brand-blue italic" data-i18n-key="plan_create_thinking_title">"Analyzing fat loss goals..."</h3>
-                                        <p className="text-[13px] text-text-secondary leading-relaxed">Designing plan for <b>{selections.equip.length > 0 ? selections.equip[0] : "Bodyweight"}</b>...</p>
+                                        <h3 className="text-[18px] font-bold text-brand-blue italic">"Analyzing goals..."</h3>
                                         <div className="flex gap-2 justify-center pt-4"><div className="w-2 h-2 bg-brand-red rounded-full animate-bounce"></div><div className="w-2 h-2 bg-brand-red rounded-full animate-bounce" style={{animationDelay:'0.2s'}}></div><div className="w-2 h-2 bg-brand-red rounded-full animate-bounce" style={{animationDelay:'0.4s'}}></div></div>
                                     </div>
                                 </div>
                             </div>
                         )}
 
-                        {/* Step A: The Vision & Commitment (Step 7) */}
+                        {/* ✅ STEP 7: 动态策略蓝图 - 恢复头部居中排版 */}
                         {step === 7 && (
                             <div className="animate-fade-up" data-zone-id="plan_create_step_vision">
-                                <div className="px-8 pt-2 flex flex-col items-center text-center">
+                                {/* 一致的居中头部 */}
+                                <div className="flex flex-col items-center pt-2 px-8 text-center">
                                     <div className="mb-6"><SunnyLogo avatar={selectedCoach?.avatar} bgColor={selectedCoach?.color} /></div>
-                                    <h3 className="text-[22px] font-bold text-text-primary leading-tight mt-2" data-i18n-key="plan_create_title_strategy">Your Strategy for Mastery</h3>
-                                    <p className="text-[13px] text-text-secondary mt-3 leading-relaxed" data-i18n-key="plan_create_subtitle_strategy">
-                                        Weight loss isn't about a single workout; it’s about a metabolic shift.
-                                    </p>
+                                    <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2 mb-2">{getStrategyTitle()}</h3>
                                 </div>
                                 
-                                <div className="mt-8 px-6">
-                                    <div className="flex items-end justify-between h-40 gap-3 mb-4">
-                                        {/* Column 1: Wake Up */}
-                                        <div className="flex-1 h-full flex flex-col justify-end items-center gap-2">
-                                            <div className="w-full rounded-t-lg transition-all ease-out duration-1000 bg-[#BDD0EB] opacity-60" style={{height: '25%'}}></div>
-                                            <span className="text-[10px] font-bold text-text-secondary uppercase">Wake Up</span>
+                                <div className="mt-6 px-6">
+                                    {/* 动态预期曲线图 */}
+                                    <div className="relative h-[240px] w-full mb-8">
+                                        <div className="absolute left-[-35px] top-[40%] -translate-y-1/2 -rotate-90 text-[12px] font-bold text-text-primary tracking-widest whitespace-nowrap z-10">
+                                            &uarr; Metabolic Rate
                                         </div>
-                                        {/* Column 2: Burn */}
-                                        <div className="flex-1 h-full flex flex-col justify-end items-center gap-2">
-                                            <div className="w-full rounded-t-lg transition-all ease-out duration-1000 delay-100 bg-[#BDD0EB]" style={{height: '50%'}}></div>
-                                            <span className="text-[10px] font-bold text-text-secondary uppercase">Burn</span>
-                                        </div>
-                                        {/* Column 3: Shape */}
-                                        <div className="flex-1 h-full flex flex-col justify-end items-center gap-2">
-                                            <div className="w-full rounded-t-lg transition-all ease-out duration-1000 delay-200 bg-[#31426D] opacity-80" style={{height: '75%'}}></div>
-                                            <span className="text-[10px] font-bold text-text-secondary uppercase">Shape</span>
-                                        </div>
-                                        {/* Column 4: Habit */}
-                                        <div className="flex-1 h-full flex flex-col justify-end items-center gap-2">
-                                            <div className="w-full rounded-t-lg transition-all ease-out duration-1000 delay-300 bg-[#EE4343] relative" style={{height: '100%'}}>
-                                                <div className="absolute top-2 left-1/2 -translate-x-1/2 text-white text-xs">★</div>
-                                            </div>
-                                            <span className="text-[10px] font-bold text-brand-red uppercase">Habit</span>
+
+                                        <svg viewBox="0 0 320 180" className="w-full h-full preserve-3d overflow-visible">
+                                            <defs>
+                                                <linearGradient id="curveGradient" x1="0" y1="0" x2="1" y2="0">
+                                                    <stop offset="0%" stopColor="#BDD0EB" stopOpacity="0.5"/>
+                                                    <stop offset="100%" stopColor="#EE4343" stopOpacity="0.15"/>
+                                                </linearGradient>
+                                                <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
+                                                    <stop offset="0%" stopColor="#4A90E2" />
+                                                    <stop offset="50%" stopColor="#A55EEA" />
+                                                    <stop offset="100%" stopColor="#EE4343" />
+                                                </linearGradient>
+                                            </defs>
+                                            
+                                            <path d="M 0 150 Q 80 150, 160 110 T 320 20 L 320 180 L 0 180 Z" fill="url(#curveGradient)" className="animate-fade-up" style={{animationDuration: '1s'}} />
+                                            <path d="M 0 150 Q 80 150, 160 110 T 320 20" fill="none" stroke="url(#lineGradient)" strokeWidth="4" strokeLinecap="round" className="animate-fade-up" style={{animationDuration: '1s', animationDelay: '0.2s'}} />
+                                            
+                                            <line x1="80" y1="150" x2="80" y2="180" stroke="#ccc" strokeDasharray="3 3" />
+                                            <line x1="160" y1="110" x2="160" y2="180" stroke="#ccc" strokeDasharray="3 3" />
+                                            <line x1="320" y1="20" x2="320" y2="180" stroke="#EE4343" strokeDasharray="3 3" />
+
+                                            <circle cx="80" cy="138" r="5" fill="white" stroke="#4A90E2" strokeWidth="3" />
+                                            <circle cx="160" cy="110" r="5" fill="white" stroke="#A55EEA" strokeWidth="3" />
+                                            <circle cx="320" cy="20" r="7" fill="white" stroke="#EE4343" strokeWidth="4" />
+                                        </svg>
+                                        
+                                        <div className="absolute right-[-10px] top-[-20px] text-brand-red font-extrabold text-[16px]">Goal</div>
+                                        <div className="absolute left-[30px] top-[100px] text-2xl animate-pop" style={{animationDelay: '0.4s'}}>🥵</div>
+                                        <div className="absolute left-[110px] top-[60px] text-4xl animate-pop" style={{animationDelay: '0.6s'}}>😌</div>
+                                        <div className="absolute right-[50px] top-[10px] text-5xl animate-pop" style={{animationDelay: '0.8s'}}>🤩</div>
+
+                                        <div className="absolute bottom-[-15px] left-[10px] w-[330px] flex justify-between text-[12px] font-bold text-text-primary">
+                                            <div className="text-center leading-tight w-[80px]">Awakening<br/><span className="font-medium text-text-secondary text-[10px]">(3-7 days)</span></div>
+                                            <div className="text-center leading-tight w-[80px]">Ignition<br/><span className="font-medium text-text-secondary text-[10px]">(2-3 weeks)</span></div>
+                                            <div className="text-center leading-tight w-[100px]">Metabolic Shift<br/><span className="font-medium text-text-secondary text-[10px]">(after 4 weeks)</span></div>
                                         </div>
                                     </div>
 
-                                    <div className="mt-6 bg-white p-5 rounded-[20px] shadow-sm border border-brand-red/10">
-                                        <h4 className="text-[13px] font-bold text-brand-red mb-2 uppercase">One Final Question</h4>
-                                        <p className="text-[12px] text-text-primary leading-relaxed">
-                                            The road to a new you requires consistency, not perfection.
-                                            <br/><br/>
-                                            <b>Are you ready to commit to this journey?</b>
+                                    {/* 归因魔法文案 */}
+                                    <div className="mt-14 bg-white p-5 rounded-[20px] shadow-sm border border-brand-red/10">
+                                        <p className="text-[13px] text-text-primary leading-relaxed">
+                                            Based on Sunny's data, the first few days are about breaking inertia. By Day 14, your body shifts into a highly efficient fat-burning machine!
                                         </p>
                                     </div>
                                 </div>
@@ -473,157 +408,81 @@
                             </div>
                         )}
 
-                        {/* Step 8: Today's Tasks (replaces Coach Selection & Ignition) */}
+                        {/* ✅ STEP 8: 今日任务 - 恢复头部居中排版 */}
                         {step === 8 && (
                             <div className="animate-fade-up" data-zone-id="plan_create_today_tasks">
-                                <div className="px-8 pt-2 flex flex-col items-center text-center">
-                                    <div className="mb-4">
-                                        <SunnyLogo 
-                                            avatar={selectedCoach?.avatar} 
-                                            bgColor={selectedCoach?.color} 
-                                            className="shadow-xl scale-110" 
-                                        />
-                                    </div>
-                                    <h3 className="text-[22px] font-bold text-text-primary leading-tight mt-2">
-                                        {selectedCoach ? `${selectedCoach.name} has prepared for you` : "Your Personal Training Plan"}
-                                    </h3>
-                                    <p className="text-[13px] text-text-secondary mt-2 leading-relaxed">
-                                        Today's personalized training plan
-                                    </p>
+                                {/* 一致的居中头部 */}
+                                <div className="flex flex-col items-center pt-2 px-8 text-center">
+                                    <div className="mb-6"><SunnyLogo avatar={selectedCoach?.avatar} bgColor={selectedCoach?.color} /></div>
+                                    <h3 className="text-[24px] font-bold text-text-primary leading-tight mt-2 mb-2">Let's wake up your body today, Alex</h3>
                                 </div>
 
-                                <div className="mt-6 px-6 space-y-4">
-                                    {/* Coach greeting card - only show if coach exists */}
-                                    {selectedCoach && (
-                                        <div className="bg-white p-4 rounded-[20px] shadow-sm border border-brand-red/10">
-                                            <div className="flex items-start gap-3">
-                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl shrink-0 ${selectedCoach.color} text-white shadow-md`}>
-                                                    {selectedCoach.avatar}
-                                                </div>
-                                                <div className="flex-1 text-left">
-                                                    <p className="text-[13px] text-text-primary leading-snug italic">
-                                                        "{selectedCoach.greeting || "I'm here to guide you through today's session. Let's make it count!"}"
-                                                    </p>
-                                                </div>
-                                            </div>
+                                {/* Vertical Stack Sneak-Peek Timeline */}
+                                <div className="relative mt-6 px-6 pb-20">
+                                    {/* 🌟 Day 1 - Main Task Card */}
+                                    <div className="relative z-30 bg-white rounded-[24px] shadow-[0_10px_30px_rgba(0,0,0,0.08)] border border-gray-100 p-4">
+                                        <div className="flex justify-between items-center mb-3">
+                                            <span className="font-bold text-text-primary text-[16px]">Day 1</span>
+                                            <span className="text-text-secondary text-[13px] font-medium">Cardio • 15 min</span>
                                         </div>
-                                    )}
-
-                                    {/* Today's tasks */}
-                                    <div className="bg-white rounded-[24px] shadow-sm overflow-hidden">
-                                        <div className="bg-gradient-to-r from-brand-blue to-brand-blue/80 p-4 text-white">
-                                            <div className="flex items-center justify-between">
-                                                <div>
-                                                    <h4 className="text-[12px] font-bold opacity-80 uppercase tracking-wider">TODAY'S PLAN</h4>
-                                                    <h2 className="text-[18px] font-extrabold mt-1">Ignite Sequence</h2>
+                                        <div className="w-full h-[200px] rounded-[16px] bg-cover bg-center relative overflow-hidden shadow-inner" style={{backgroundImage: `url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=600&q=80')`}}>
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                                            <div className="absolute bottom-4 left-4 text-white pr-4">
+                                                <h4 className="font-bold text-[18px] leading-snug">15-Min Fun Running to Warmup</h4>
+                                                <div className="flex items-center gap-2 mt-2">
+                                                    <span className="text-[12px] opacity-90">15 min</span>
+                                                    <span className="text-[10px] opacity-60">|</span>
+                                                    <span className="text-[12px] opacity-90">Beginner</span>
                                                 </div>
-                                                <div className="text-right">
-                                                    <div className="text-[24px] font-bold">15</div>
-                                                    <div className="text-[10px] opacity-80">MIN</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="p-4 space-y-3">
-                                            <div className="flex items-center gap-3 p-3 bg-bg-neutral rounded-[16px]">
-                                                <div className="w-10 h-10 rounded-full bg-brand-red/10 text-brand-red flex items-center justify-center font-bold text-lg shrink-0">1</div>
-                                                <div className="flex-1 text-left">
-                                                    <h5 className="font-bold text-text-primary text-[14px]">Warm-up Flow</h5>
-                                                    <p className="text-[11px] text-text-secondary">3 min • Light cardio</p>
-                                                </div>
-                                                <div className="text-brand-red"><Icons.Check /></div>
-                                            </div>
-                                            <div className="flex items-center gap-3 p-3 bg-bg-neutral rounded-[16px]">
-                                                <div className="w-10 h-10 rounded-full bg-brand-red/10 text-brand-red flex items-center justify-center font-bold text-lg shrink-0">2</div>
-                                                <div className="flex-1 text-left">
-                                                    <h5 className="font-bold text-text-primary text-[14px]">Power Rhythm</h5>
-                                                    <p className="text-[11px] text-text-secondary">10 min • Moderate intensity</p>
-                                                </div>
-                                                <div className="w-5 h-5 rounded-full border-2 border-brand-red/30"></div>
-                                            </div>
-                                            <div className="flex items-center gap-3 p-3 bg-bg-neutral rounded-[16px] opacity-60">
-                                                <div className="w-10 h-10 rounded-full bg-gray-200 text-gray-400 flex items-center justify-center font-bold text-lg shrink-0">3</div>
-                                                <div className="flex-1 text-left">
-                                                    <h5 className="font-bold text-text-primary text-[14px]">Cool Down</h5>
-                                                    <p className="text-[11px] text-text-secondary">2 min • Stretch & relax</p>
-                                                </div>
-                                                <div className="w-5 h-5 rounded-full border-2 border-gray-300"></div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* Stats preview */}
-                                    <div className="grid grid-cols-3 gap-3">
-                                        <div className="bg-white p-3 rounded-[16px] shadow-sm text-center">
-                                            <div className="text-[20px] font-bold text-brand-red">🔥</div>
-                                            <div className="text-[11px] text-text-secondary mt-1">Calories</div>
-                                            <div className="text-[14px] font-bold text-text-primary">120</div>
-                                        </div>
-                                        <div className="bg-white p-3 rounded-[16px] shadow-sm text-center">
-                                            <div className="text-[20px] font-bold text-brand-blue">💪</div>
-                                            <div className="text-[11px] text-text-secondary mt-1">Intensity</div>
-                                            <div className="text-[14px] font-bold text-text-primary">Medium</div>
-                                        </div>
-                                        <div className="bg-white p-3 rounded-[16px] shadow-sm text-center">
-                                            <div className="text-[20px] font-bold text-brand-green">⏱️</div>
-                                            <div className="text-[11px] text-text-secondary mt-1">Duration</div>
-                                            <div className="text-[14px] font-bold text-text-primary">15 min</div>
-                                        </div>
+                                    {/* 🌟 Day 2 - Peek Card */}
+                                    <div className="relative z-20 bg-[#F5F7FA] rounded-b-[24px] mx-4 -mt-4 pt-8 pb-4 px-5 shadow-sm border border-gray-100 flex justify-between items-center">
+                                        <span className="font-bold text-text-secondary text-[14px]">Day 2</span>
+                                        <span className="text-text-secondary font-medium text-[14px]">Strength</span>
+                                    </div>
+
+                                    {/* 🌟 Day 3 - Peek Card */}
+                                    <div className="relative z-10 bg-[#F0F2F5] rounded-b-[24px] mx-8 -mt-4 pt-8 pb-4 px-5 shadow-sm border border-white/50 flex justify-between items-center opacity-60">
+                                        <span className="font-bold text-gray-400 text-[14px]">Day 3</span>
+                                        <span className="text-gray-400 font-medium text-[14px]">Active Recovery</span>
                                     </div>
                                 </div>
-                                <div className="h-24"></div>
                             </div>
                         )}
                     </div>
 
                     {/* Bottom CTA Area */}
-                    <div className="px-6 pb-12 pt-4 bg-gradient-to-t from-bg-page via-bg-page to-transparent shrink-0 z-50" data-zone-id="plan_create_cta_area" data-prd-zone="plan_create_cta_area">
+                    <div className="px-6 pb-12 pt-4 bg-gradient-to-t from-bg-page via-bg-page to-transparent shrink-0 z-50">
                         {step === 1 && (
-                            <button 
-                                onClick={handleNext} 
-                                disabled={!selections.goal}
-                                className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn active:scale-95 transition-all disabled:opacity-30"
-                                data-zone-id="plan_create_cta_continue"
-                                data-prd-zone="plan_create_cta_continue"
-                            ><span data-i18n-key="plan_create_cta_continue_label">Continue</span></button>
+                            <button onClick={handleNext} disabled={!selections.goal} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn active:scale-95 transition-all disabled:opacity-30">Continue</button>
                         )}
                         {step === 2 && (
                             <>
-                                <button 
-                                    onClick={handleNext} 
-                                    disabled={selections.equip.length === 0}
-                                    className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn active:scale-95 transition-all disabled:opacity-30"
-                                    data-zone-id="plan_create_cta_continue"
-                                    data-prd-zone="plan_create_cta_continue"
-                                ><span data-i18n-key="plan_create_cta_continue_label">Continue</span></button>
-                                <button onClick={handleNoEquipment} className="mt-3 w-full py-3 text-text-secondary text-[14px] font-medium underline hover:text-brand-red transition-colors" data-zone-id="plan_create_equip_none" data-prd-zone="plan_create_equip_none">No Equipment</button>
+                                <button onClick={handleNext} disabled={selections.equip.length === 0} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn active:scale-95 transition-all disabled:opacity-30">Continue</button>
+                                <button onClick={handleNoEquipment} className="mt-3 w-full py-3 text-text-secondary text-[14px] font-medium underline hover:text-brand-red transition-colors">No Equipment</button>
                             </>
                         )}
                         {step >= 3 && step <= 4 && !thinking && (
-                            <button 
-                                onClick={handleNext} 
-                                disabled={step === 3 && !selections.level}
-                                className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn active:scale-95 transition-all disabled:opacity-30"
-                                data-zone-id="plan_create_cta_continue"
-                                data-prd-zone="plan_create_cta_continue"
-                            ><span data-i18n-key="plan_create_cta_continue_label">Continue</span></button>
+                            <button onClick={handleNext} disabled={step === 3 && !selections.level} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn active:scale-95 transition-all disabled:opacity-30">Continue</button>
                         )}
                         {step === 5 && !thinking && (
-                            <button onClick={handleNext} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn active:scale-95" data-zone-id="plan_create_cta_continue" data-prd-zone="plan_create_cta_continue">Continue</button>
+                            <button onClick={handleNext} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn active:scale-95">Continue</button>
                         )}
                         {step === 6 && !thinking && (
-                            <button onClick={handleNext} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn active:scale-95" data-zone-id="plan_create_cta_generate" data-prd-zone="plan_create_cta_generate">Generate My AI Plan</button>
+                            <button onClick={handleNext} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn active:scale-95">Generate My AI Plan</button>
                         )}
                         {step === 7 && (
-                            <button onClick={handleNext} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn active:scale-95 animate-pop" data-zone-id="plan_create_cta_see_tasks" data-prd-zone="plan_create_cta_see_tasks">See Today's Tasks</button>
+                            <button onClick={handleNext} className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn active:scale-95 animate-pop">See Today's Tasks</button>
                         )}
                         {step === 8 && (
                             <button 
-                                onClick={() => window.navigateTo('free_mode')}
+                                onClick={() => window.navigateTo('workout_prepare')}
                                 className="w-full py-4 bg-brand-red text-white rounded-[16px] font-bold shadow-float-btn animate-pop" 
-                                data-zone-id="plan_create_cta_start_workout"
-                                data-prd-zone="plan_create_cta_start_workout"
                             >
-                                START WORKOUT
+                                Start Workout
                             </button>
                         )}
                     </div>

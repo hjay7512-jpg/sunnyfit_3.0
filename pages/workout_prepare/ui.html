@@ -322,11 +322,10 @@
                         <div className="absolute inset-0 z-50 flex items-end bg-black/40" onClick={() => setShowDeviceModal(null)} data-zone-id="workout_prepare_modal_main">
                             <div className="w-full max-h-[50vh] bg-bg-card rounded-t-[20px] p-4 animate-slide-up overflow-y-auto no-scrollbar" onClick={e => e.stopPropagation()} data-zone-id="workout_prepare_modal_main_content">
                                 <div className="w-10 h-1 bg-black/20 rounded-full mx-auto mb-4" />
-                                <h3 className="text-[16px] leading-6 font-black text-brand-blue mb-3">Main Device</h3>
+                                <h3 className="text-[16px] leading-6 font-black text-brand-blue mb-3">Connect Equipment</h3>
                                 {mainModalView === 'status' ? (
                                     <>
                                         <div className="mb-4 p-4 bg-bg-neutral rounded-btn">
-                                            <p className="text-[12px] text-black/60 mb-1">Status</p>
                                             <p className="text-[14px] font-semibold text-black/90">
                                                 {mainConnState === 'connecting' && 'Connecting...'}
                                                 {mainConnState === 'scanning' && 'Scanning...'}
@@ -370,7 +369,7 @@
                         <div className="absolute inset-0 z-50 flex items-end bg-black/40" onClick={() => setShowDeviceModal(null)} data-zone-id="workout_prepare_modal_hr">
                             <div className="w-full max-h-[50vh] bg-bg-card rounded-t-[20px] p-4 animate-slide-up overflow-y-auto no-scrollbar" onClick={e => e.stopPropagation()} data-zone-id="workout_prepare_modal_hr_content">
                                 <div className="w-10 h-1 bg-black/20 rounded-full mx-auto mb-4" />
-                                <h3 className="text-[16px] leading-6 font-black text-brand-blue mb-3">Heart Rate</h3>
+                                <h3 className="text-[16px] leading-6 font-black text-brand-blue mb-3">Connect Equipment</h3>
                                 <div className="space-y-2 mb-4">
                                     {MOCK_DEVICES.filter(d => d.id === 'hr-band').map(d => (
                                         <div key={d.id} className="flex items-center justify-between p-4 bg-bg-neutral rounded-btn">
