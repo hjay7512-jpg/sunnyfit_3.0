@@ -42,7 +42,7 @@
         .breadcrumbs a { color: #666; text-decoration: none; }
         .breadcrumbs a:hover { color: var(--primary-color); }
 
-        /* 主体内容区：仅占 grid 第二行，绝不与顶栏重叠 */
+        /* 主体内容区：仅占 grid 第二行 */
         main { min-height: 0; display: flex; overflow: hidden; position: relative; z-index: 0; }
 
         /* 状态 1：全局视图 (Markdown 解析区) */
@@ -63,21 +63,19 @@
         .rules-content .markdown-body table { table-layout: auto; max-width: 100%; }
         .rules-content .markdown-body th, .rules-content .markdown-body td { min-width: 60px; max-width: 100%; }
 
-        /* 状态 2：详情拆分视图 (左 UI，右规则) 1:1 布局；整体缩放层默认 90% 避免裁切 */
-        #detail-view { width: 100%; min-height: 0; display: none; overflow: hidden; }
-        #detail-view.active { display: flex; justify-content: center; align-items: center; }
+        /* 状态 2：详情拆分视图 (左 UI，右规则) 1:1 布局；overflow:visible 使缩放层(111%)不被裁切 */
+        #detail-view { width: 100%; min-height: 0; display: none; overflow: visible; }
+        #detail-view.active { display: flex; }
         #detail-view-zoom-wrap {
             flex: 1;
             min-width: 0;
             min-height: 0;
             display: flex;
-            transform-origin: center center;
-            transform: scale(0.9);
             overflow: hidden;
         }
         
-        /* 左侧预览区：仅内容区，缩放为左下方悬浮 */
-        .preview-pane { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: #ebedf0; overflow: hidden; position: relative; }
+        /* 左侧预览区：iframe 区域可缩放，overflow:visible 避免缩放层被裁切 */
+        .preview-pane { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: #ebedf0; overflow: visible; position: relative; }
         .preview-iframe-wrap {
             position: relative;
             flex: 1;
@@ -86,14 +84,11 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            overflow: hidden;
+            overflow: visible;
         }
+        /* 缩放层：尺寸设为 100%/zoom 再 scale(zoom)，视觉填满容器，无裁切 */
         .preview-scale-wrap {
             position: relative;
-            width: 100%;
-            height: 100%;
-            min-width: 100%;
-            min-height: 100%;
             transform-origin: center center;
             flex-shrink: 0;
         }
@@ -131,8 +126,8 @@
         .preview-zoom-float .zoom-btn:hover { border-color: var(--primary-color); color: var(--primary-color); background: rgba(241,90,36,0.08); }
         .preview-zoom-float .zoom-value { min-width: 40px; text-align: center; font-weight: 600; }
 
-        /* 右侧规则区：1:1 占比，min-height:0 使内容区可收缩并出现滚动 */
-        .rules-pane { flex: 1; min-width: 0; min-height: 0; background: #fff; border-left: 1px solid var(--border-color); display: flex; flex-direction: column; overflow: hidden; }
+        /* 右侧规则区：1:1 占比，z-index 高于左侧缩放层，避免左侧缩放溢出时遮挡 */
+        .rules-pane { flex: 1; min-width: 0; min-height: 0; background: #fff; border-left: 1px solid var(--border-color); display: flex; flex-direction: column; overflow: hidden; position: relative; z-index: 1; }
         .rules-header { flex-shrink: 0; padding: 20px; border-bottom: 1px solid var(--border-color); }
         .rules-header h2 { font-size: 18px; margin-bottom: 4px; }
         .rules-header p { font-size: 12px; color: #999; }
@@ -182,17 +177,18 @@
 
         <div id="detail-view">
             <div id="detail-view-zoom-wrap">
-            <div class="preview-pane">
-                <div class="preview-iframe-wrap">
-                    <div class="preview-scale-wrap" id="preview-scale-wrap">
-                        <iframe id="ui-iframe" src=""></iframe>
-                        <div id="ui-highlight-overlay" class="ui-highlight-overlay" style="display:none;"></div>
+                <div class="preview-pane">
+                    <div class="preview-iframe-wrap">
+                        <div class="preview-scale-wrap" id="preview-scale-wrap">
+                            <iframe id="ui-iframe" src=""></iframe>
+                            <div id="ui-highlight-overlay" class="ui-highlight-overlay" style="display:none;"></div>
+                        </div>
                     </div>
-                </div>
-                <div class="preview-zoom-float">
-                    <button type="button" class="zoom-btn" id="zoom-out" title="缩小">−</button>
-                    <span class="zoom-value" id="zoom-value">90%</span>
-                    <button type="button" class="zoom-btn" id="zoom-in" title="放大">+</button>
+                    <div class="preview-zoom-float">
+                        <button type="button" class="zoom-btn" id="zoom-out" title="缩小">−</button>
+                        <span class="zoom-value" id="zoom-value">90%</span>
+                        <button type="button" class="zoom-btn" id="zoom-in" title="放大">+</button>
+                    </div>
                 </div>
             </div>
             <div class="rules-pane">
@@ -200,9 +196,7 @@
                     <h2 id="page-title">页面名称加载中...</h2>
                     <p id="page-id-display">ID: ...</p>
                 </div>
-                <div class="rules-content" id="rules-container">
-                    </div>
-            </div>
+                <div class="rules-content" id="rules-container"></div>
             </div>
         </div>
     </main>
@@ -225,11 +219,24 @@
 
         function getPreviewZoom() { return PREVIEW_ZOOM_LEVELS[previewZoomIndex]; }
         function applyPreviewZoom() {
-            const viewWrap = document.getElementById('detail-view-zoom-wrap');
-            if (!viewWrap) return;
+            const scaleWrap = document.getElementById('preview-scale-wrap');
+            if (!scaleWrap) return;
             const zoom = getPreviewZoom();
-            viewWrap.style.transformOrigin = 'center center';
-            viewWrap.style.transform = zoom === 1 ? 'none' : 'scale(' + zoom + ')';
+            scaleWrap.style.transformOrigin = 'center center';
+            if (zoom === 1) {
+                scaleWrap.style.width = '100%';
+                scaleWrap.style.height = '100%';
+                scaleWrap.style.minWidth = '100%';
+                scaleWrap.style.minHeight = '100%';
+                scaleWrap.style.transform = 'none';
+            } else {
+                var pct = (100 / zoom).toFixed(2);
+                scaleWrap.style.width = pct + '%';
+                scaleWrap.style.height = pct + '%';
+                scaleWrap.style.minWidth = pct + '%';
+                scaleWrap.style.minHeight = pct + '%';
+                scaleWrap.style.transform = 'scale(' + zoom + ')';
+            }
         }
         function updateZoomLabel() {
             const el = document.getElementById('zoom-value');
@@ -370,23 +377,6 @@
                 });
             }
 
-            // 5. 右侧规则区滚轮滚动：父级 transform 可能导致原生滚动失效，用 wheel 回退保证可滚
-            const rulesContentEl = document.getElementById('rules-container');
-            if (rulesContentEl) {
-                rulesContentEl.addEventListener('wheel', function(e) {
-                    var el = this;
-                    if (el.scrollHeight <= el.clientHeight) return;
-                    var top = el.scrollTop;
-                    var maxTop = el.scrollHeight - el.clientHeight;
-                    if (e.deltaY > 0 && top < maxTop) {
-                        e.preventDefault();
-                        el.scrollTop = Math.min(maxTop, top + e.deltaY);
-                    } else if (e.deltaY < 0 && top > 0) {
-                        e.preventDefault();
-                        el.scrollTop = Math.max(0, top + e.deltaY);
-                    }
-                }, { passive: false });
-            }
         }
 
         // 双向高亮联动：规则 hover → UI 高亮，UI hover → 规则高亮
