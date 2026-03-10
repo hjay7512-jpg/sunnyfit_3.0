@@ -13,57 +13,101 @@
             --border-color: #e4e7ed;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); height: 100vh; display: flex; flex-direction: column; }
-        
-        /* 顶部导航栏 */
-        header { background: #fff; padding: 16px 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; align-items: center; z-index: 10; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            overflow: hidden;
+            display: grid;
+            grid-template-rows: 56px 1fr;
+            grid-template-areas: "header" "main";
+        }
+        body > header { grid-area: header; }
+        body > main { grid-area: main; }
+
+        /* 顶部导航栏：固定 56px 高，main 由 grid 严格排在下方 */
+        header {
+            height: 56px;
+            min-height: 56px;
+            background: #fff;
+            padding: 0 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            z-index: 100;
+        }
         .logo { font-size: 18px; font-weight: bold; color: var(--primary-color); margin-right: 20px; }
         .breadcrumbs { font-size: 14px; color: #666; }
         .breadcrumbs a { color: #666; text-decoration: none; }
         .breadcrumbs a:hover { color: var(--primary-color); }
 
-        /* 主体内容区 */
-        main { flex: 1; display: flex; overflow: hidden; position: relative; }
+        /* 主体内容区：仅占 grid 第二行，绝不与顶栏重叠 */
+        main { min-height: 0; display: flex; overflow: hidden; position: relative; z-index: 0; }
 
         /* 状态 1：全局视图 (Markdown 解析区) */
         #global-view { width: 100%; max-width: 800px; margin: 0 auto; padding: 40px 20px; overflow-y: auto; display: none; }
         #global-view.active { display: block; }
         .markdown-body { background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); line-height: 1.6; }
         .markdown-body a { color: var(--primary-color); }
-        /* 规则区 Markdown 表格：列对齐 */
-        .markdown-body table { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 12px 0; }
-        .markdown-body th, .markdown-body td { padding: 10px 12px; border: 1px solid var(--border-color); vertical-align: top; text-align: left; }
+        /* 规则区 Markdown 表格：自适应列宽与文字换行 */
+        .markdown-body table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+        .markdown-body th, .markdown-body td { padding: 10px 12px; border: 1px solid var(--border-color); vertical-align: top; text-align: left; word-break: break-word; overflow-wrap: break-word; }
         .markdown-body th { background: var(--bg-color); font-weight: 600; }
-        .markdown-body th:first-child, .markdown-body td:first-child { width: 22%; }
-        .markdown-body th:nth-child(2), .markdown-body td:nth-child(2) { width: 18%; }
-        .markdown-body th:nth-child(3), .markdown-body td:nth-child(3) { width: 60%; }
+        /* 全局视图表格保留固定列比 */
+        #global-view .markdown-body table { table-layout: fixed; }
+        #global-view .markdown-body th:first-child, #global-view .markdown-body td:first-child { width: 22%; }
+        #global-view .markdown-body th:nth-child(2), #global-view .markdown-body td:nth-child(2) { width: 18%; }
+        #global-view .markdown-body th:nth-child(3), #global-view .markdown-body td:nth-child(3) { width: 60%; }
+        /* 右侧规则区：表格自适应，长文本换行 */
+        .rules-content .markdown-body table { table-layout: auto; max-width: 100%; }
+        .rules-content .markdown-body th, .rules-content .markdown-body td { min-width: 60px; max-width: 100%; }
 
         /* 状态 2：详情拆分视图 (左 UI，右规则) 1:1 布局 */
         #detail-view { width: 100%; display: none; }
         #detail-view.active { display: flex; }
         
-        /* 左侧预览区：1:1 占比，2% 内边距 */
-        .preview-pane { flex: 1; min-width: 0; display: flex; justify-content: center; align-items: flex-start; background: #ebedf0; padding: 2%; overflow: auto; }
-        /* 缩放包装器：Demo 始终以 375×812 渲染，用 scale 等比缩小以保持原有效果 */
-        .device-scale-wrap {
-            width: 375px;
-            height: 812px;
-            flex-shrink: 0;
-            transform-origin: top center;
-            transform: scale(min(1, (100vh - 120px) / 812, (50vw - 4%) / 375));
-        }
-        /* 设备框：固定 375×812，Demo 以设计稿尺寸渲染 */
-        .device-mockup { 
-            width: 375px; 
-            height: 812px; 
-            background: #fff; 
-            border-radius: 36px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15); 
-            border: 6px solid #333; 
-            overflow: hidden; 
+        /* 左侧预览区：仅内容区，缩放为左下方悬浮 */
+        .preview-pane { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: #ebedf0; overflow: hidden; position: relative; }
+        .preview-iframe-wrap {
             position: relative;
+            flex: 1;
+            min-height: 0;
+            background: #fff;
         }
-        .device-mockup iframe { width: 375px; height: 812px; border: none; display: block; }
+        .preview-iframe-wrap iframe { width: 100%; height: 100%; border: none; display: block; }
+        /* 左下方悬浮缩放按钮 */
+        .preview-zoom-float {
+            position: absolute;
+            left: 12px;
+            bottom: 12px;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 10px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+            font-size: 13px;
+            color: #333;
+        }
+        .preview-zoom-float .zoom-btn {
+            width: 28px;
+            height: 28px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+        .preview-zoom-float .zoom-btn:hover { border-color: var(--primary-color); color: var(--primary-color); background: rgba(241,90,36,0.08); }
+        .preview-zoom-float .zoom-value { min-width: 40px; text-align: center; font-weight: 600; }
 
         /* 右侧规则区：1:1 占比 */
         .rules-pane { flex: 1; min-width: 0; background: #fff; border-left: 1px solid var(--border-color); display: flex; flex-direction: column; }
@@ -84,7 +128,6 @@
         }
         
         /* UI 高亮遮罩：左侧 Demo 区域 */
-        .device-mockup { position: relative; }
         .ui-highlight-overlay { position: absolute; pointer-events: none; border: 2px solid var(--primary-color); border-radius: 8px; background: rgba(241, 90, 36, 0.08); z-index: 10; transition: all 0.15s ease-out; }
         .rule-badge { display: inline-block; background: #333; color: #fff; font-size: 12px; padding: 2px 8px; border-radius: 4px; margin-bottom: 8px; }
         .rule-title { font-weight: bold; margin-bottom: 12px; font-size: 15px; }
@@ -108,11 +151,14 @@
 
         <div id="detail-view">
             <div class="preview-pane">
-                <div class="device-scale-wrap">
-                    <div class="device-mockup">
-                        <iframe id="ui-iframe" src=""></iframe>
-                        <div id="ui-highlight-overlay" class="ui-highlight-overlay" style="display:none;"></div>
-                    </div>
+                <div class="preview-iframe-wrap">
+                    <iframe id="ui-iframe" src=""></iframe>
+                    <div id="ui-highlight-overlay" class="ui-highlight-overlay" style="display:none;"></div>
+                </div>
+                <div class="preview-zoom-float">
+                    <button type="button" class="zoom-btn" id="zoom-out" title="缩小">−</button>
+                    <span class="zoom-value" id="zoom-value">90%</span>
+                    <button type="button" class="zoom-btn" id="zoom-in" title="放大">+</button>
                 </div>
             </div>
             <div class="rules-pane">
@@ -136,6 +182,33 @@
         const globalView = document.getElementById('global-view');
         const detailView = document.getElementById('detail-view');
         const breadcrumbs = document.getElementById('breadcrumbs');
+
+        // 左侧预览区缩放：档位与默认 90%
+        const PREVIEW_ZOOM_LEVELS = [0.5, 0.75, 0.9, 1, 1.1, 1.25];
+        let previewZoomIndex = PREVIEW_ZOOM_LEVELS.indexOf(0.9);
+        if (previewZoomIndex < 0) previewZoomIndex = 2;
+
+        function getPreviewZoom() { return PREVIEW_ZOOM_LEVELS[previewZoomIndex]; }
+        function applyPreviewZoom() {
+            const iframe = document.getElementById('ui-iframe');
+            if (!iframe || !iframe.contentDocument) return;
+            try {
+                const doc = iframe.contentDocument;
+                const zoom = getPreviewZoom();
+                doc.documentElement.style.overflow = 'auto';
+                doc.documentElement.style.height = '100%';
+                doc.body.style.margin = '0';
+                doc.body.style.width = '100%';
+                doc.body.style.minHeight = '100%';
+                doc.body.style.overflow = 'auto';
+                doc.body.style.transformOrigin = '50% 50%';
+                doc.body.style.transform = zoom === 1 ? 'none' : 'scale(' + zoom + ')';
+            } catch (_) { }
+        }
+        function updateZoomLabel() {
+            const el = document.getElementById('zoom-value');
+            if (el) el.textContent = Math.round(getPreviewZoom() * 100) + '%';
+        }
 
         // 核心路由控制器
         async function init() {
@@ -246,6 +319,29 @@
 
             // 3. 双向高亮联动（规则 ↔ Demo）
             setupBidirectionalHighlight(iframe, rulesContainer);
+
+            // 4. 左侧预览区缩放控件：默认 90%，用户可调节
+            updateZoomLabel();
+            const zoomOutBtn = document.getElementById('zoom-out');
+            const zoomInBtn = document.getElementById('zoom-in');
+            if (zoomOutBtn) {
+                zoomOutBtn.addEventListener('click', () => {
+                    if (previewZoomIndex > 0) {
+                        previewZoomIndex--;
+                        updateZoomLabel();
+                        applyPreviewZoom();
+                    }
+                });
+            }
+            if (zoomInBtn) {
+                zoomInBtn.addEventListener('click', () => {
+                    if (previewZoomIndex < PREVIEW_ZOOM_LEVELS.length - 1) {
+                        previewZoomIndex++;
+                        updateZoomLabel();
+                        applyPreviewZoom();
+                    }
+                });
+            }
         }
 
         // 双向高亮联动：规则 hover → UI 高亮，UI hover → 规则高亮
@@ -253,7 +349,7 @@
             const overlay = document.getElementById('ui-highlight-overlay');
             if (!overlay) return;
 
-            const deviceMockup = iframe.closest('.device-mockup');
+            const previewWrap = iframe.closest('.preview-iframe-wrap');
             const rulesContent = rulesContainer.closest('.rules-content');
 
             // 规则 → UI：hover 规则时高亮对应 UI 元素
@@ -261,7 +357,7 @@
             rulesContainer.querySelectorAll(ruleSelectors).forEach(el => {
                 el.addEventListener('mouseenter', () => {
                     const zoneId = el.getAttribute('data-zone');
-                    highlightUI(zoneId, iframe, overlay, deviceMockup);
+                    highlightUI(zoneId, iframe, overlay);
                     el.classList.add('zone-highlight');
                 });
                 el.addEventListener('mouseleave', () => {
@@ -305,18 +401,19 @@
                 pollTimer = setInterval(updateVisibleZone, 400);
             }
             iframe.addEventListener('load', () => {
+                applyPreviewZoom();
                 startVisibleZonePolling();
                 setTimeout(startVisibleZonePolling, 600);
                 setTimeout(startVisibleZonePolling, 1500);
             });
 
             // 鼠标离开左侧预览区时清除 UI 高亮遮罩（保留右侧规则高亮，因为由可见内容驱动）
-            deviceMockup?.addEventListener('mouseleave', () => {
+            previewWrap?.addEventListener('mouseleave', () => {
                 overlay.style.display = 'none';
             });
         }
 
-        function highlightUI(zoneId, iframe, overlay, deviceMockup) {
+        function highlightUI(zoneId, iframe, overlay) {
             try {
                 const doc = iframe.contentDocument;
                 if (!doc) { overlay.style.display = 'none'; return; }
