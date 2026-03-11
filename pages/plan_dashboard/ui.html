@@ -3,52 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SunnyFit: Intent Select (SOP 2.0)</title>
-    
+    <title>SunnyFit: Plan Dashboard (SOP 2.0)</title>
+
+    <script>
+        // SOP 2.0 MapsTo 跨级路由：供本页及子组件调用，统一通过父级 Viewer 切换 page 参数
+        function navigateTo(targetPageId) {
+            var cleanId = (targetPageId || '').replace(/\.html$/, '');
+            var targetFile = cleanId + '.html';
+            try {
+                if (window.parent !== window && window.parent.location.search.indexOf('page=') !== -1) {
+                    var parentParams = new URLSearchParams(window.parent.location.search);
+                    parentParams.set('page', cleanId);
+                    window.parent.location.search = parentParams.toString();
+                    return;
+                }
+            } catch (e) {}
+            if (!window.location.pathname.endsWith(targetFile)) {
+                window.location.href = targetFile;
+            }
+        }
+        if (typeof window !== 'undefined') window.navigateTo = navigateTo;
+    </script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-    <script>
-        function navigateTo(targetPageId) {
-            try {
-                const parentParams = new URLSearchParams(window.parent.location.search);
-                parentParams.set('page', targetPageId);
-                window.parent.location.search = parentParams.toString();
-            } catch (e) {
-                console.warn("未检测到 Viewer 外壳，执行降级跳转");
-                alert("SOP 路由触发：即将前往 -> " + targetPageId);
-            }
-        }
-    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        brand: { red: '#EE4343', blue: '#31426D', beige: '#F6E2CF', green: '#2BA471', darkRed: '#8B0000', sky: '#BDD0EB' },
-                        bg: { page: '#FFFBF7', card: '#FFFFFF', neutral: '#F5F7FA', dark: '#1A1A1A' },
-                        text: { primary: '#31426D', secondary: '#666666', inverse: '#FFFFFF' }
+                        brand: { red: '#EE4343', dark: '#111827', blue: '#31426D', green: '#2BA471', yellow: '#FFB800', beige: '#F6E2CF', darkRed: '#8B0000', sky: '#BDD0EB' },
+                        bg: { page: '#FFFBF7', card: '#FFFFFF', neutral: '#F5F7FA' },
+                        text: { primary: '#111827', secondary: '#4B5563', muted: '#8CA3AF', subtitle: '#9CA3AF' },
+                        state: { 
+                            cardio: '#FFF0F0', cardioText: '#EE4343',
+                            strength: '#F0F4FF', strengthText: '#31426D',
+                            recovery: '#EFFFF6', recoveryText: '#2BA471',
+                            rest: '#F3F4F6' 
+                        }
                     },
                     fontFamily: { sans: ['Montserrat', 'sans-serif'] },
                     boxShadow: {
-                        'glow': '0px 10px 30px rgba(222, 37, 41, 0.4)',
-                        'card': '0px 4px 12px rgba(0, 0, 0, 0.05)'
+                        'card-premium': '0 12px 40px -8px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.03)',
+                        'glow-green': '0 0 20px rgba(43, 164, 113, 0.25)',
+                        'sheet': '0 10px 40px rgba(0,0,0,0.12)'
                     },
                     animation: {
-                        'breathe': 'breathe 4s ease-in-out infinite',
-                        'fade-up': 'fadeUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards'
+                        'fade-in': 'fadeIn 0.2s ease-out forwards',
+                        'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'sheet-up': 'sheetUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
+                        'fade-up': 'fadeUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
+                        'flip-in': 'flipIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+                        'pulse-green': 'pulseGreen 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'pulse-fast': 'pulseFast 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                     },
                     keyframes: {
-                        breathe: {
-                            '0%, 100%': { transform: 'scale(1)', filter: 'drop-shadow(0px 10px 20px rgba(222, 37, 41, 0.4))' },
-                            '50%': { transform: 'scale(1.05)', filter: 'drop-shadow(0px 15px 30px rgba(222, 37, 41, 0.6))' },
-                        },
-                        fadeUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }
+                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+                        fadeUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+                        slideUp: { '0%': { opacity: '0', transform: 'translateY(15px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+                        sheetUp: { '0%': { opacity: '0', transform: 'translateY(100%)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+                        flipIn: { '0%': { opacity: '0', transform: 'rotateX(-15deg) scale(0.96)' }, '100%': { opacity: '1', transform: 'rotateX(0) scale(1)' } },
+                        pulseGreen: { '0%, 100%': { opacity: '1', transform: 'scale(1)' }, '50%': { opacity: '0.6', transform: 'scale(1.1)' } },
+                        pulseFast: { '0%, 100%': { opacity: '1' }, '50%': { opacity: '0.5' } }
                     }
                 }
             }
@@ -56,109 +76,446 @@
     </script>
     <style>
         * { -webkit-tap-highlight-color: transparent; }
-        body { 
-            margin: 0; background-color: #f0f0f0; display: flex; 
-            justify-content: center; align-items: center; height: 100vh; overflow: hidden;
-            font-family: 'Montserrat', sans-serif;
-        }
-        .mobile-viewport {
-            width: 390px; height: 844px; background-color: #FFFBF7; position: relative;
-            overflow: hidden; border-radius: 40px; border: 8px solid #333;
-            box-shadow: 0px 30px 60px rgba(0,0,0,0.3);
-        }
+        body { margin: 0; background-color: #f0f0f0; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: 'Montserrat', sans-serif; }
+        .mobile-viewport { width: 390px; height: 844px; background-color: #FFFBF7; position: relative; overflow: hidden; border-radius: 40px; border: 8px solid #333; box-shadow: 0px 30px 60px rgba(0,0,0,0.3); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        .bg-gradient-premium { background: linear-gradient(180deg, #FFFBF7 0%, #F4F7FB 30%, #EFF3F9 100%); }
+        .chat-scroll { -ms-overflow-style: none; scrollbar-width: none; scroll-behavior: smooth; }
+        .chat-scroll::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useRef } = React;
 
-        // 仅保留此页面需要的唯一 Icon
         const Icons = {
-            ChevronRight: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m9 18 6-6-6-6"/></svg>
+            Back: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7"/></svg>,
+            More: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"/></svg>,
+            Settings: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>,
+            Swap: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>,
+            EndCircle: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>,
+            Close: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"/></svg>,
+            Check: () => <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg>,
+            Lock: () => <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"/></svg>,
+            Chat: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>,
+            Send: () => <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/></svg>,
+            Target: () => <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
         };
 
-        const SunnyLogo = ({ variant = 'standard', className = "" }) => {
-            const colors = variant === 'splash' ? { path1: '#FFFFFF', path23: '#EE4343' } : { path1: '#EE4343', path23: '#FFFFFF' };
-            return (
-                <div className="w-full h-full animate-breathe">
-                    <svg viewBox="0 0 32 32" fill="none" className={`w-full h-full drop-shadow-glow ${className}`}>
-                        <path d="M16.013 32C13.271 31.9018 10.5412 31.8755 7.87463 31.1231C3.57228 29.9252 1.23878 26.956 0.52873 22.6889C-0.165498 18.3226 -0.176144 13.8749 0.497173 9.50531C1.23001 4.58405 4.38577 1.32017 9.29472 0.537958C13.609 -0.165525 18.0077 -0.17914 22.3262 0.497619C27.7401 1.35875 30.6837 4.27187 31.513 9.76137C32.1817 14.0582 32.1521 18.4348 31.4253 22.7222C30.5207 27.9048 27.3527 30.867 22.079 31.558C20.0716 31.8176 18.0362 31.8597 16.013 32Z" fill={colors.path1} />
-                        <path d="M15.3836 6.16027C15.9406 6.15315 16.4468 6.48357 16.6646 6.99654C16.8824 7.50952 16.7687 8.10332 16.3767 8.49943C15.9848 8.89555 15.3925 9.01542 14.8774 8.80283C14.3624 8.59024 14.027 8.08735 14.0283 7.53001C14.0358 6.78206 14.636 6.1754 15.3836 6.16027Z" fill={colors.path23} />
-                        <path d="M19.6492 11.387C18.5149 11.7676 17.3455 12.0377 16.2287 12.4744C15.8322 12.6166 15.4556 12.8094 15.1084 13.0479C13.9776 13.8722 13.939 14.9315 14.9611 15.9768C15.7606 16.7959 16.7231 17.4115 17.5769 18.1586C18.9041 19.3214 18.9637 20.5245 17.7312 21.8118C16.4829 23.1255 14.905 23.9726 13.2676 24.6811C12.5908 24.974 11.8983 25.2283 11.2128 25.5002C11.0314 25.3255 10.9531 25.0694 11.0059 24.8232C12.0619 24.4117 13.0326 23.8082 13.8689 23.043C14.3759 22.5899 14.8315 22.0823 15.2276 21.5295C16.092 20.3018 16.0446 19.5722 15.0523 18.4445C14.3405 17.6412 13.5095 16.945 12.9134 16.0365C11.7317 14.2335 12.2928 12.0623 14.1722 10.9977C15.6747 10.1471 17.2876 9.58586 18.9234 9.06848C19.6106 8.85451 20.1226 9.11759 20.3259 9.7402C20.5766 10.5312 20.34 11.159 19.6492 11.387Z" fill={colors.path23} />
-                    </svg>
-                </div>
-            );
-        };
-
-        const SplashLayer = ({ onComplete }) => {
-            const [scale, setScale] = useState(0); 
-            const [logoOpacity, setLogoOpacity] = useState(0);
-            
-            useEffect(() => { 
-                setTimeout(() => setScale(40), 100); 
-                setTimeout(() => setLogoOpacity(1), 600); 
-                setTimeout(onComplete, 2500); 
-            }, []);
-
-            return (
-                <div className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden" data-prd-zone="intent_select_splash">
-                    <div className="absolute w-12 h-12 bg-brand-red rounded-full transition-transform duration-[800ms]" style={{ transform: `scale(${scale})` }} />
-                    <div className="relative z-10 w-24 h-24 transition-opacity duration-1000" style={{ opacity: logoOpacity }}>
-                        <SunnyLogo variant="splash" />
-                    </div>
-                </div>
-            );
-        };
-
-        const HomeScreen = ({ isVisible, onNavigate }) => {
-            const [show, setShow] = useState(false);
-            useEffect(() => { if(isVisible) setTimeout(() => setShow(true), 800); }, [isVisible]);
-            
-            const options = [
-                { id: 'device_connect', icon: '🚲', title: 'Connect Equipment', subtitle: 'Connect your Sunny / JLL gear and track' },
-                { id: 'plan_create', icon: '🔎', title: 'Find a Course', subtitle: 'Looking for workouts suit for me' },
-                { id: 'guest_explore', icon: '👀', title: 'Just Browsing', subtitle: 'I have no idea' }
-            ];
-
-            return (
-                <div className={`absolute inset-0 flex flex-col items-center pt-[10vh] px-6 transition-opacity duration-1000 ${isVisible?'opacity-100':'opacity-0'}`}>
-                    <div className="w-20 h-20 mb-6 flex-shrink-0"><SunnyLogo /></div>
-                    <div className="text-center mb-10 shrink-0">
-                        <h1 className="text-[28px] font-bold mb-2 text-text-primary leading-tight" data-i18n="intent_select_greeting">Good Morning.</h1>
-                        <p className="text-text-secondary text-[14px]" data-i18n="intent_select_subtitle">What do you want to start?</p>
-                    </div>
-                    <div className="w-full flex-1 overflow-y-auto no-scrollbar pb-10">
-                        {show && options.map((opt, i) => (
-                            <div key={opt.id} onClick={() => onNavigate(opt.id)} data-prd-zone={`intent_select_opt_${opt.id}`} className="w-full bg-white p-4 rounded-[20px] shadow-card flex items-center animate-fade-up mb-4 cursor-pointer active:scale-[0.97] transition-all" style={{animationDelay: `${i*0.1}s`}}>
-                                <div className="w-12 h-12 bg-bg-neutral rounded-[16px] flex items-center justify-center text-2xl flex-shrink-0">{opt.icon}</div>
-                                <div className="ml-4 flex-grow text-left pr-2">
-                                    <h3 className="font-bold text-text-primary text-[15px] leading-tight">{opt.title}</h3>
-                                    <p className="text-[11px] text-text-secondary mt-1 leading-snug">{opt.subtitle}</p>
-                                </div>
-                                <div className="w-5 h-5 flex-shrink-0 text-text-secondary opacity-30"><Icons.ChevronRight className="w-full h-full" /></div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            );
-        };
-
-        // --- 极其纯粹的 App 顶层控制器 ---
         const App = () => {
-            const [appState, setAppState] = useState('launching'); 
+            const [isMenuOpen, setIsMenuOpen] = useState(false); 
+            const [isSettingsOpen, setIsSettingsOpen] = useState(false); 
+            const [isChatOpen, setIsChatOpen] = useState(false); 
             
-            const handleNav = (targetModule) => { 
-                // SOP 2.0: 直接进行跨页面路由分发，抛弃单页内部堆叠
-                window.navigateTo(targetModule);
+            const [isSyncing, setIsSyncing] = useState(false);
+            const [toast, setToast] = useState(null);
+            const [animKey, setAnimKey] = useState(0);
+
+            const [planSettings, setPlanSettings] = useState({
+                intensity: 'Intermediate',
+                equipment: ['Home Bike'],
+                days: ['Mon', 'Tue', 'Thu', 'Fri'],
+                considerations: []
+            });
+
+            const [messages, setMessages] = useState([{ role: 'ai', text: "Today is about active recovery. Need me to swap it for something else?", time: 'Now' }]);
+            const [isTyping, setIsTyping] = useState(false);
+            const chatEndRef = useRef(null);
+
+            const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            const EQUIPMENT_OPTS = ['Home Bike', 'Treadmill', 'Rowing Machine', 'Dumbbells', 'Bodyweight Only'];
+            const CONSIDERATION_OPTS = ['Knee Friendly', 'Back Support', 'No Jumping', 'Quiet Mode'];
+            const INTENSITY_OPTS = ['Beginner', 'Intermediate', 'Advanced'];
+
+            const planData = {
+                meta: { title: "12 lbs to ideal weight" },
+                sysStage: { name: "Awakening", progress: 30, desc: "Phase 1: Breaking inertia. Muscle fibers are recovering and adapting to the new load.", status: "In Progress", emoji: "🥵" },
+                milestone: "Dynamic Cycle Assessment (Est. in 2 workouts)",
+                coachText: "You pushed hard on that cardio ride yesterday! 👏 Today is an Active Recovery day. Let's soothe those muscles and prep the body for tomorrow's strength session.",
+                defaultWorkout: { title: "15-Min Active Stretch Flow", tag: "Recovery", time: "15 min", img: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=400&q=80", colorTheme: "brand-green" },
+                rollingWindow: [
+                    { label: 'Yest', type: 'cardio', status: 'done', date: 'Tue' }, 
+                    { label: 'Today', type: 'recovery', status: 'today', date: 'Wed' }, 
+                    { label: 'Tom', type: 'strength', status: 'locked', date: 'Thu' }, 
+                    { label: 'Fri', type: 'cardio', status: 'locked', date: 'Fri' },
+                    { label: 'Sat', type: 'rest', status: 'rest', date: 'Sat' }
+                ]
+            };
+
+            const [activeWorkout, setActiveWorkout] = useState(planData.defaultWorkout);
+            const [coachMsg, setCoachMsg] = useState(planData.coachText);
+
+            const showToast = (msg) => {
+                setToast(msg);
+                setTimeout(() => setToast(null), 3000);
+            };
+
+            useEffect(() => {
+                if (chatEndRef.current && isChatOpen) chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+            }, [messages, isTyping, isChatOpen]);
+
+            const toggleArrayItem = (field, item) => {
+                setPlanSettings(prev => {
+                    const arr = prev[field];
+                    if (arr.includes(item)) {
+                        if (arr.length > 1) return { ...prev, [field]: arr.filter(i => i !== item) };
+                        return prev;
+                    }
+                    return { ...prev, [field]: [...arr, item] };
+                });
+            };
+
+            const handleOpenSettings = () => {
+                setIsMenuOpen(false);
+                setTimeout(() => setIsSettingsOpen(true), 250); 
+            };
+
+            const handleQuickAction = (action) => {
+                setIsMenuOpen(false);
+                if (action === 'end') {
+                    showToast("🛑 Plan termination requested.");
+                } else {
+                    showToast("🔄 Opening Plan Library to swap...");
+                }
+            };
+
+            const handleSaveSettings = () => {
+                setIsSettingsOpen(false);
+                setIsSyncing(true);
+                setTimeout(() => {
+                    setIsSyncing(false);
+                    showToast("Plan fully recalibrated based on new settings! ✨");
+                }, 2000);
+            };
+
+            const handleSmartAdjust = (userText, keyword) => {
+                setMessages(prev => [...prev, { role: 'user', text: userText, time: 'Now' }]);
+                setIsTyping(true);
+                setTimeout(() => {
+                    setIsTyping(false);
+                    let aiReply = "Got it! Adjusted for you.";
+                    let newWorkout = {};
+                    if (keyword === 'yoga') {
+                        aiReply = "Yoga it is. Let's focus on deep breathing and joint mobility today.";
+                        newWorkout = { title: "20-Min Restorative Yoga", tag: "Recovery", time: "20 min", img: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=400&q=80", note: "Yoga Flow", colorTheme: "brand-green" };
+                    } else if (keyword === 'skip') {
+                        aiReply = "No problem. Rest is just as important. I've logged today as a full rest day.";
+                        newWorkout = { title: "Full Rest Day", tag: "Rest", time: "--", img: "https://images.unsplash.com/photo-1515041219749-89347f83291a?auto=format&fit=crop&w=400&q=80", note: "Take it easy", colorTheme: "gray-500" };
+                    }
+                    setMessages(prev => [...prev, { role: 'ai', text: aiReply, time: 'Now' }]);
+                    setActiveWorkout(newWorkout);
+                    setCoachMsg("Plan adjusted successfully. Listen to your body!");
+                    setAnimKey(prev => prev + 1);
+                    setTimeout(() => setIsChatOpen(false), 1800);
+                }, 800);
+            };
+
+            const renderRollingPill = (dayObj, idx) => {
+                const colors = {
+                    cardio: { bg: 'bg-state-cardio', text: 'text-state-cardioText', border: 'border-state-cardioText/20' },
+                    strength: { bg: 'bg-state-strength', text: 'text-state-strengthText', border: 'border-state-strengthText/20' },
+                    recovery: { bg: 'bg-state-recovery', text: 'text-state-recoveryText', border: 'border-state-recoveryText/20' },
+                    rest: { bg: 'bg-gray-50', text: 'text-gray-400', border: 'border-gray-200' }
+                };
+                const theme = colors[dayObj.type] || colors.rest;
+
+                if (dayObj.status === 'today') {
+                    return (
+                        <div key={idx} className="flex flex-col items-center gap-1.5 transform scale-110 origin-bottom px-1">
+                            <span className={`text-[11px] font-black ${theme.text}`}>{dayObj.label}</span>
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${theme.bg} border-2 border-[${theme.text}] shadow-md shadow-[${theme.text}]/20`}>
+                                <div className={`w-3 h-3 rounded-full ${theme.bg.replace('state-', 'brand-')} bg-brand-green animate-pulse-green`}></div>
+                            </div>
+                            <span className="text-[9px] font-bold text-text-muted">{dayObj.date}</span>
+                        </div>
+                    );
+                }
+                if (dayObj.status === 'done') {
+                    return (
+                        <div key={idx} className="flex flex-col items-center gap-1.5 opacity-80">
+                            <span className="text-[10px] font-bold text-text-muted">{dayObj.label}</span>
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${theme.bg} ${theme.text} border ${theme.border}`}><Icons.Check/></div>
+                            <span className="text-[9px] font-medium text-gray-400">{dayObj.date}</span>
+                        </div>
+                    );
+                }
+                if (dayObj.status === 'locked') {
+                    return (
+                        <div key={idx} className="flex flex-col items-center gap-1.5 opacity-50">
+                            <span className="text-[10px] font-bold text-text-muted">{dayObj.label}</span>
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${theme.bg} border border-dashed ${theme.border}`}><Icons.Lock/></div>
+                            <span className="text-[9px] font-medium text-gray-400">{dayObj.date}</span>
+                        </div>
+                    );
+                }
+                return (
+                    <div key={idx} className="flex flex-col items-center gap-1.5 opacity-60">
+                        <span className="text-[10px] font-bold text-text-muted">{dayObj.label}</span>
+                        <div className="w-8 h-8 rounded-full bg-gray-50 text-gray-400 flex items-center justify-center text-[10px] font-bold border border-gray-100">-</div>
+                        <span className="text-[9px] font-medium text-gray-400">{dayObj.date}</span>
+                    </div>
+                );
             };
 
             return (
-                <div className="mobile-viewport font-sans">
-                    {appState === 'launching' && <SplashLayer onComplete={() => setAppState('home')} />}
-                    <HomeScreen isVisible={appState === 'home'} onNavigate={handleNav} />
+                <div className="mobile-viewport flex flex-col font-sans bg-bg-page relative">
+                    
+                    {/* Toast */}
+                    <div className={`absolute top-14 left-1/2 -translate-x-1/2 bg-gray-900/95 backdrop-blur-md text-white px-5 py-2.5 rounded-full text-[13px] font-bold shadow-2xl z-[100] transition-all duration-400 ease-out flex items-center gap-2 ${toast ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-8 pointer-events-none'}`}>
+                        {toast}
+                    </div>
+
+                    {/* Loading */}
+                    {isSyncing && (
+                        <div className="absolute inset-0 z-[100] bg-white/80 backdrop-blur-xl flex flex-col items-center justify-center animate-fade-in">
+                            <div className="w-20 h-20 bg-gradient-to-br from-brand-yellow to-orange-400 rounded-full flex items-center justify-center text-4xl shadow-lg border-4 border-white mb-6 animate-pulse">⚙️</div>
+                            <h3 className="text-[20px] font-black text-brand-dark mb-2 tracking-tight">Recalibrating Plan...</h3>
+                            <p className="text-[13px] font-medium text-text-secondary text-center px-12 leading-relaxed">AI is re-structuring your 30-day journey.</p>
+                            <div className="flex gap-2 mt-6">
+                                <div className="w-2.5 h-2.5 bg-brand-red rounded-full animate-bounce"></div>
+                                <div className="w-2.5 h-2.5 bg-brand-red rounded-full animate-bounce" style={{animationDelay:'0.15s'}}></div>
+                                <div className="w-2.5 h-2.5 bg-brand-red rounded-full animate-bounce" style={{animationDelay:'0.3s'}}></div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* --- 主页面 Header --- */}
+                    <div className="px-6 pt-14 pb-4 flex items-start justify-between z-40 relative shrink-0" data-zone-id="plan_dashboard_header" data-prd-zone="plan_dashboard_header">
+                        <button onClick={() => typeof window.navigateTo === 'function' && window.navigateTo('home_page')} className="text-text-primary p-1 -ml-1 active:scale-90 transition-transform"><Icons.Back /></button>
+                        <div className="flex flex-col items-center">
+                            <h1 className="font-black text-[18px] text-text-primary tracking-tight">{planData.meta.title}</h1>
+                            <p className="text-[11px] font-semibold text-text-muted mt-0.5 tracking-wide flex items-center gap-1.5">
+                                🚲 {planSettings.equipment[0]} <span className="text-gray-300">|</span> 📅 {planSettings.days.length} Days/wk
+                            </p>
+                        </div>
+                        <div className="flex gap-2">
+                            <button onClick={() => setIsMenuOpen(true)} className="text-text-primary active:scale-90 transition-all p-1 -mr-1"><Icons.More /></button>
+                        </div>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto no-scrollbar px-5 pb-24 z-20 relative">
+                        
+                        {/* 模块 1: System Track */}
+                        <div className="mb-8 animate-fade-up" style={{animationDelay: '0.1s'}} data-zone-id="plan_dashboard_step_system_track" data-prd-zone="plan_dashboard_step_system_track">
+                            <div className="bg-white rounded-[24px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div className="flex justify-between items-center mb-5 relative z-10 px-2">
+                                    <div className="flex flex-col items-center gap-1.5 relative z-10">
+                                        <div className={`w-9 h-9 rounded-full flex items-center justify-center text-[18px] bg-brand-red text-white shadow-md shadow-brand-red/20`}>🥵</div>
+                                        <span className="text-[9px] font-black uppercase text-brand-red">Awake</span>
+                                    </div>
+                                    <div className="flex flex-col items-center gap-1.5 relative z-10 opacity-80">
+                                        <div className={`w-9 h-9 rounded-full flex items-center justify-center text-[18px] bg-gray-100 grayscale`}>😌</div>
+                                        <span className="text-[9px] font-black uppercase text-gray-400">Ignition</span>
+                                    </div>
+                                    <div className="flex flex-col items-center gap-1.5 relative z-10 opacity-50">
+                                        <div className={`w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-[18px] grayscale`}>🤩</div>
+                                        <span className="text-[9px] font-black uppercase text-gray-400">Shift</span>
+                                    </div>
+                                    <div className="absolute left-6 right-6 top-[18px] h-[3px] bg-gray-100 rounded-full -z-10"></div>
+                                    <div className="absolute left-6 top-[18px] h-[3px] bg-gradient-to-r from-brand-red via-orange-400 to-transparent rounded-full -z-10" style={{width: `${planData.sysStage.progress}%`}}></div>
+                                </div>
+                                <div className="bg-[#F8FAFC] rounded-2xl p-3 border border-gray-100 mb-2">
+                                    <div className="flex justify-between items-start mb-1.5">
+                                        <span className="font-bold text-[12px] text-text-primary">Current: {planData.sysStage.name}</span>
+                                        <span className="text-[10px] font-black text-brand-blue bg-brand-blue/10 px-2 py-0.5 rounded-md">{planData.sysStage.status}</span>
+                                    </div>
+                                    <p className="text-[11px] text-text-muted leading-relaxed font-medium">{planData.sysStage.desc}</p>
+                                </div>
+                                <div className="flex items-center gap-2 mt-3 px-1">
+                                    <div className="w-5 h-5 rounded-full bg-brand-yellow/20 text-brand-yellow flex items-center justify-center"><Icons.Target/></div>
+                                    <p className="text-[11px] font-bold text-text-primary">Next Milestone: <span className="text-text-muted font-semibold ml-1">{planData.milestone}</span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 模块 2: Up Next */}
+                        <div className="mb-10 animate-fade-up relative" style={{animationDelay: '0.2s'}} data-zone-id="plan_dashboard_step_up_next" data-prd-zone="plan_dashboard_step_up_next">
+                            <div className="flex justify-between items-end mb-3 px-1">
+                                <h2 className="text-[18px] font-black text-text-primary tracking-tight">Up Next</h2>
+                                <div className="flex gap-2">
+                                    <span className="flex items-center gap-1 text-[9px] font-bold text-gray-400"><span className="w-1.5 h-1.5 rounded-full bg-brand-red"></span> Cardio</span>
+                                    <span className="flex items-center gap-1 text-[9px] font-bold text-gray-400"><span className="w-1.5 h-1.5 rounded-full bg-brand-blue"></span> Strength</span>
+                                    <span className="flex items-center gap-1 text-[9px] font-bold text-gray-400"><span className="w-1.5 h-1.5 rounded-full bg-brand-green"></span> Recover</span>
+                                </div>
+                            </div>
+
+                            <div className={`bg-white rounded-[28px] p-5 shadow-card-premium relative transition-all duration-500 border-2 ${activeWorkout.tag === 'Recovery' ? 'border-brand-green/20' : 'border-gray-50'}`} data-zone-id="plan_dashboard_workout_card" data-prd-zone="plan_dashboard_workout_card">
+                                <div className="flex justify-between items-end mb-6 pb-5 border-b border-gray-100" data-zone-id="plan_dashboard_rolling_window" data-prd-zone="plan_dashboard_rolling_window">
+                                    {planData.rollingWindow.map((day, idx) => renderRollingPill(day, idx))}
+                                </div>
+                                <div className="flex gap-3.5 items-start mb-5">
+                                    <div className="w-11 h-11 bg-gradient-to-br from-brand-yellow to-orange-300 rounded-full flex items-center justify-center text-xl shrink-0 shadow-md">👱‍♂️</div>
+                                    <div className="flex-1 bg-[#F8FAFC] rounded-[16px] rounded-tl-none p-3.5 border border-gray-100 relative">
+                                        <div className="absolute -left-[6px] top-3 w-3 h-3 bg-[#F8FAFC] border-l border-b border-gray-100 transform rotate-45"></div>
+                                        <p className="text-[13px] font-semibold text-text-primary leading-relaxed relative z-10">{coachMsg}</p>
+                                    </div>
+                                </div>
+                                <div key={animKey} className="relative h-44 rounded-[20px] overflow-hidden mb-5 shadow-sm group animate-flip-in">
+                                    <div className="absolute inset-0 bg-cover bg-center" style={{backgroundImage: `url('${activeWorkout.img}')`}}></div>
+                                    <div className={`absolute inset-0 bg-gradient-to-t ${activeWorkout.tag === 'Recovery' ? 'from-brand-green/90 via-black/30' : 'from-black/80 via-black/20'} to-transparent opacity-90`}></div>
+                                    {activeWorkout.note && (
+                                        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur text-text-primary text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-md shadow-lg flex items-center gap-1">
+                                            <span>🪄</span> {activeWorkout.note}
+                                        </div>
+                                    )}
+                                    <div className="absolute bottom-4 left-4 right-4 text-white">
+                                        <div className="flex items-center gap-2 mb-1 opacity-90">
+                                            <span className="text-[11px] font-bold uppercase tracking-wider">{activeWorkout.tag}</span>
+                                            <span className="w-1 h-1 bg-white rounded-full"></span>
+                                            <span className="text-[11px] font-bold">{activeWorkout.time}</span>
+                                        </div>
+                                        <h3 className="font-black text-[20px] leading-tight drop-shadow-md">{activeWorkout.title}</h3>
+                                    </div>
+                                </div>
+                                <div className="flex gap-3" data-zone-id="plan_dashboard_cta_area" data-prd-zone="plan_dashboard_cta_area">
+                                    <button onClick={() => typeof window.navigateTo === 'function' && window.navigateTo('workout_prepare')} className={`flex-[7] py-4 text-white rounded-[16px] font-black text-[15px] active:scale-95 transition-all shadow-md flex justify-center items-center ${activeWorkout.tag === 'Recovery' ? 'bg-brand-green hover:bg-[#248f61] shadow-brand-green/30' : 'bg-brand-red hover:bg-[#d63a3a] shadow-brand-red/20'}`} data-zone-id="plan_dashboard_cta_start" data-prd-zone="plan_dashboard_cta_start">
+                                        Start Session
+                                    </button>
+                                    <button onClick={() => setIsChatOpen(true)} className="flex-[3] py-4 bg-gray-50 hover:bg-gray-100 text-text-secondary rounded-[16px] font-bold text-[14px] border border-gray-200 active:scale-95 transition-all flex justify-center items-center gap-1.5" data-zone-id="plan_dashboard_cta_adjust" data-prd-zone="plan_dashboard_cta_adjust">
+                                        <Icons.Chat /> Adjust
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* --- 浮层 1: Action Sheet --- */}
+                    {isMenuOpen && (
+                        <div className="absolute inset-0 z-[60] flex flex-col justify-end animate-fade-in" data-zone-id="plan_dashboard_menu" data-prd-zone="plan_dashboard_menu">
+                            <div className="absolute inset-0 bg-[#424A53]/50 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)}></div>
+                            
+                            <div className="relative px-4 pb-10 flex flex-col gap-2 animate-sheet-up font-sans w-full max-w-[390px] mx-auto">
+                                
+                                {/* Group 1: 选项组 */}
+                                <div className="bg-white rounded-[20px] flex flex-col overflow-hidden shadow-sheet">
+                                    <button onClick={handleOpenSettings} className="w-full pt-[18px] pb-[16px] px-5 flex items-center gap-4 bg-white active:bg-gray-50 transition-colors border-b border-gray-100/80" data-zone-id="plan_dashboard_menu_adjust" data-prd-zone="plan_dashboard_menu_adjust">
+                                        <div className="text-gray-500 w-7 h-7 bg-gray-50 rounded-full flex items-center justify-center shrink-0"><Icons.Settings /></div>
+                                        <div className="flex flex-col items-start text-left">
+                                            <span className="text-[17px] font-bold text-text-primary">Adjust Plan</span>
+                                            <span className="text-[13px] font-medium text-text-subtitle mt-0.5">Modify intensity, equipment, or days</span>
+                                        </div>
+                                    </button>
+                                    <button onClick={() => handleQuickAction('swap')} className="w-full pt-[16px] pb-[18px] px-5 flex items-center gap-4 bg-white active:bg-gray-50 transition-colors" data-zone-id="plan_dashboard_menu_swap" data-prd-zone="plan_dashboard_menu_swap">
+                                        <div className="text-gray-500 w-7 h-7 bg-gray-50 rounded-full flex items-center justify-center shrink-0"><Icons.Swap /></div>
+                                        <div className="flex flex-col items-start text-left">
+                                            <span className="text-[17px] font-bold text-text-primary">Swap Plan</span>
+                                            <span className="text-[13px] font-medium text-text-subtitle mt-0.5">Choose a different journey</span>
+                                        </div>
+                                    </button>
+                                </div>
+                                
+                                {/* Group 2: 危险操作 */}
+                                <div className="bg-white rounded-[20px] overflow-hidden shadow-sheet">
+                                    <button onClick={() => handleQuickAction('end')} className="w-full min-h-[58px] flex items-center justify-center gap-2.5 bg-white active:bg-gray-50 transition-colors" data-zone-id="plan_dashboard_menu_end" data-prd-zone="plan_dashboard_menu_end">
+                                        <span className="text-brand-red"><Icons.EndCircle /></span>
+                                        <span className="text-[17px] font-bold text-brand-red">End Current Plan</span>
+                                    </button>
+                                </div>
+
+                                {/* Group 3: 取消 (精准对齐 58px 高度和圆角) */}
+                                <div className="bg-white rounded-[20px] overflow-hidden shadow-sheet mt-1">
+                                    <button onClick={() => setIsMenuOpen(false)} className="w-full min-h-[58px] bg-white active:bg-gray-50 transition-colors text-[17px] font-bold text-text-primary">
+                                        Cancel
+                                    </button>
+                                </div>
+
+                            </div>
+                        </div>
+                    )}
+
+                    {/* --- 浮层 2: Plan Settings --- */}
+                    {isSettingsOpen && (
+                        <div className="absolute inset-0 z-[70] flex flex-col justify-end animate-fade-in" data-zone-id="plan_dashboard_settings" data-prd-zone="plan_dashboard_settings">
+                            <div className="absolute inset-0 bg-brand-dark/60 backdrop-blur-sm" onClick={() => setIsSettingsOpen(false)}></div>
+                            <div className="relative w-full h-[90%] bg-[#F4F7FB] rounded-t-[32px] shadow-[0_-20px_50px_rgba(0,0,0,0.3)] flex flex-col animate-sheet-up overflow-hidden">
+                                <div className="flex justify-between items-center px-6 pt-6 pb-4 bg-[#F4F7FB] shrink-0 border-b border-gray-200/50">
+                                    <div><h3 className="font-black text-[20px] text-text-primary tracking-tight">Plan Settings</h3></div>
+                                    <button onClick={() => setIsSettingsOpen(false)} className="p-2.5 bg-gray-200/50 hover:bg-gray-200 rounded-full active:scale-90 transition-colors"><Icons.Close /></button>
+                                </div>
+                                <div className="flex-1 overflow-y-auto no-scrollbar px-6 py-6 space-y-8">
+                                    <section>
+                                        <h4 className="text-[11px] font-black text-text-muted uppercase tracking-widest mb-3.5 flex items-center gap-1.5">🔥 Intensity Level</h4>
+                                        <div className="flex gap-2 bg-gray-100 p-1 rounded-[16px]">
+                                            {INTENSITY_OPTS.map(level => (
+                                                <button key={level} onClick={() => setPlanSettings({...planSettings, intensity: level})} className={`flex-1 py-2.5 rounded-[12px] text-[12px] font-bold transition-all ${planSettings.intensity === level ? 'bg-white text-text-primary shadow-sm border border-gray-200/50' : 'text-text-secondary hover:text-text-primary'}`}>{level}</button>
+                                            ))}
+                                        </div>
+                                    </section>
+                                    <section>
+                                        <div className="flex justify-between items-end mb-3.5">
+                                            <h4 className="text-[11px] font-black text-text-muted uppercase tracking-widest flex items-center gap-1.5">📅 Main Workout Days</h4>
+                                            <span className="text-[11px] font-bold text-brand-blue">{planSettings.days.length} Days/wk</span>
+                                        </div>
+                                        <div className="flex justify-between gap-1.5">
+                                            {WEEK_DAYS.map(day => {
+                                                const isSelected = planSettings.days.includes(day);
+                                                return (
+                                                    <button key={day} onClick={() => toggleArrayItem('days', day)} className={`flex-1 aspect-[3/4] rounded-2xl flex flex-col items-center justify-center transition-all ${isSelected ? 'bg-brand-dark text-white shadow-md border-transparent' : 'bg-white text-text-secondary border border-gray-200/80 active:bg-gray-50'}`}>
+                                                        <span className={`text-[13px] font-bold ${isSelected ? 'text-white' : 'text-text-primary'}`}>{day.charAt(0)}</span>
+                                                        {isSelected && <div className="w-1 h-1 bg-white rounded-full mt-1.5 opacity-80"></div>}
+                                                    </button>
+                                                )
+                                            })}
+                                        </div>
+                                    </section>
+                                    <section>
+                                        <h4 className="text-[11px] font-black text-text-muted uppercase tracking-widest mb-3.5 flex items-center gap-1.5">🚲 Available Equipment</h4>
+                                        <div className="flex flex-wrap gap-2.5">
+                                            {EQUIPMENT_OPTS.map(eq => {
+                                                const isSelected = planSettings.equipment.includes(eq);
+                                                return (
+                                                    <button key={eq} onClick={() => toggleArrayItem('equipment', eq)} className={`px-4 py-3 rounded-xl text-[13px] font-bold transition-all flex items-center gap-2 border-[1.5px] ${isSelected ? 'bg-brand-red/5 border-brand-red text-brand-red shadow-sm' : 'bg-white border-gray-200 text-text-primary active:bg-gray-50'}`}>
+                                                        {isSelected && <Icons.Check/>} {eq}
+                                                    </button>
+                                                )
+                                            })}
+                                        </div>
+                                    </section>
+                                </div>
+                                <div className="p-6 bg-white border-t border-gray-100 shrink-0 pb-8">
+                                    <button onClick={handleSaveSettings} className="w-full py-4.5 bg-brand-dark hover:bg-black text-white rounded-[20px] font-black text-[16px] active:scale-95 transition-all shadow-[0_8px_20px_rgba(0,0,0,0.15)] flex justify-center items-center gap-2">
+                                        <span className="text-[20px]">✨</span> Save & Recalculate
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* --- 浮层 3: Coach AI Chat --- */}
+                    {isChatOpen && (
+                        <div className="absolute inset-0 z-[80] flex flex-col justify-end animate-fade-in" data-zone-id="plan_dashboard_chat" data-prd-zone="plan_dashboard_chat">
+                            <div className="absolute inset-0 bg-brand-dark/50 backdrop-blur-sm" onClick={() => setIsChatOpen(false)}></div>
+                            <div className="absolute bottom-0 left-0 right-0 bg-[#F4F7FB] rounded-t-[32px] pt-6 pb-8 shadow-[0_-20px_50px_rgba(0,0,0,0.3)] flex flex-col h-[65vh] animate-sheet-up">
+                                <div className="flex justify-between items-center px-6 mb-4 shrink-0">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="w-9 h-9 bg-gradient-to-br from-brand-yellow to-orange-300 rounded-full flex items-center justify-center text-[18px] shadow-sm">👱‍♂️</div>
+                                        <div>
+                                            <h3 className="font-black text-[16px] text-text-primary">Coach AI</h3>
+                                            <p className="text-[10px] font-bold text-brand-green flex items-center gap-1"><span className="w-1.5 h-1.5 bg-brand-green rounded-full animate-pulse-fast"></span> Online</p>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => setIsChatOpen(false)} className="p-2 bg-gray-200/50 hover:bg-gray-200 rounded-full active:scale-90 transition-colors"><Icons.Close /></button>
+                                </div>
+                                <div className="flex-1 overflow-y-auto chat-scroll px-6 py-2 space-y-4">
+                                    {messages.map((msg, idx) => (
+                                        <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                            <div className={`max-w-[80%] p-3.5 rounded-[18px] ${msg.role === 'user' ? 'bg-brand-dark text-white rounded-tr-sm' : 'bg-white text-text-primary border border-gray-100 shadow-sm rounded-tl-sm'}`}>
+                                                <p className="text-[13px] font-medium leading-relaxed">{msg.text}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="shrink-0 px-4 pt-2 bg-gradient-to-t from-[#F4F7FB] via-[#F4F7FB] to-transparent">
+                                    <div className="flex gap-2 overflow-x-auto chat-scroll pb-3 px-2">
+                                        <button onClick={() => handleSmartAdjust("Can we just do yoga?", "yoga")} className="shrink-0 px-3.5 py-2 bg-white border border-gray-200 text-text-secondary rounded-full text-[12px] font-bold active:bg-gray-50 shadow-sm">🧘 Prefer Yoga</button>
+                                        <button onClick={() => handleSmartAdjust("I want a full rest today.", "skip")} className="shrink-0 px-3.5 py-2 bg-white border border-gray-200 text-text-secondary rounded-full text-[12px] font-bold active:bg-gray-50 shadow-sm">🛋️ Skip completely</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
         };
